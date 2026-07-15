@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/events/scaffold/v1.json",
+  "title": "Scaffold Event",
+  "description": "Phase 1 test fixture event. Not a production domain event. Consumers ignore unknown additive fields and reject unknown major versions.",
+  "type": "object",
+  "required": ["eventName", "eventVersion", "occurredAt"],
+  "properties": {
+    "eventName": {
+      "type": "string",
+      "const": "scaffold.phase1.verified.v1"
+    },
+    "eventVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Major event version. Unknown majors must be rejected."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

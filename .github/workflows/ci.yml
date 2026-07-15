@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  repository-hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Whitespace check (full candidate tree)
+        run: ./scripts/check_whitespace.sh
+      - name: Focused/disabled test markers
+        run: ./scripts/check_focused_tests.sh
+      - name: Secret scan
+        run: ./scripts/secret_scan.sh
+
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --check .
+      - run: pnpm -r --if-present run lint
+      - run: pnpm exec dependency-cruiser --config dependency-cruiser.cjs apps packages
+      - run: pnpm -r --if-present run typecheck
+      - run: pnpm -r --if-present run test
+      - run: pnpm -r --if-present run build
+
+  python:
+    name: Python 3.12
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - name: Install and sync Python 3.12
+        run: |
+          uv python install 3.12
+          uv sync --all-packages --group dev --frozen --python 3.12
+      - run: uv run --python 3.12 ruff format --check .
+      - run: uv run --python 3.12 ruff check .
+      - run: uv run --python 3.12 pyright
+      - run: uv run --python 3.12 lint-imports
+      - run: uv run --python 3.12 pytest
+      - name: Migration checks
+        run: |
+          echo "N/A until Phase 3 introduces Alembic migrations."
+          test ! -d services/core/alembic
+
+  contracts:
+    name: Contracts and schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          uv python install 3.12
+          uv sync --all-packages --group dev --frozen --python 3.12
+      - run: uv run --python 3.12 python scripts/generate_openapi.py
+      - run: pnpm --filter @memdot/contracts run generate
+      - run: pnpm --filter @memdot/contracts run check
+      - run: uv run --python 3.12 python scripts/validate_schemas.py
+      - run: uv run --python 3.12 pytest tests/contracts -q
+      - name: Deterministic second generation
+        run: |
+          uv run --python 3.12 python scripts/generate_openapi.py
+          pnpm --filter @memdot/contracts run generate
+          git diff --exit-code -- packages/contracts/generated
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          uv python install 3.12
+          uv sync --all-packages --group dev --frozen --python 3.12
+      - run: uv run --python 3.12 python scripts/validate_docs.py
+      - run: node --import ./scripts/mermaid-preload.mjs scripts/validate_mermaid.mjs
+
+  containers:
+    name: Container builds and health smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker build -f apps/web/Dockerfile -t memdot-web:ci .
+          docker build -f apps/mcp/Dockerfile -t memdot-mcp:ci .
+          docker build -f services/core/Dockerfile -t memdot-core:ci .
+          docker build -f services/workers/Dockerfile -t memdot-workers:ci .
+          docker build -f services/model-router/Dockerfile -t memdot-model-router:ci .
+      - name: Non-root inspection
+        run: |
+          ./scripts/docker_nonroot_check.sh memdot-web:ci
+          ./scripts/docker_nonroot_check.sh memdot-mcp:ci
+          ./scripts/docker_nonroot_check.sh memdot-core:ci
+          ./scripts/docker_nonroot_check.sh memdot-workers:ci
+          ./scripts/docker_nonroot_check.sh memdot-model-router:ci
+      - name: Health smoke
+        env:
+          MEMDOT_IMAGE_TAG: ci
+        run: ./scripts/docker_health_smoke.sh
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4

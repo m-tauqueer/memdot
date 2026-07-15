@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/scaffold/memdot-document.phase1.json",
+  "title": "MemdotDocument Phase 1 Scaffold Fixture",
+  "description": "Non-canonical Phase 1 scaffold only. The real MemdotDocument v1 schema is owned by Phase 6 and must not be inferred from this fixture.",
+  "type": "object",
+  "required": ["scaffoldVersion", "fixtureKind"],
+  "properties": {
+    "scaffoldVersion": {
+      "type": "integer",
+      "const": 0,
+      "description": "Scaffold fixture version. Not a product schemaVersion."
+    },
+    "fixtureKind": {
+      "type": "string",
+      "const": "memdot.document.scaffold"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/resource-envelope/v1.json",
+  "title": "Resource Envelope",
+  "description": "Versioned public resource envelope scaffold.",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "id"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

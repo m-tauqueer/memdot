@@ -1,0 +1,25 @@
+[project]
+name = "memdot-workers"
+version = "0.1.0"
+description = "Memdot workers service skeleton"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.116.0",
+  "uvicorn[standard]>=0.35.0",
+  "pydantic-settings>=2.10.0",
+  "memdot-domain",
+]
+
+[project.scripts]
+memdot-workers = "memdot_workers.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/memdot_workers"]
+
+[tool.uv.sources]
+memdot-domain = { workspace = true }

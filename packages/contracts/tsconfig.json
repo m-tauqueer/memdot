@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": false
+  },
+  "include": ["src/index.ts", "generated/openapi/openapi.ts"],
+  "exclude": ["src/**/*.test.ts", "dist", "coverage", "scripts"]
+}

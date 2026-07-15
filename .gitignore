@@ -1,0 +1,87 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.venv/
+.python-version.local
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.pyright/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Tooling caches
+.turbo/
+.cache/
+.eslintcache
+*.tsbuildinfo
+.next/
+out/
+coverage/
+.nyc_output/
+.vitest/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+credentials.json
+service-account*.json
+**/secrets/**
+!**/secrets/.gitkeep
+
+# IDE and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker / local runtime
+*.log
+docker-data/
+.compose-cache/
+
+# Generated local artifacts (committed generated contracts live under packages/contracts/generated)
+tmp/
+.tmp/
+*.tmp
+*.bak
+
+# Test / benchmark local outputs
+tests/**/artifacts/
+tests/**/results/
+!tests/**/.gitkeep
+
+# SBOM / scan local outputs
+sbom*.json
+trivy-report*.json
+
+# Python uv
+.uv/
+uv-cache/
+
+.import_linter_cache/
+
+# Local phase handoff artifacts
+PHASE_01_CANDIDATE.patch
+PHASE_01_CANDIDATE.stat.txt

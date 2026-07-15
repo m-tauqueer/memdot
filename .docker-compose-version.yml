@@ -1,0 +1,4 @@
+# Memdot Compose compatibility pin (Phase 1 placeholder).
+# Full topology lands in Phase 2. This file records supported tooling versions.
+compose: "2.24"
+docker_api: "1.44"

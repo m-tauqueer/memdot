@@ -1,0 +1,136 @@
+[project]
+name = "memdot"
+version = "0.0.0"
+description = "Memdot monorepo Python workspace (scaffold)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "packages/domain-python",
+  "packages/provider-adapters",
+  "services/core",
+  "services/workers",
+  "services/model-router",
+]
+
+[tool.uv.sources]
+memdot-domain = { workspace = true }
+memdot-provider-adapters = { workspace = true }
+memdot-core = { workspace = true }
+memdot-workers = { workspace = true }
+memdot-model-router = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.0",
+  "pytest-asyncio>=1.0.0",
+  "ruff>=0.12.0",
+  "pyright>=1.1.400",
+  "import-linter>=2.1",
+  "httpx>=0.28.0",
+  "jsonschema>=4.24.0",
+  "httpx2>=2.7.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/generated/**", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+  "services/core/tests",
+  "services/workers/tests",
+  "services/model-router/tests",
+  "packages/domain-python/tests",
+  "packages/provider-adapters/tests",
+  "tests/contracts",
+  "tests/boundaries",
+]
+addopts = "-q --strict-markers --strict-config"
+markers = [
+  "boundary: dependency boundary tests",
+  "contract: contract and schema tests",
+]
+filterwarnings = ["error"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+include = [
+  "packages/domain-python/src",
+  "packages/provider-adapters/src",
+  "services/core/src",
+  "services/workers/src",
+  "services/model-router/src",
+]
+exclude = ["**/generated/**", "**/.venv/**", "**/node_modules/**"]
+venvPath = "."
+venv = ".venv"
+extraPaths = [
+  "packages/domain-python/src",
+  "packages/provider-adapters/src",
+  "services/core/src",
+  "services/workers/src",
+  "services/model-router/src",
+]
+reportMissingTypeStubs = false
+reportUnusedFunction = false
+
+[tool.importlinter]
+root_packages = [
+  "memdot_domain",
+  "memdot_provider_adapters",
+  "memdot_core",
+  "memdot_workers",
+  "memdot_model_router",
+]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain must not import services or adapters"
+type = "forbidden"
+source_modules = ["memdot_domain"]
+forbidden_modules = [
+  "memdot_core",
+  "memdot_workers",
+  "memdot_model_router",
+  "memdot_provider_adapters",
+]
+
+[[tool.importlinter.contracts]]
+name = "Services must not import sibling services"
+type = "independence"
+modules = [
+  "memdot_core",
+  "memdot_workers",
+  "memdot_model_router",
+]
+
+[[tool.importlinter.contracts]]
+name = "Provider adapters may depend on domain only"
+type = "forbidden"
+source_modules = ["memdot_provider_adapters"]
+forbidden_modules = [
+  "memdot_core",
+  "memdot_workers",
+  "memdot_model_router",
+]
+
+[[tool.importlinter.contracts]]
+name = "Core must not import provider adapters"
+type = "forbidden"
+source_modules = ["memdot_core"]
+forbidden_modules = ["memdot_provider_adapters"]

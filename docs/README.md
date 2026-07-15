@@ -1,6 +1,6 @@
 # Memdot documentation
 
-Status: **Founding specification complete; Phase 1 corrections complete; revised report submitted; correction round 2 pending Codex re-audit**
+Status: **Phase 1 accepted and committed; Phase 2 owner-authorized and ready for implementation**
 Baseline date: **2026-07-15**
 
 This directory is the source of truth for Memdot v1. It describes a general,

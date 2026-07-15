@@ -83,7 +83,7 @@ Architecture baseline: 2026-07-15 founding documentation
 
 ## 3. Macro-phase sequence
 
-- [ ] Phase 1 — Repository foundation and production-grade monorepo structure
+- [x] Phase 1 — Repository foundation and production-grade monorepo structure
 - [ ] Phase 2 — Self-host infrastructure and local developer platform
 - [ ] Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
 - [ ] Phase 4 — Core API, durable transactions, workflows, and object storage
@@ -166,8 +166,8 @@ Primary contracts: TRD-SYS-001..010, TRD-DEP-006..008, ADR-0011, Codebase Contex
 - [x] AGENTS.md and Codebase Context Map describe actual verified paths and commands.
 - [x] No product/domain functionality is falsely claimed.
 - [x] Grok submits one consolidated Phase 1 report using docs/execution/PHASE_REPORT_TEMPLATE.md.
-- [ ] Codex performs a complete Phase 1 architecture audit and returns PASS.
-- [ ] Tauqueer explicitly authorizes the Phase 1 commit(s) and start of Phase 2.
+- [x] Codex performs a complete Phase 1 architecture audit and returns PASS.
+- [x] Tauqueer explicitly authorizes the Phase 1 commit(s) and start of Phase 2.
 
 # Phase 2 — Self-host infrastructure and local developer platform
 
@@ -1156,15 +1156,15 @@ Primary contracts: PRD section 14, FSD-AC-001..024, TRD section 14, System Archi
 
 # 5. Progress and decision log
 
-- [x] Current active macro-phase: Phase 1 — corrections complete; revised report submitted; correction round 2 pending Codex re-audit.
-- [x] Current internal micro-phase: Phase 1 micro-phases 1.1–1.4 complete (self-checks PASS).
-- [x] Current Grok phase report: REVISED Phase 1 report submitted (initial + correction round 1); awaiting round-2 re-audit.
-- [x] Current Codex verdict: FAIL — CORRECTIONS REQUIRED (documentation/source-of-truth inconsistency; substantive gates previously PASS).
-- [ ] Current owner decision: NONE (commit not authorized).
-- [ ] Current blocker: NONE for implementation; pending Codex re-audit of documentation pointer alignment.
-- [ ] Last accepted commit: NONE.
+- [x] Current active macro-phase: Phase 2 — owner-authorized; implementation not started.
+- [ ] Current internal micro-phase: Phase 2.1 not started.
+- [ ] Current Grok phase report: NONE for Phase 2.
+- [x] Current Codex verdict: PASS for Phase 1 after two correction rounds.
+- [x] Current owner decision: Phase 1 commit and Phase 2 start authorized.
+- [ ] Current blocker: NONE.
+- [x] Last accepted implementation commit: `4138239ea31eff267af3e9a9d9984ca51a763991`.
 - [x] Last verified environment: Node 22 (`.nvmrc` / CI / containers); Python 3.12 (`.python-version` / CI / containers); pnpm 11.5.2; uv with `uv.lock`.
-- [x] Last documentation synchronization: 2026-07-15 Phase 1 correction round 2 (execution pointers + Node engine alignment).
+- [x] Last documentation synchronization: 2026-07-15 Phase 1 acceptance and Phase 2 handoff.
 
 ## Accepted macro-phase record template
 

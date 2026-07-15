@@ -19,6 +19,7 @@ technical requirements.
 ## Files
 
 - [Phase 1 Grok Prompt](PHASE_01_GROK_PROMPT.md)
+- [Phase 2 Grok Prompt](PHASE_02_GROK_PROMPT.md)
 - [Phase Report Template](PHASE_REPORT_TEMPLATE.md)
 
 Add later phase prompts only after the preceding phase receives a Codex PASS, so

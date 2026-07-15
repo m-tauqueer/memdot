@@ -9,17 +9,16 @@ Purpose: Durable starting context for Grok, Codex, and future implementation ses
 - The workspace contains the founding product, functional, technical,
   architecture, ADR, security, evaluation, AI-context, implementation-plan, and
   implementation-tracker documents.
-- Phase 1 monorepo scaffold corrections are complete. A revised Grok Phase 1
-  report has been submitted. Previous Codex verdict: FAIL — CORRECTIONS
-  REQUIRED. Correction round 2 is pending Codex re-audit. No product domain
-  behavior, ledger, auth, ingestion, retrieval, Learning, MCP tools, Notion, or
-  Compose topology is claimed complete.
+- Phase 1 monorepo scaffold is accepted and committed. Codex returned PASS after
+  two correction rounds, and Tauqueer authorized the Phase 2 start. No product
+  domain behavior, ledger, auth, ingestion, retrieval, Learning, MCP tools,
+  Notion, or production-like Compose topology is claimed complete.
 - Verified scaffold paths exist for apps/web, apps/mcp, services/core,
   services/workers, services/model-router, packages/contracts,
   packages/domain-python, packages/provider-adapters, packages/ui,
   infra/compose, infra/hosted, tests/benchmark, and tests/security.
-- Git is initialized on branch `main` with no Phase 1 commit yet (owner-
-  authorized commit remains after Codex PASS).
+- Git branch `main` and `origin/main` contain accepted implementation commit
+  `4138239ea31eff267af3e9a9d9984ca51a763991`.
 - Verified commands are recorded in AGENTS.md and
   docs/ai/CODEBASE_CONTEXT_MAP.md.
 - This file must be updated whenever a phase changes verified repository state.
@@ -309,15 +308,13 @@ begins in Phase 12.
 
 ## 14. Current execution pointer
 
-- Active phase: Phase 1 — corrections complete; revised report submitted;
-  correction round 2 pending Codex re-audit.
+- Active phase: Phase 2 — owner-authorized; implementation not started.
 - Builder prompt:
-  [docs/execution/PHASE_01_GROK_PROMPT.md](docs/execution/PHASE_01_GROK_PROMPT.md)
-- Detailed checklist: IMPLEMENTATION_TRACKER.md Phase 1.
-- Current phase report: revised consolidated Grok Phase 1 report submitted.
-- Current Codex verdict: FAIL — CORRECTIONS REQUIRED (documentation/engine
-  alignment); substantive gates previously PASS.
-- Current accepted implementation commit: none.
+  [docs/execution/PHASE_02_GROK_PROMPT.md](docs/execution/PHASE_02_GROK_PROMPT.md)
+- Detailed checklist: IMPLEMENTATION_TRACKER.md Phase 2.
+- Current phase report: none for Phase 2.
+- Current Codex verdict: PASS for Phase 1.
+- Current accepted implementation commit: `4138239ea31eff267af3e9a9d9984ca51a763991`.
 - Verified commands: see AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
 
 ## 15. Context maintenance

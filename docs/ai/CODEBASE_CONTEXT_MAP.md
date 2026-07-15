@@ -1,8 +1,8 @@
 # Codebase Context Map for AI Agents
 
-Version: **1 — Phase 1 candidate**
+Version: **1 — Phase 1 accepted**
 Date: **2026-07-15**
-Implementation status: **Phase 1 corrections complete; revised report submitted; previous Codex verdict FAIL; correction round 2 pending re-audit. No product domain behavior.**
+Implementation status: **Phase 1 scaffold accepted at `4138239`; Phase 2 infrastructure is owner-authorized but not implemented. No product domain behavior.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -226,5 +226,5 @@ must distinguish documented target state from implemented and verified current
 state.
 
 History note: Version 0 was documentation-only target state. Version 1 records
-the Phase 1 scaffold candidate. Corrections are complete and a revised report is
-submitted; Codex re-audit (round 2) is pending before any owner-authorized commit.
+the accepted Phase 1 scaffold. Phase 2 begins from commit `4138239` and must
+replace target infrastructure paths and commands only after verification.

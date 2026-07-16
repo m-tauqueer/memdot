@@ -1,12 +1,12 @@
 # Codebase Context Map for AI Agents
 
-Version: **4.2 — Wave 9 frontend foundation on `frontend`**
+Version: **4.3 — Waves 9–10 frontend on `frontend`**
 Date: **2026-07-17**
 Implementation status: **Technical Phases 1–3 accepted on `main` (`cc570eb`).
-Waves 4–8 Correction Round 2 tip `99ed500` on `develop`. Frontend Wave 9
-foundation is on branch `frontend` (worktree) awaiting Codex audit. Wave 10
-product UI remains open. Live provider/deployment proof belongs to the Alpha
-integration gate. Prompts and reports are chat-only.**
+Waves 4–8 Correction Round 2 tip `99ed500` on `develop`. Frontend Waves 9–10
+product UI is on branch `frontend` (worktree) awaiting combined Codex audit.
+Release-acceptance and Alpha integration gate remain open. Prompts/reports are
+chat-only.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths

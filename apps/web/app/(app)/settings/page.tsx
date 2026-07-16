@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Banner, Button } from "@memdot/ui";
+import { Banner, Button, Input } from "@memdot/ui";
 
 import { useSession } from "@/src/components/auth/SessionProvider";
 import { useConnectivity } from "@/src/components/connectivity/ConnectivityProvider";
 import { useJobs } from "@/src/components/jobs/JobsProvider";
 import { PageHeader } from "@/src/components/shell/PageHeader";
-import { ApiError, beginOidc, requestAccountExport } from "@/src/lib/api/client";
+import { ApiError, beginOidc, createTombstone, requestAccountExport, restoreReplay } from "@/src/lib/api/client";
 import {
   estimateOfflineBytes,
   getReviewPack,
@@ -30,6 +30,9 @@ export default function SettingsPage() {
   const jobs = useJobs();
   const accountId = session.session?.account_id;
   const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [deleteMsg, setDeleteMsg] = useState<string | null>(null);
+  const [entityId, setEntityId] = useState("");
+  const [entityType, setEntityType] = useState("source");
   const [busy, setBusy] = useState(false);
   const [pins, setPins] = useState<PinRecord[]>([]);
   const [pack, setPack] = useState<ReviewPackMeta | null>(null);
@@ -161,6 +164,47 @@ export default function SettingsPage() {
             ) : null}
           </div>
           {exportMsg ? <p className="text-meta mt-3">{exportMsg}</p> : null}
+          <div className="mt-6 border-t border-border pt-4">
+            <h3 className="m-0 text-sm font-semibold">Deletion tombstone</h3>
+            <p className="text-meta mt-2">Requires recent auth. Purge checkpoints remain server-owned.</p>
+            <div className="mt-3 grid gap-3">
+              <Input label="Entity ID" value={entityId} onChange={(e) => setEntityId(e.target.value)} />
+              <Input label="Entity type" value={entityType} onChange={(e) => setEntityType(e.target.value)} />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  label="Create tombstone"
+                  variant="danger"
+                  disabled={busy || !connectivity.online || !entityId || !session.session?.recent_auth}
+                  onClick={() => {
+                    setBusy(true);
+                    setDeleteMsg(null);
+                    void createTombstone({ entity_id: entityId, entity_type: entityType })
+                      .then((result) => setDeleteMsg(`Tombstone: ${JSON.stringify(result).slice(0, 160)}`))
+                      .catch((err: unknown) =>
+                        setDeleteMsg(err instanceof ApiError ? err.message : "Tombstone failed"),
+                      )
+                      .finally(() => setBusy(false));
+                  }}
+                />
+                <Button
+                  label="Restore replay"
+                  variant="secondary"
+                  disabled={busy || !connectivity.online || !session.session?.recent_auth}
+                  onClick={() => {
+                    setBusy(true);
+                    setDeleteMsg(null);
+                    void restoreReplay({})
+                      .then((result) => setDeleteMsg(`Replay: ${JSON.stringify(result).slice(0, 160)}`))
+                      .catch((err: unknown) =>
+                        setDeleteMsg(err instanceof ApiError ? err.message : "Replay failed"),
+                      )
+                      .finally(() => setBusy(false));
+                  }}
+                />
+              </div>
+              {deleteMsg ? <p className="text-meta">{deleteMsg}</p> : null}
+            </div>
+          </div>
         </section>
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="m-0 text-sm font-semibold">Offline (ADR-0013)</h2>

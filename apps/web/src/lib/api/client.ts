@@ -4,12 +4,25 @@
  */
 
 import type {
+  AddNodeBody,
+  AppendTurnBody,
   CompileContextBody,
+  CreateAssessmentBody,
+  CreateConversationBody,
+  CreateCourseBody,
+  CreateDocumentBody,
+  CreateMemoryItemBody,
+  CreateProposalBody,
   CreateSourceBody,
+  CreateTombstoneBody,
   RevealAttemptBody,
+  SaveRevisionBody,
+  SelectPagesBody,
   StartAttemptBody,
   SubmitAttemptBody,
+  UploadIntentBody,
 } from "./types";
+import { sha256File } from "@/src/lib/crypto/sha256";
 
 export const CSRF_COOKIE = "memdot_csrf";
 export const CSRF_HEADER = "X-CSRF-Token";
@@ -288,4 +301,189 @@ export function compileContext(
 
 export function listConversations(): Promise<unknown> {
   return apiRequest("/api/v1/conversations");
+}
+
+export type UploadIntent = {
+  uploadId: string;
+  uploadUrl: string;
+  objectKey?: string;
+  expiresAt?: string;
+  correlationId?: string;
+};
+
+export function createUploadIntent(
+  sourceId: string,
+  body: UploadIntentBody,
+): Promise<UploadIntent> {
+  return apiRequest(`/api/v1/sources/${sourceId}/uploads`, { method: "POST", body });
+}
+
+export function completeUpload(
+  sourceId: string,
+  uploadId: string,
+): Promise<{ revisionId?: string; jobId?: string; correlationId?: string }> {
+  return apiRequest(`/api/v1/sources/${sourceId}/uploads/complete`, {
+    method: "POST",
+    body: { upload_id: uploadId },
+  });
+}
+
+/** Create source → upload intent → PUT bytes → complete (202 job). */
+export async function uploadSourceFile(input: {
+  spaceId: string;
+  title: string;
+  file: File;
+}): Promise<{ sourceId: string; revisionId?: string; jobId?: string }> {
+  const created = await createSource({ space_id: input.spaceId, title: input.title });
+  const sha256 = await sha256File(input.file);
+  const intent = await createUploadIntent(created.sourceId, {
+    filename: input.file.name,
+    content_type: input.file.type || "application/octet-stream",
+    byte_count: input.file.size,
+    sha256,
+  });
+  const put = await fetch(intent.uploadUrl, {
+    method: "PUT",
+    body: input.file,
+    headers: {
+      "Content-Type": input.file.type || "application/octet-stream",
+    },
+  });
+  if (!put.ok) {
+    throw new ApiError(
+      {
+        status: put.status,
+        detail: `Object upload failed (${put.status})`,
+        code: "upload_put_failed",
+      },
+      put.status,
+    );
+  }
+  const completed = await completeUpload(created.sourceId, intent.uploadId);
+  return {
+    sourceId: created.sourceId,
+    ...(completed.revisionId ? { revisionId: completed.revisionId } : {}),
+    ...(completed.jobId ? { jobId: completed.jobId } : {}),
+  };
+}
+
+export function createDocument(
+  body: CreateDocumentBody,
+): Promise<{ documentId: string; revisionId: string; spaceId: string }> {
+  return apiRequest("/api/v1/documents", { method: "POST", body });
+}
+
+export function getDocument(documentId: string): Promise<Record<string, unknown>> {
+  return apiRequest(`/api/v1/documents/${documentId}`);
+}
+
+export function listDocumentRevisions(documentId: string): Promise<{ items?: unknown[] }> {
+  return apiRequest(`/api/v1/documents/${documentId}/revisions`);
+}
+
+export function saveDocumentRevision(
+  documentId: string,
+  body: SaveRevisionBody,
+): Promise<{ revisionId?: string; correlationId?: string }> {
+  return apiRequest(`/api/v1/documents/${documentId}/revisions`, { method: "POST", body });
+}
+
+export function createConversation(
+  body: CreateConversationBody,
+): Promise<{ conversationId?: string; id?: string }> {
+  return apiRequest("/api/v1/conversations", { method: "POST", body });
+}
+
+export function getConversation(conversationId: string): Promise<Record<string, unknown>> {
+  return apiRequest(`/api/v1/conversations/${conversationId}`);
+}
+
+export function appendConversationTurn(
+  conversationId: string,
+  body: AppendTurnBody,
+): Promise<unknown> {
+  return apiRequest(`/api/v1/conversations/${conversationId}/turns`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function deleteConversation(conversationId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/conversations/${conversationId}`, { method: "DELETE" });
+}
+
+export function createCourse(
+  body: CreateCourseBody,
+): Promise<{ courseId?: string; id?: string }> {
+  return apiRequest("/api/v1/learning/courses", { method: "POST", body });
+}
+
+export function addCourseNode(courseId: string, body: AddNodeBody): Promise<unknown> {
+  return apiRequest(`/api/v1/learning/courses/${courseId}/nodes`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function createAssessment(
+  body: CreateAssessmentBody,
+): Promise<{ assessmentItemId?: string; revisionId?: string }> {
+  return apiRequest("/api/v1/learning/assessments", { method: "POST", body });
+}
+
+export function getAttemptView(
+  assessmentItemId: string,
+  revisionId: string,
+): Promise<Record<string, unknown>> {
+  return apiRequest(
+    `/api/v1/learning/assessments/${assessmentItemId}/revisions/${revisionId}/attempt`,
+  );
+}
+
+export function createMemoryItem(body: CreateMemoryItemBody): Promise<unknown> {
+  return apiRequest("/api/v1/memory/items", { method: "POST", body });
+}
+
+export function createProposal(body: CreateProposalBody): Promise<{ proposalId?: string }> {
+  return apiRequest("/api/v1/memory/proposals", { method: "POST", body });
+}
+
+export function createTombstone(body: CreateTombstoneBody): Promise<unknown> {
+  return apiRequest("/api/v1/deletion/tombstones", { method: "POST", body });
+}
+
+export function restoreReplay(body: Record<string, unknown> = {}): Promise<unknown> {
+  return apiRequest("/api/v1/deletion/restore-replay", { method: "POST", body });
+}
+
+export function notionConnect(): Promise<Record<string, unknown>> {
+  return apiRequest("/api/v1/notion/connect", { method: "POST", body: {} });
+}
+
+export function notionListPages(connectionId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/notion/connections/${connectionId}/pages`);
+}
+
+export function notionSelectPages(body: SelectPagesBody): Promise<unknown> {
+  return apiRequest("/api/v1/notion/pages/select", { method: "POST", body });
+}
+
+export function notionSyncBinding(
+  bindingId: string,
+  fixtureContent?: string | null,
+): Promise<unknown> {
+  return apiRequest(`/api/v1/notion/bindings/${bindingId}/sync`, {
+    method: "POST",
+    body: { fixture_content: fixtureContent ?? null },
+  });
+}
+
+export function notionResolveConflict(
+  bindingId: string,
+  body: Record<string, unknown>,
+): Promise<unknown> {
+  return apiRequest(`/api/v1/notion/bindings/${bindingId}/resolve`, {
+    method: "POST",
+    body,
+  });
 }

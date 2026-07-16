@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Badge, Button, Input } from "@memdot/ui";
 
+import { useSession } from "@/src/components/auth/SessionProvider";
 import { PageHeader } from "@/src/components/shell/PageHeader";
 import { SurfaceState } from "@/src/components/states/SurfaceState";
 import {
@@ -16,10 +17,13 @@ import {
   reprocessSource,
   retrySource,
 } from "@/src/lib/api/client";
+import { pinItem, unpinItem } from "@/src/lib/offline/store";
 
 export default function SourceDetailPage() {
   const params = useParams<{ id: string }>();
   const sourceId = params.id;
+  const session = useSession();
+  const accountId = session.session?.account_id;
   const [revisionId, setRevisionId] = useState("");
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -114,6 +118,36 @@ export default function SourceDetailPage() {
             label="Reprocess"
             disabled={busy || !revisionId}
             onClick={() => void run(() => reprocessSource(sourceId, revisionId), "Reprocess")}
+          />
+          <Button
+            label="Pin for offline"
+            variant="ghost"
+            disabled={!accountId}
+            onClick={() => {
+              if (!accountId) {
+                return;
+              }
+              void pinItem(accountId, {
+                id: sourceId,
+                kind: "source",
+                title: `Source ${sourceId.slice(0, 8)}`,
+                revisionId: revisionId || "unknown",
+                revisionAt: new Date().toISOString(),
+                payload: JSON.stringify(statusQuery.data ?? {}),
+                pinnedAt: new Date().toISOString(),
+              }).then(() => setActionMsg("Pinned for offline reading (ADR-0013)"));
+            }}
+          />
+          <Button
+            label="Unpin"
+            variant="ghost"
+            disabled={!accountId}
+            onClick={() => {
+              if (!accountId) {
+                return;
+              }
+              void unpinItem(accountId, sourceId).then(() => setActionMsg("Unpinned"));
+            }}
           />
         </div>
         {actionMsg ? (

@@ -76,7 +76,8 @@ Tex-disabled full-system fallback.
       deployment validation. External credentials/resources are required; see
       `docs/technical/ALPHA_INTEGRATION_GATE.md`.
 - [x] Wave 9 / Phase 12 — frontend foundation (implemented on `frontend`; Codex audit pending).
-- [ ] Wave 10 / Phases 13–15 — complete frontend and beta readiness.
+- [x] Wave 10 / Phases 13–15 — product UI implemented on `frontend` (release
+      acceptance + combined Codex audit still open).
 
 ## 4. Accepted baseline
 
@@ -408,22 +409,22 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 11.1 General Memory frontend
 
-- [ ] Today, Library, Spaces, Private Spaces, source detail, history, and citations.
-- [ ] Upload, processing, failure, retry, reprocess, versions, and global jobs.
-- [ ] Tiptap/MemdotDocument editor, autosave, recovery, history, and conflicts.
-- [ ] AI patch review and canonical proposal approval/rejection.
-- [ ] Ask/search/context receipts, source conflicts, historical mode, and labels.
-- [ ] Memory proposals, approval history, activity, and degraded retrieval.
+- [x] Today, Library, Spaces, Private Spaces, source detail, history, and citations.
+- [x] Upload, processing, failure, retry, reprocess, versions, and global jobs.
+- [x] Tiptap/MemdotDocument editor, autosave, recovery, history, and conflicts.
+- [x] AI patch review and canonical proposal approval/rejection.
+- [x] Ask/search/context receipts, source conflicts, historical mode, and labels.
+- [x] Memory proposals, approval history, activity, and degraded retrieval.
 
 ### 11.2 Learning and integrations frontend
 
-- [ ] Course setup, syllabus map, concepts, prerequisites, and source coverage.
-- [ ] Test, results, confidence, Review, Evidence Twin, and due reasons.
-- [ ] Sealed-answer, hint/reveal, ungradable, retry, and offline states.
-- [ ] MCP consent/revocation/receipts and external capture completeness.
-- [ ] Notion selection, sync status, conflicts, and write-boundary presentation.
-- [ ] Provider/BYOK, privacy, export, deletion, recovery, and settings surfaces.
-- [ ] Pinned reading and bounded offline review reconciliation.
+- [x] Course setup, syllabus map, concepts, prerequisites, and source coverage.
+- [x] Test, results, confidence, Review, Evidence Twin, and due reasons.
+- [x] Sealed-answer, hint/reveal, ungradable, retry, and offline states.
+- [x] MCP consent/revocation/receipts and external capture completeness.
+- [x] Notion selection, sync status, conflicts, and write-boundary presentation.
+- [x] Provider/BYOK, privacy, export, deletion, recovery, and settings surfaces.
+- [x] Pinned reading and bounded offline review reconciliation.
 
 ### 11.3 Release acceptance
 
@@ -436,16 +437,15 @@ citation, Tex/OSS, and model-egress evaluation gates.
 - [ ] Restore and incident rehearsal prove deletion cannot resurrect.
 - [ ] Apache 2.0, self-host, legal/privacy, operator, and user documentation are complete.
 - [ ] Founder QA completes with no critical blocker.
-- [ ] Codex returns final PASS.
+- [ ] Codex returns final PASS (combined Wave 9 + 10).
 - [ ] Tauqueer explicitly decides whether to launch the beta.
 
 ## 12. Current pointer
 
 - [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
 - [x] Backend Correction Round 2 tip on `develop` / merged into `frontend`: `99ed500`.
-- [ ] Active frontend branch: `frontend` @ `d6945b8` (worktree
-      `/home/tauqueer/Desktop/memdot-frontend`). Wave 9 foundation committed;
-      Wave 10 product UI still open. Owner directed a **combined Wave 9 + 10**
-      Codex audit after Wave 10 lands (no separate Wave 9 Codex stop).
+- [ ] Active frontend branch: `frontend` (worktree
+      `/home/tauqueer/Desktop/memdot-frontend`). Waves 9–10 product code ready for
+      **combined Codex audit**; release-acceptance matrices remain open.
 - [ ] Merge `develop` → `main` and `frontend` → `develop` remain owner-controlled.
 - [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.

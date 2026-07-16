@@ -10,9 +10,10 @@ import { useSession } from "@/src/components/auth/SessionProvider";
 import { useConnectivity } from "@/src/components/connectivity/ConnectivityProvider";
 import { JobsPanel } from "@/src/components/jobs/JobsPanel";
 import { useJobs } from "@/src/components/jobs/JobsProvider";
-import { clearAccountOffline } from "@/src/lib/offline/store";
 import { logout } from "@/src/lib/api/client";
+import { clearAccountOffline } from "@/src/lib/offline/store";
 import { isNavActive, MOBILE_TAB_NAV, PRIMARY_NAV } from "@/src/lib/nav";
+import { clearRegistry } from "@/src/lib/workspace/registry";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/today";
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       if (accountId) {
         await clearAccountOffline(accountId);
+        clearRegistry(accountId);
         jobs.clearAccountJobs();
       }
       await logout();

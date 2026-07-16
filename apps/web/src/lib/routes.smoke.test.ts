@@ -20,6 +20,7 @@ const FOUNDATION_ROUTES = [
   "/settings",
   "/api/health",
   "/api/runtime-config",
+  "/library/documents/example",
 ];
 
 describe("route smoke inventory", () => {

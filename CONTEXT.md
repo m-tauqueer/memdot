@@ -18,8 +18,9 @@ Purpose: Durable starting context for Grok, Codex, and future implementation ses
 - Phase 3 delivers Alembic migrations (frozen SQL, not `create_all`), FORCE RLS with
   Core-signed and time-bounded tenant context envelopes, atomic pointer/outbox writes,
   evidence-ledger foundations, server-side OIDC authorization-code + PKCE routes, and
-  seeded per-table adversarial security tests. Ingestion, retrieval,
-  Learning product APIs, MCP tools, Notion, and Tex provider wiring remain Phase 4+.
+  seeded per-table adversarial security tests. Wave 4 Core runtime/ingestion and Wave 5
+  documents/memory/retrieval/context/model-router stubs are implemented on `main`;
+  combined gates remain deferred to Wave 6.
 - Verified scaffold paths exist for apps/web, apps/mcp, services/core,
   services/workers, services/model-router, packages/contracts,
   packages/domain-python, packages/provider-adapters, packages/ui,

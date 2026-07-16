@@ -29,15 +29,21 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     app = FastAPI(
         title="Memdot Core API",
         version="0.1.0",
-        description="Canonical domain API. Wave 4 adds sources, jobs, and ingestion routes.",
+        description="Canonical domain API. Adds documents, memory, context, sources, jobs, and ingestion routes.",
     )
     app.state.settings = resolved
 
     from memdot_core.auth.routes import router as auth_router
+    from memdot_core.context.routes import router as context_router
+    from memdot_core.documents.routes import router as documents_router
+    from memdot_core.memory.routes import router as memory_router
     from memdot_core.sources.routes import router as sources_router  # noqa: PLC0415
 
     app.include_router(auth_router)
     app.include_router(sources_router)
+    app.include_router(documents_router)
+    app.include_router(memory_router)
+    app.include_router(context_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

@@ -162,6 +162,10 @@ class DocumentRevision(Base):
     base_revision_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    content_json: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    plain_text: Mapped[str | None] = mapped_column(Text)
+    author_actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    proposal_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -350,6 +354,8 @@ class Proposal(Base):
         String(64), nullable=False, default=TruthClass.DERIVED_PROPOSAL
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default=ProposalStatus.PENDING)
+    patch_json: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -638,3 +644,178 @@ class CurrentActiveParseRun(Base):
     source_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     parse_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MemoryItem(Base):
+    __tablename__ = "memory_item"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_memory_item_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_memory_item_1"),
+        UniqueConstraint("account_id", "space_id", "id", name="uq_memory_item_space_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MemoryRevision(Base):
+    __tablename__ = "memory_revision"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "memory_item_id"],
+            ["memory_item.account_id", "memory_item.id"],
+            name="fk_memory_revision_item",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "space_id", "memory_item_id"],
+            ["memory_item.account_id", "memory_item.space_id", "memory_item.id"],
+            name="fk_memory_revision_item_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_memory_revision_1"),
+        UniqueConstraint("account_id", "space_id", "id", name="uq_memory_revision_space_id"),
+        UniqueConstraint(
+            "account_id",
+            "space_id",
+            "memory_item_id",
+            "id",
+            name="uq_memory_revision_pointer",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'superseded', 'retracted')",
+            name="ck_memory_revision_status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    memory_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    base_revision_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    assertion_text: Mapped[str] = mapped_column(Text, nullable=False)
+    truth_class: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    provenance_json: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CurrentMemoryRevision(Base):
+    __tablename__ = "current_memory_revision"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "memory_item_id"],
+            ["memory_item.account_id", "memory_item.id"],
+            name="fk_current_memory_revision_item",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "revision_id"],
+            ["memory_revision.account_id", "memory_revision.id"],
+            name="fk_current_memory_revision_revision",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "space_id", "memory_item_id", "revision_id"],
+            [
+                "memory_revision.account_id",
+                "memory_revision.space_id",
+                "memory_revision.memory_item_id",
+                "memory_revision.id",
+            ],
+            name="fk_current_memory_revision_same_item",
+        ),
+        UniqueConstraint("account_id", "memory_item_id", name="uq_current_memory_revision_1"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    memory_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Projection(Base):
+    __tablename__ = "projection"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_projection_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_projection_1"),
+        UniqueConstraint(
+            "account_id",
+            "provider",
+            "surface",
+            "canonical_type",
+            "canonical_id",
+            "canonical_revision_id",
+            name="uq_projection_canonical",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'pending', 'tombstoned')",
+            name="ck_projection_status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    surface: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    canonical_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    canonical_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    canonical_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    provider_document_id: Mapped[str | None] = mapped_column(Text)
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tombstoned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ContextReceipt(Base):
+    __tablename__ = "context_receipt"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_context_receipt_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    query_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    purpose: Mapped[str] = mapped_column(String(64), nullable=False)
+    policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    eligible_spaces: Mapped[list[object]] = mapped_column(JSONB, nullable=False, default=list)
+    provider_versions: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    budget: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    context_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    partial: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ContextReceiptItem(Base):
+    __tablename__ = "context_receipt_item"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "receipt_id"],
+            ["context_receipt.account_id", "context_receipt.id"],
+            name="fk_context_receipt_item_receipt",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_context_receipt_item_1"),
+        UniqueConstraint("account_id", "receipt_id", "rank", name="uq_context_receipt_item_rank"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    receipt_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    canonical_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    canonical_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    locator: Mapped[str | None] = mapped_column(Text)
+    selected: Mapped[bool] = mapped_column(default=True)
+    omit_reason: Mapped[str | None] = mapped_column(String(64))

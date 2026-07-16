@@ -42,6 +42,12 @@ ACCOUNT_OWNED_TABLES: frozenset[str] = frozenset(
         "projection_state",
         "upload_intent",
         "current_active_parse_run",
+        "memory_item",
+        "memory_revision",
+        "current_memory_revision",
+        "projection",
+        "context_receipt",
+        "context_receipt_item",
     }
 )
 
@@ -49,6 +55,7 @@ IMMUTABLE_TABLES: frozenset[str] = frozenset(
     {
         "source_revision",
         "document_revision",
+        "memory_revision",
         "audit_event",
         "conversation_turn",
         "job_attempt",
@@ -68,6 +75,7 @@ MUTABLE_POINTER_TABLES: frozenset[str] = frozenset(
     {
         "current_source_revision",
         "current_document_revision",
+        "current_memory_revision",
         "current_active_parse_run",
     }
 )

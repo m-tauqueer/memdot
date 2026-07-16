@@ -2,14 +2,18 @@
 
 from memdot_domain.ports.hosted_key_provider import HostedKeyProviderPort
 from memdot_domain.ports.memory_provider import MemoryProviderPort
+from memdot_domain.ports.model import ModelPort
 from memdot_domain.ports.object_storage import ObjectStoragePort
 from memdot_domain.ports.parser import ParserPort
+from memdot_domain.ports.retrieval_provider import RetrievalProviderPort
 from memdot_domain.ports.secret_cipher import SecretCipherPort
 
 __all__ = [
     "HostedKeyProviderPort",
     "MemoryProviderPort",
+    "ModelPort",
     "ObjectStoragePort",
     "ParserPort",
+    "RetrievalProviderPort",
     "SecretCipherPort",
 ]

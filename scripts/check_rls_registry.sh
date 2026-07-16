@@ -160,6 +160,7 @@ with engine.connect() as conn:
         "memdot_oidc_record_replay",
         "memdot_set_current_source_revision",
         "memdot_set_current_document_revision",
+        "memdot_set_current_memory_revision",
         "memdot_auth_provision_hosted",
         "memdot_auth_provision_bootstrap",
     }

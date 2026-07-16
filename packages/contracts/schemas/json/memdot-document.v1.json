@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/document/v1.json",
+  "title": "MemdotDocument v1",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "documentId", "root"],
+  "properties": {
+    "schema": { "type": "string", "const": "memdot-document" },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "documentId": { "type": "string", "format": "uuid" },
+    "root": { "$ref": "#/$defs/docNode" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "blockId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "blockAttrs": {
+      "type": "object",
+      "required": ["blockId"],
+      "properties": {
+        "blockId": { "$ref": "#/$defs/blockId" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 6 }
+      },
+      "additionalProperties": true
+    },
+    "mark": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bold", "italic", "code", "link"]
+        },
+        "attrs": {
+          "type": "object",
+          "properties": {
+            "href": { "type": "string", "format": "uri" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "inlineNode": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "const": "text" },
+        "text": { "type": "string" },
+        "marks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/mark" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockNode": {
+      "oneOf": [
+        { "$ref": "#/$defs/paragraph" },
+        { "$ref": "#/$defs/heading" },
+        { "$ref": "#/$defs/bulletList" },
+        { "$ref": "#/$defs/orderedList" },
+        { "$ref": "#/$defs/listItem" },
+        { "$ref": "#/$defs/blockquote" },
+        { "$ref": "#/$defs/codeBlock" },
+        { "$ref": "#/$defs/horizontalRule" },
+        { "$ref": "#/$defs/image" },
+        { "$ref": "#/$defs/unsupportedBlock" }
+      ]
+    },
+    "paragraph": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "paragraph" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "heading": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "heading" },
+        "attrs": {
+          "allOf": [
+            { "$ref": "#/$defs/blockAttrs" },
+            {
+              "type": "object",
+              "required": ["level"],
+              "properties": {
+                "level": { "type": "integer", "minimum": 1, "maximum": 6 }
+              }
+            }
+          ]
+        },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "bulletList": {
+      "type": "object",
+      "required": ["type", "attrs", "content"],
+      "properties": {
+        "type": { "type": "string", "const": "bulletList" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/listItem" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "orderedList": {
+      "type": "object",
+      "required": ["type", "attrs", "content"],
+      "properties": {
+        "type": { "type": "string", "const": "orderedList" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/listItem" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "listItem": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "listItem" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/blockNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockquote": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "blockquote" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/blockNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "codeBlock": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "codeBlock" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "horizontalRule": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "horizontalRule" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" }
+      },
+      "additionalProperties": false
+    },
+    "image": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "image" },
+        "attrs": {
+          "allOf": [
+            { "$ref": "#/$defs/blockAttrs" },
+            {
+              "type": "object",
+              "required": ["src"],
+              "properties": {
+                "src": { "type": "string", "format": "uri" },
+                "alt": { "type": "string" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "unsupportedBlock": {
+      "type": "object",
+      "required": ["type", "attrs"],
+      "properties": {
+        "type": { "type": "string", "const": "unsupported_block" },
+        "attrs": { "$ref": "#/$defs/blockAttrs" },
+        "content": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "docNode": {
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": { "type": "string", "const": "doc" },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/blockNode" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

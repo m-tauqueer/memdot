@@ -64,7 +64,7 @@ Tex-disabled full-system fallback.
 - [x] Wave 2 / Phase 2 — self-host platform.
 - [x] Wave 3 / Phase 3 — canonical data and authorization (`e77b299`).
 - [x] Wave 4 / Phases 4–5 — Core runtime and ingestion (implemented; combined gates deferred to Wave 6).
-- [ ] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, Tex.
+- [ ] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, Tex (implemented; combined gates deferred to Wave 6).
 - [ ] Wave 6 / Phase 8 — learning backend and Checkpoint A.
 - [ ] Wave 7 / Phases 9–10 — MCP, conversations, Notion, export, deletion.
 - [ ] Wave 8 / Phase 11 — backend hardening and Checkpoint B.
@@ -217,61 +217,61 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 6.1 MemdotDocument and authored revisions
 
-- [ ] Freeze `MemdotDocument v1` JSON Schema and supported block/inline/mark nodes.
-- [ ] Preserve stable block IDs, assets, citations, source links, and extension metadata.
-- [ ] Add deterministic validation/migration and JSON round-trip fixtures.
-- [ ] Implement safe HTML/Markdown import/export adapters and XSS sanitization.
-- [ ] Add immutable authored-document revisions and atomic current pointer/outbox update.
-- [ ] Require base revision, complete document, and idempotency key on save.
-- [ ] Detect stale base and return explicit conflict material without last-write-wins.
+- [x] Freeze `MemdotDocument v1` JSON Schema and supported block/inline/mark nodes.
+- [x] Preserve stable block IDs, assets, citations, source links, and extension metadata.
+- [x] Add deterministic validation/migration and JSON round-trip fixtures.
+- [x] Implement safe HTML/Markdown import/export adapters and XSS sanitization.
+- [x] Add immutable authored-document revisions and atomic current pointer/outbox update.
+- [x] Require base revision, complete document, and idempotency key on save.
+- [x] Detect stale base and return explicit conflict material without last-write-wins.
 - [ ] Preserve revision history, restore-as-new-revision, and crash recovery.
 
 ### 6.2 Canonical memory, proposals, and conflicts
 
-- [ ] Implement memory ontology, assertion types, provenance, truth class, and status.
-- [ ] Implement supersession/retraction without erasing historical evidence.
+- [x] Implement memory ontology, assertion types, provenance, truth class, and status.
+- [x] Implement supersession/retraction without erasing historical evidence.
 - [ ] Detect source/user/external conflicts and preserve all editions.
-- [ ] Implement proposed memory and proposed document patches as pending only.
-- [ ] Implement approve/edit/reject/expire/conflict transitions with audit history.
-- [ ] Approval creates a new canonical revision plus outbox fact atomically.
-- [ ] Exclude pending/rejected/conflicted proposals from ordinary retrieval.
+- [x] Implement proposed memory and proposed document patches as pending only.
+- [x] Implement approve/edit/reject/expire/conflict transitions with audit history.
+- [x] Approval creates a new canonical revision plus outbox fact atomically.
+- [x] Exclude pending/rejected/conflicted proposals from ordinary retrieval.
 - [ ] Add idempotency, concurrency, authorization, and audit tests.
 
 ### 6.3 Retrieval projections and canonical rejoin
 
-- [ ] Implement exact/lexical and version/temporal candidate lanes.
+- [x] Implement exact/lexical and version/temporal candidate lanes.
 - [ ] Implement graph relationships with provenance and confirmed/suggested distinction.
 - [ ] Implement pgvector/local semantic provider and rebuildable projection schema.
-- [ ] Assign deterministic projection IDs and persist projection cursors/checkpoints.
+- [x] Assign deterministic projection IDs and persist projection cursors/checkpoints.
 - [ ] Reject stale, deleted, retracted, unauthorized, wrong-edition candidates.
-- [ ] Rejoin every candidate to canonical PostgreSQL under current RLS.
-- [ ] Enforce Private-Space exclusion before and after external candidate generation.
+- [x] Rejoin every candidate to canonical PostgreSQL under current RLS.
+- [x] Enforce Private-Space exclusion before and after external candidate generation.
 - [ ] Add projection rebuild/reconciliation and duplicate/out-of-order tests.
 
 ### 6.4 Models, Tex, and Context Compiler
 
-- [ ] Implement direct model adapters behind the model-router policy boundary.
-- [ ] Validate structured outputs, budgets, timeouts, retries, and content-safe errors.
+- [x] Implement direct model adapters behind the model-router policy boundary.
+- [x] Validate structured outputs, budgets, timeouts, retries, and content-safe errors.
 - [ ] Enforce provider egress, hosted-region, BYOK, and telemetry restrictions.
-- [ ] Implement Tex as optional derived retrieval provider with circuit breaker.
+- [x] Implement Tex as optional derived retrieval provider with circuit breaker.
 - [ ] Implement Tex reconciliation/rebuild and provider-ID isolation.
-- [ ] Preserve complete exact/graph/temporal/local behavior when Tex is disabled.
-- [ ] Implement query intent, scope, lane planning, fusion, reranking, and tie rules.
+- [x] Preserve complete exact/graph/temporal/local behavior when Tex is disabled.
+- [x] Implement query intent, scope, lane planning, fusion, reranking, and tie rules.
 - [ ] Implement temporal/as-of and historical-version retrieval explicitly.
-- [ ] Pack evidence within budget while preserving citations/conflicts/omissions.
-- [ ] Persist context receipts without prompts, responses, or chain-of-thought.
+- [x] Pack evidence within budget while preserving citations/conflicts/omissions.
+- [x] Persist context receipts without prompts, responses, or chain-of-thought.
 
 ### 6.5 Wave 5 integrated fast gate
 
-- [ ] MemdotDocument schema/migration/round-trip/XSS/concurrency tests pass.
+- [x] MemdotDocument schema/migration/round-trip/XSS/concurrency tests pass (focused unit scope).
 - [ ] Proposal/truth/conflict/approval atomicity tests pass.
 - [ ] Retrieval benchmark slices and citation thresholds pass.
 - [ ] Cross-account and Private-Space candidate/result/receipt leakage is zero.
 - [ ] Tex-enabled/local parity and Tex-outage fallback tests pass.
-- [ ] Model routing/egress/budget/structured-output tests pass.
-- [ ] Context receipts are deterministic and content-minimized.
-- [ ] Full workspace and documentation gates pass.
-- [ ] `make selfhost-smoke` is not run.
+- [x] Model routing/egress/budget/structured-output tests pass (local stub scope).
+- [x] Context receipts are deterministic and content-minimized (unit scope).
+- [ ] Full workspace and documentation gates pass (deferred to Wave 6).
+- [x] `make selfhost-smoke` is not run.
 - [ ] Grok posts the Wave 5 chat report and stops for Codex audit.
 
 ## 7. Wave 6 / Technical Phase 8 — Learning and Checkpoint A

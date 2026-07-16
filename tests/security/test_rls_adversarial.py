@@ -56,6 +56,14 @@ REGISTERED_ACCOUNT_OWNED_TABLES = frozenset(
         "durable_job",
         "job_attempt",
         "projection_state",
+        "upload_intent",
+        "current_active_parse_run",
+        "memory_item",
+        "memory_revision",
+        "current_memory_revision",
+        "projection",
+        "context_receipt",
+        "context_receipt_item",
     }
 )
 

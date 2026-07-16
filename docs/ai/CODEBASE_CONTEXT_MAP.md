@@ -36,13 +36,14 @@ apps/
   web/                 Next.js shell (health only; frontend starts Wave 9)
   mcp/                 MCP edge (health only; tools arrive Wave 7)
 services/
-  core/                FastAPI, auth, tenancy, ledger, sources API, jobs/outbox,
-                       ingestion orchestration, object-storage adapter, migrations
-  workers/             Workers health skeleton; Hatchet canary workflows
-  model-router/        Model-router health skeleton
+  core/                FastAPI, auth, tenancy, ledger, sources API, documents/memory/
+                       context APIs, jobs/outbox, ingestion orchestration, migrations
+  workers/             Workers health; ingestion pipeline; projection rebuild helpers
+  model-router/        Local echo/structured completion stub with budget policy
 packages/
   contracts/           Generated OpenAPI/JSON Schema/event schemas
-  domain-python/       Domain types + provider ports
+  domain-python/       Domain types, MemdotDocument, retrieval fusion, context compiler,
+                       provider ports (model, retrieval)
   provider-adapters/   Concrete adapters depending inward on ports
   ui/                  Accessible frontend primitives
 infra/
@@ -103,12 +104,11 @@ Forbidden dependencies:
 | Sources and revisions           | Core              | source/revision/blob/upload_intent APIs and lifecycle        |
 | Ingestion execution             | Core + workers    | durable jobs, outbox, parser orchestration in Core           |
 | Normalised content              | Core              | parse_runs, document_element, active parse pointer promotion |
-| Approved/proposed memory        | Core              | memory_records, proposals _(later)_                          |
-| Conversations                   | Core              | foundations now; capture behavior arrives Wave 7             |
-| Learning                        | Core/domain       | curriculum, events _(later)_                                 |
-| Retrieval/context               | Domain            | intent, routes, receipts _(later)_                           |
-| External projections            | Workers/providers | rebuildable _(later)_                                        |
-| Model egress                    | Model router      | provider policies _(later)_                                  |
+| Approved/proposed memory        | Core              | `services/core/src/memdot_core/memory/`                      |
+| Authored documents              | Core              | `services/core/src/memdot_core/documents/`                   |
+| Retrieval/context               | Core + domain     | `context/`, `packages/domain-python/retrieval.py`, compiler  |
+| External projections            | Workers/providers | `workers/projections/rebuild.py`, provider adapters          |
+| Model egress                    | Model router      | `services/model-router/` policy + `/v1/complete` stub        |
 | MCP                             | MCP app           | protocol mapping; health only in Phase 1                     |
 | Public REST                     | Core              | auth/health now; Wave 4 expands generated OpenAPI            |
 

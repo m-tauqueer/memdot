@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/events/memory.proposal_created.v1.json",
+  "title": "memory.proposal_created",
+  "type": "object",
+  "required": ["proposal_id", "space_id", "target_type", "target_id"],
+  "properties": {
+    "proposal_id": { "type": "string", "format": "uuid" },
+    "space_id": { "type": "string", "format": "uuid" },
+    "target_type": { "type": "string" },
+    "target_id": { "type": "string", "format": "uuid" },
+    "base_revision_id": { "type": "string", "format": "uuid" }
+  },
+  "additionalProperties": false
+}

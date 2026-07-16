@@ -21,7 +21,7 @@ describe("JSON schemas", () => {
     const files = listSchemaFiles("schemas/json");
     expect(files).toEqual([
       "export-manifest.v1.json",
-      "memdot-document.scaffold.json",
+      "memdot-document.v1.json",
       "problem.v1.json",
       "provider-port-health.v1.json",
       "resource-envelope.v1.json",

@@ -203,3 +203,34 @@ def set_current_active_parse_run(
             "payload_json": payload_json,
         },
     )
+
+
+def set_current_memory_revision(
+    session: Session,
+    *,
+    pointer_id: uuid.UUID,
+    account_id: uuid.UUID,
+    space_id: uuid.UUID,
+    memory_item_id: uuid.UUID,
+    revision_id: uuid.UUID,
+    event_id: uuid.UUID,
+    payload_sha256: str,
+    payload_json: str,
+) -> None:
+    session.execute(
+        text(
+            "SELECT memdot_set_current_memory_revision("
+            ":pointer_id,:account_id,:space_id,:memory_item_id,:revision_id,"
+            ":event_id,:payload_sha256,CAST(:payload_json AS jsonb))"
+        ),
+        {
+            "pointer_id": pointer_id,
+            "account_id": account_id,
+            "space_id": space_id,
+            "memory_item_id": memory_item_id,
+            "revision_id": revision_id,
+            "event_id": event_id,
+            "payload_sha256": payload_sha256,
+            "payload_json": payload_json,
+        },
+    )

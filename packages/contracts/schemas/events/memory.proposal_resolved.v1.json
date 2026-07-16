@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/events/memory.proposal_resolved.v1.json",
+  "title": "memory.proposal_resolved",
+  "type": "object",
+  "required": ["proposal_id", "space_id", "status"],
+  "properties": {
+    "proposal_id": { "type": "string", "format": "uuid" },
+    "space_id": { "type": "string", "format": "uuid" },
+    "status": {
+      "type": "string",
+      "enum": ["approved", "rejected", "expired", "conflicted"]
+    },
+    "memory_revision_id": { "type": "string", "format": "uuid" }
+  },
+  "additionalProperties": false
+}

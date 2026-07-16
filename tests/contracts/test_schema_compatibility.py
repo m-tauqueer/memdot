@@ -31,16 +31,29 @@ def test_problem_json_fixture_validates(problem_schema: dict) -> None:
 
 
 @pytest.mark.contract
-def test_memdot_document_scaffold_fixture() -> None:
+def test_memdot_document_v1_fixture() -> None:
     schema = json.loads(
-        (SCHEMAS / "json" / "memdot-document.scaffold.json").read_text(encoding="utf-8")
+        (SCHEMAS / "json" / "memdot-document.v1.json").read_text(encoding="utf-8")
     )
-    payload = {"scaffoldVersion": 0, "fixtureKind": "memdot.document.scaffold"}
+    doc_id = "0194f123-4567-7890-abcd-ef1234567890"
+    block_id = "0194f123-4567-7890-abcd-ef1234567891"
+    payload = {
+        "schema": "memdot-document",
+        "schemaVersion": 1,
+        "documentId": doc_id,
+        "root": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "attrs": {"blockId": block_id},
+                    "content": [{"type": "text", "text": "Hello."}],
+                }
+            ],
+        },
+    }
     validate(instance=payload, schema=schema)
-    assert (
-        "Phase 1 scaffold" in schema["description"] or "scaffold" in schema["description"].lower()
-    )
-    assert schema["$id"].endswith("memdot-document.phase1.json")
+    assert schema["$id"].endswith("document/v1.json")
 
 
 @pytest.mark.contract

@@ -63,11 +63,11 @@ Tex-disabled full-system fallback.
 - [x] Wave 1 / Phase 1 — repository foundation.
 - [x] Wave 2 / Phase 2 — self-host platform.
 - [x] Wave 3 / Phase 3 — canonical data and authorization (`e77b299`).
-- [x] Wave 4 / Phases 4–5 — Core runtime and ingestion (implemented; combined gates deferred to Wave 6).
-- [ ] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, Tex (implemented; combined gates deferred to Wave 6).
-- [ ] Wave 6 / Phase 8 — learning backend and Checkpoint A.
-- [ ] Wave 7 / Phases 9–10 — MCP, conversations, Notion, export, deletion.
-- [ ] Wave 8 / Phase 11 — backend hardening and Checkpoint B.
+- [x] Wave 4 / Phases 4–5 — Core runtime and ingestion (on develop; focused gates green).
+- [x] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, Tex stubs (on develop).
+- [x] Wave 6 / Phase 8 — learning backend on develop (Checkpoint A smoke pending Compose DB).
+- [x] Wave 7 / Phases 9–10 — MCP, conversations, Notion, export, deletion (on develop; stubs where noted).
+- [x] Wave 8 / Phase 11 — hardening/telemetry/hosted skeleton/eval gates on develop (Checkpoint B smoke pending).
 - [ ] Wave 9 / Phase 12 — frontend foundation.
 - [ ] Wave 10 / Phases 13–15 — complete frontend and beta readiness.
 
@@ -428,7 +428,7 @@ citation, Tex/OSS, and model-egress evaluation gates.
 ## 12. Current pointer
 
 - [x] Accepted through Wave 3 / technical Phase 3 at `e77b299`.
-- [x] Active delivery: Waves 4–6 backend (owner-authorized continuous run).
-- [x] Wave 4 implementation landed; combined pytest/gates deferred to end of Wave 6.
-- [ ] Next full smoke: Checkpoint A after technical Phase 8 / Wave 6.
-- [ ] Frontend starts only after Checkpoint B, Codex PASS, and owner authorization.
+- [x] Active branch: `develop` through technical Phases 4–11 implementation.
+- [ ] Merge `develop` → `main` remains owner-controlled.
+- [ ] Checkpoint A/B full `make selfhost-smoke` pending Compose-backed DB URL in this environment.
+- [ ] Frontend (Waves 9–10 / Phases 12–15) starts only after Checkpoint B, Codex PASS, and owner authorization.

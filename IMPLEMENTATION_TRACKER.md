@@ -444,8 +444,8 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 - [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
 - [x] Backend Correction Round 2 tip on `develop` / merged into `frontend`: `99ed500`.
-- [ ] Active frontend branch: `frontend` (worktree
-      `/home/tauqueer/Desktop/memdot-frontend`). Waves 9–10 product code ready for
-      **combined Codex audit**; release-acceptance matrices remain open.
+- [ ] Active branch: `develop` @ `87d084a` (Waves 9–10 frontend merged from
+      `frontend`). Ready for **combined Wave 9 + 10 Codex audit**;
+      release-acceptance matrices remain open.
 - [ ] Merge `develop` → `main` and `frontend` → `develop` remain owner-controlled.
 - [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.

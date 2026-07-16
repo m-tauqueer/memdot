@@ -1,8 +1,8 @@
 # Codebase Context Map for AI Agents
 
-Version: **1 — Phase 1 accepted**
-Date: **2026-07-15**
-Implementation status: **Phase 1 scaffold accepted at `4138239`; Phase 2 infrastructure is owner-authorized but not implemented. No product domain behavior.**
+Version: **3 — Phase 2 accepted; Phase 3 active**
+Date: **2026-07-16**
+Implementation status: **Phases 1–2 are accepted. The Tex-disabled self-host Compose, configuration, secrets, readiness, durability, and operational smoke platform is implemented. Phase 3 is owner-authorized but no product schema or authorization behavior is implemented yet.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -42,7 +42,7 @@ packages/
   provider-adapters/   Concrete adapters depending inward on ports
   ui/                  Accessible frontend primitives
 infra/
-  compose/             Placeholder (Phase 2 topology)
+  compose/             Tex-disabled self-host Compose (Phase 2 candidate)
   hosted/              Placeholder (later hosted infra)
 docs/                  Product, technical, ADR, evaluation, AI context
 tests/
@@ -198,6 +198,20 @@ make clean
 make workspace-list
 ```
 
+Verified Phase 2 commands (candidate pending Codex audit):
+
+```bash
+make compose-config
+make compose-up
+make compose-ps
+make compose-logs
+make compose-down
+make selfhost-smoke
+```
+
+Operator entrypoints live under `infra/compose/` (`README.md`, `images.lock.yaml`,
+`scripts/`).
+
 Contract generation:
 
 ```bash
@@ -226,5 +240,5 @@ must distinguish documented target state from implemented and verified current
 state.
 
 History note: Version 0 was documentation-only target state. Version 1 records
-the accepted Phase 1 scaffold. Phase 2 begins from commit `4138239` and must
-replace target infrastructure paths and commands only after verification.
+the accepted Phase 1 scaffold. Version 2 tracked the Phase 2 candidate. Version
+3 records Phase 2 acceptance and the owner-authorized Phase 3 start.

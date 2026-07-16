@@ -1,6 +1,7 @@
-"""Minimal workers health application. No workflows in Phase 1."""
+"""Minimal workers health application. Workflows arrive via Hatchet workers."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
+from memdot_domain.health_probes import probe_tcp_host_port
 from memdot_domain.types import HealthStatus
 
 from memdot_workers.settings import WorkersSettings
@@ -17,7 +18,13 @@ def create_app(settings: WorkersSettings | None = None) -> FastAPI:
         return {"status": HealthStatus.OK.value}
 
     @app.get("/health/ready")
-    def ready() -> dict[str, str]:
+    def ready(response: Response) -> dict[str, str]:
+        # Readiness degrades when Hatchet engine is unreachable.
+        # Telemetry outage must not fail readiness.
+        probe = probe_tcp_host_port(resolved.hatchet_host, resolved.hatchet_port)
+        if not probe.ok:
+            response.status_code = 503
+            return {"status": "degraded", "service": "workers", "dependency": "hatchet"}
         return {"status": HealthStatus.OK.value, "service": "workers"}
 
     return app

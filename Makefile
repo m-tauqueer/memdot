@@ -1,4 +1,12 @@
-.PHONY: bootstrap format format-check lint typecheck test contracts docs-validate build containers container-smoke check clean workspace-list
+.PHONY: bootstrap format format-check lint typecheck test contracts docs-validate build containers container-smoke check clean workspace-list \
+	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke
+
+COMPOSE_DIR := infra/compose
+COMPOSE_ENV := $(COMPOSE_DIR)/.env
+COMPOSE_FILES := -f $(COMPOSE_DIR)/compose.yaml -f $(COMPOSE_DIR)/compose.dev.yaml
+COMPOSE := docker compose --env-file $(COMPOSE_ENV) $(COMPOSE_FILES)
+MEMDOT_HTTP_PORT ?= 8080
+MEMDOT_HTTPS_PORT ?= 8443
 
 bootstrap:
 	pnpm install --frozen-lockfile
@@ -44,26 +52,50 @@ build:
 	uv run python -c "import memdot_core, memdot_workers, memdot_model_router, memdot_domain, memdot_provider_adapters"
 
 containers:
-	docker build -f apps/web/Dockerfile -t memdot-web:phase1 .
-	docker build -f apps/mcp/Dockerfile -t memdot-mcp:phase1 .
-	docker build -f services/core/Dockerfile -t memdot-core:phase1 .
-	docker build -f services/workers/Dockerfile -t memdot-workers:phase1 .
-	docker build -f services/model-router/Dockerfile -t memdot-model-router:phase1 .
-	./scripts/docker_nonroot_check.sh memdot-web:phase1
-	./scripts/docker_nonroot_check.sh memdot-mcp:phase1
-	./scripts/docker_nonroot_check.sh memdot-core:phase1
-	./scripts/docker_nonroot_check.sh memdot-workers:phase1
-	./scripts/docker_nonroot_check.sh memdot-model-router:phase1
+	docker build -f apps/web/Dockerfile -t memdot-web:local -t memdot-web:phase1 .
+	docker build -f apps/mcp/Dockerfile -t memdot-mcp:local -t memdot-mcp:phase1 .
+	docker build -f services/core/Dockerfile -t memdot-core:local -t memdot-core:phase1 .
+	docker build -f services/workers/Dockerfile -t memdot-workers:local -t memdot-workers:phase1 .
+	docker build -f services/model-router/Dockerfile -t memdot-model-router:local -t memdot-model-router:phase1 .
+	./scripts/docker_nonroot_check.sh memdot-web:local
+	./scripts/docker_nonroot_check.sh memdot-mcp:local
+	./scripts/docker_nonroot_check.sh memdot-core:local
+	./scripts/docker_nonroot_check.sh memdot-workers:local
+	./scripts/docker_nonroot_check.sh memdot-model-router:local
 
 container-smoke:
 	./scripts/docker_health_smoke.sh
+
+compose-config:
+	./scripts/validate_compose_placeholder.sh
+
+compose-up:
+	bash infra/compose/scripts/materialize_local_secrets.sh
+	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
+		$(COMPOSE) up -d --build --force-recreate --remove-orphans
+
+compose-down:
+	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
+		$(COMPOSE) down
+
+compose-ps:
+	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
+		$(COMPOSE) ps
+
+compose-logs:
+	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
+		$(COMPOSE) logs --tail=200
+
+selfhost-smoke:
+	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
+		bash infra/compose/scripts/selfhost_smoke.sh
 
 check: format-check lint typecheck test contracts docs-validate build
 	./scripts/check_focused_tests.sh
 	./scripts/secret_scan.sh
 	./scripts/validate_compose_placeholder.sh
 	./scripts/check_whitespace.sh
-	@echo "Phase 1 local CI-equivalent suite passed."
+	@echo "Local CI-equivalent suite passed."
 
 clean:
 	pnpm -r --if-present run clean || true

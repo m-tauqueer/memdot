@@ -1,6 +1,6 @@
 # Memdot documentation
 
-Status: **Phase 1 accepted and committed; Phase 2 owner-authorized and ready for implementation**
+Status: **Phases 1–2 accepted; Phase 3 owner-authorized and active**
 Baseline date: **2026-07-15**
 
 This directory is the source of truth for Memdot v1. It describes a general,

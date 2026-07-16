@@ -1,0 +1,54 @@
+# Memdot Caddy entrypoint — only public reverse proxy.
+# TLS files live under /etc/caddy/tls (generated into ignored paths).
+
+{
+	auto_https disable_redirects
+}
+
+:80 {
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	handle {
+		redir https://{host}{uri} 308
+	}
+}
+
+:443 {
+	tls /etc/caddy/tls/server.crt /etc/caddy/tls/server.key
+
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# Web health must win over Core /api/* proxy.
+	handle /api/health {
+		reverse_proxy web:3000
+	}
+
+	handle_path /api/* {
+		reverse_proxy core:8000
+	}
+
+	handle /mcp/* {
+		uri strip_prefix /mcp
+		reverse_proxy mcp:8100
+	}
+
+	handle /realms/* {
+		reverse_proxy keycloak:8080
+	}
+
+	handle /resources/* {
+		reverse_proxy keycloak:8080
+	}
+
+	handle /.well-known/* {
+		reverse_proxy keycloak:8080
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

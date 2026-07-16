@@ -16,6 +16,14 @@ describe("health handlers", () => {
   it("returns ready health payload", () => {
     expect(createReadyHealthResponse()).toEqual({ status: "ok", service: "mcp" });
   });
+
+  it("returns degraded when OIDC discovery fails", () => {
+    expect(createReadyHealthResponse({ oidcConfigured: true, oidcOk: false })).toEqual({
+      status: "degraded",
+      service: "mcp",
+      dependency: "oidc",
+    });
+  });
 });
 
 describe("createMcpServer", () => {

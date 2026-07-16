@@ -19,6 +19,8 @@ WORKDIR /app/apps/mcp
 RUN pnpm build
 
 FROM base AS runner
+ARG MEMDOT_SOURCE_HASH=unknown
+LABEL memdot.source_hash=$MEMDOT_SOURCE_HASH
 RUN addgroup -g 10001 -S memdot && adduser -u 10001 -S memdot -G memdot
 WORKDIR /app
 ENV NODE_ENV=production

@@ -1,0 +1,53 @@
+# Memdot Compose image registry — pin upstream images by immutable digest.
+# Local application images (memdot-*:local) are built from repository Dockerfiles.
+version: "2.1.0"
+images:
+  caddy:
+    reference: caddy:2.9.1-alpine@sha256:b4e3952384eb9524a887633ce65c752dd7c71314d2c2acf98cd5c715aaa534f0
+    version: "2.9.1-alpine"
+  postgres:
+    reference: pgvector/pgvector:pg16@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
+    version: "pg16"
+  seaweedfs:
+    reference: chrislusf/seaweedfs:3.80@sha256:1055999e08eed1789b0ae45d235126e4495e23d3fb9d6396293fd42539b1ae6a
+    version: "3.80"
+  keycloak:
+    reference: quay.io/keycloak/keycloak:26.0.7@sha256:4388e2379b7e870a447adbe7b80bd61f5fbf04e925832b19669fda4957f05a81
+    version: "26.0.7"
+  openbao:
+    reference: openbao/openbao:2.1.0@sha256:7de07aa6df3937d44c96c2d65c188b2d4a70546f2a764ad4510301305af6a223
+    version: "2.1.0"
+  otel-lgtm:
+    reference: grafana/otel-lgtm:0.11.0@sha256:0d4e0cbb87b38112ba4b8e411f81925ab0f78cce3c5b219c327e8b06c1b67c23
+    version: "0.11.0"
+  hatchet-migrate:
+    reference: ghcr.io/hatchet-dev/hatchet/hatchet-migrate:v0.55.0@sha256:d67af1b8766eacf7807ae95534c51c11a15782b7ba965cb17d1d95a4050c9165
+    version: "v0.55.0"
+  hatchet-admin:
+    reference: ghcr.io/hatchet-dev/hatchet/hatchet-admin:v0.55.0@sha256:273f1439618fa758f4000b90d19adf0185b49c2874de223194e8e51a9544fb62
+    version: "v0.55.0"
+  hatchet-engine:
+    reference: ghcr.io/hatchet-dev/hatchet/hatchet-engine:v0.55.0@sha256:07f73dacda61cf11f4e9040ea1b8b0bf2ba15ae8b717cb197212d85e259e1c66
+    version: "v0.55.0"
+  hatchet-api:
+    reference: ghcr.io/hatchet-dev/hatchet/hatchet-api:v0.55.0@sha256:3daa7a676015a6f683f266c3eb8e93011c0a41bdbe2e6643c968912f2a9af965
+    version: "v0.55.0"
+  hatchet-dashboard:
+    reference: ghcr.io/hatchet-dev/hatchet/hatchet-dashboard:v0.55.0@sha256:5cd248da635bf3054b6d0872afca3264db1072c0da6054e21f547d6c7cebb3c2
+    version: "v0.55.0"
+local_images:
+  web:
+    reference: memdot-web:local
+    dockerfile: apps/web/Dockerfile
+  mcp:
+    reference: memdot-mcp:local
+    dockerfile: apps/mcp/Dockerfile
+  core:
+    reference: memdot-core:local
+    dockerfile: services/core/Dockerfile
+  workers:
+    reference: memdot-workers:local
+    dockerfile: services/workers/Dockerfile
+  model-router:
+    reference: memdot-model-router:local
+    dockerfile: services/model-router/Dockerfile

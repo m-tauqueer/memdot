@@ -1,0 +1,55 @@
+{
+  "realm": "memdot",
+  "enabled": true,
+  "displayName": "Memdot Local",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "memdot-web",
+      "name": "Memdot Web",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["https://localhost:8443/*", "http://localhost:8080/*"],
+      "webOrigins": ["https://localhost:8443", "http://localhost:8080"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "memdot-core",
+      "name": "Memdot Core",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${KEYCLOAK_CORE_CLIENT_SECRET}",
+      "serviceAccountsEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": false,
+      "bearerOnly": false,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "memdot-mcp",
+      "name": "Memdot MCP",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${KEYCLOAK_MCP_CLIENT_SECRET}",
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": false,
+      "protocol": "openid-connect"
+    }
+  ],
+  "roles": {
+    "realm": []
+  },
+  "users": []
+}

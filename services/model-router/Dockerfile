@@ -9,6 +9,8 @@ RUN uv pip install --system --no-cache ./packages/domain-python \
   && uv pip install --system --no-cache --no-sources ./services/model-router
 
 FROM python:3.12-slim AS runner
+ARG MEMDOT_SOURCE_HASH=unknown
+LABEL memdot.source_hash=$MEMDOT_SOURCE_HASH
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin memdot
 WORKDIR /app
 ENV MODEL_ROUTER_ENV=production

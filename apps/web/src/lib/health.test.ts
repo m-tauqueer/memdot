@@ -7,6 +7,7 @@ describe("createWebHealthPayload", () => {
     expect(createWebHealthPayload()).toEqual({
       status: "ok",
       service: "web",
+      oidc_required_for_readiness: false,
     });
   });
 });

@@ -1,0 +1,1 @@
+# SECRET_SCAN_NEGATIVE_FIXTURE: phase2-core-client-secret-not-for-production

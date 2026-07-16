@@ -18,7 +18,7 @@ def main() -> int:
     from memdot_core.app import create_app
     from memdot_core.settings import CoreSettings
 
-    app = create_app(CoreSettings(env="generation"))
+    app = create_app(CoreSettings(env="test"))
     schema = app.openapi()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     rendered = json.dumps(schema, indent=2, sort_keys=True) + "\n"

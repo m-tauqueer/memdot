@@ -1,0 +1,70 @@
+# Developer ergonomics overrides — does not weaken base security invariants.
+# All published ports bind to loopback only.
+# Keycloak start-dev and OpenBao -dev are allowed ONLY here / in test overlays.
+
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:${MEMDOT_HTTP_PORT:-8080}:80"
+      - "127.0.0.1:${MEMDOT_HTTPS_PORT:-8443}:443"
+
+  web:
+    environment:
+      WEB_LOG_LEVEL: debug
+
+  core:
+    environment:
+      CORE_LOG_LEVEL: debug
+
+  mcp:
+    environment:
+      MCP_LOG_LEVEL: debug
+
+  workers:
+    environment:
+      WORKERS_LOG_LEVEL: debug
+
+  model-router:
+    environment:
+      MODEL_ROUTER_LOG_LEVEL: debug
+
+  keycloak:
+    # Optional local health management port only.
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      KC_HOSTNAME_STRICT: "false"
+    command:
+      - start
+      - --import-realm
+      - --health-enabled=true
+      - --http-enabled=true
+      - --hostname-strict=false
+      - --proxy-headers=xforwarded
+
+  otel-lgtm:
+    ports:
+      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  seaweedfs:
+    ports:
+      - "127.0.0.1:8333:8333"
+      - "127.0.0.1:8888:8888"
+
+  openbao:
+    ports:
+      - "127.0.0.1:8200:8200"
+
+  hatchet-engine:
+    ports:
+      - "127.0.0.1:17070:7070"
+
+  hatchet-api:
+    ports:
+      - "127.0.0.1:18080:8080"

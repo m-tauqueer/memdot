@@ -54,6 +54,19 @@ make clean          # remove local caches/artifacts
 make workspace-list # discover pnpm and uv workspace members
 ```
 
+## Verified Phase 2 commands (candidate pending Codex audit)
+
+```bash
+make compose-config   # render Compose + policy validation (Tex absent, digests, exposure)
+make compose-up       # start Tex-disabled self-host stack (dev overlay, loopback operator ports)
+make compose-ps       # service status
+make compose-logs     # recent logs
+make compose-down     # stop stack; preserves named volumes
+make selfhost-smoke   # bounded end-to-end infra smoke (TLS, OIDC, durability, canary)
+```
+
+Operator docs: `infra/compose/README.md`. Image digests: `infra/compose/images.lock.yaml`.
+
 Package managers: `pnpm@11.5.2`, `uv` with lockfile `uv.lock`.
 Node engines: `>=22 <23` (pinned via `.nvmrc` to 22).
 Python: `>=3.12`, validated and containerized on **3.12** (`.python-version` 3.12).

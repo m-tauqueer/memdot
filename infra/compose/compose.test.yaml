@@ -1,0 +1,79 @@
+# Disposable test override. Used by smoke scripts with an isolated project name.
+# Never target production volumes. Dev exceptions (hostname-strict false, loopback
+# Caddy ports) live here per Phase 2 correction E — not in the base topology.
+#
+# Note: memdot_data remains internal. Host-published ports on OpenBao/SeaweedFS
+# cannot work on internal networks; smokes reach them via compose exec/run.
+
+name: memdot-test
+
+networks:
+  # Operator-facing non-internal network for loopback-published edge only.
+  # Does not weaken memdot_data/workflow/observability internal invariants.
+  memdot_ops:
+    driver: bridge
+    internal: false
+
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:${MEMDOT_HTTP_PORT:-18080}:80"
+      - "127.0.0.1:${MEMDOT_HTTPS_PORT:-18443}:443"
+
+  keycloak:
+    environment:
+      KC_HOSTNAME_STRICT: "false"
+    command:
+      - start
+      - --import-realm
+      - --health-enabled=true
+      - --http-enabled=true
+      - --hostname-strict=false
+      - --proxy-headers=xforwarded
+
+  # Attach data-plane services to memdot_ops solely so loopback publishes work
+  # for host-side adapter smokes without opening the internal data network.
+  openbao:
+    networks:
+      - memdot_data
+      - memdot_ops
+    ports:
+      - "127.0.0.1:18200:8200"
+
+  seaweedfs:
+    networks:
+      - memdot_data
+      - memdot_ops
+    ports:
+      - "127.0.0.1:18333:8333"
+
+  postgres:
+    networks:
+      - memdot_data
+      - memdot_workflow
+      - memdot_ops
+    ports:
+      - "127.0.0.1:15432:5432"
+
+  otel-lgtm:
+    networks:
+      - memdot_observability
+      - memdot_ops
+    ports:
+      - "127.0.0.1:13001:3000"
+
+volumes:
+  postgres_data:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_postgres_data
+  seaweed_data:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_seaweed_data
+  openbao_data:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_openbao_data
+  keycloak_data:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_keycloak_data
+  hatchet_certs:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_hatchet_certs
+  hatchet_config:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_hatchet_config
+  otel_data:
+    name: ${COMPOSE_PROJECT_NAME:-memdot-test}_otel_data

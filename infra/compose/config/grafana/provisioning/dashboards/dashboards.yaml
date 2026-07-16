@@ -1,0 +1,13 @@
+# Grafana dashboard provisioning for otel-lgtm local stack.
+apiVersion: 1
+providers:
+  - name: memdot
+    orgId: 1
+    folder: Memdot
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /otel-lgtm/grafana-dashboard-mount
+      foldersFromFilesStructure: false

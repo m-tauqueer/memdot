@@ -2,7 +2,7 @@
 
 Version: 1.0
 Baseline date: 2026-07-15
-Current status: Phase 1 accepted and committed; Phase 2 owner-authorized and ready for implementation
+Current status: Phases 1–2 accepted; Phase 3 owner-authorized and active
 Execution model: Tauqueer owns decisions, Grok implements a complete phase, Codex audits at the phase boundary
 
 ## 1. Purpose
@@ -472,11 +472,11 @@ Codex audits the complete phase, not Grok's summary alone.
 
 ## 8. Current execution pointer
 
-- Active phase: Phase 2 — owner-authorized; implementation not started.
-- Phase prompt: [PHASE_02_GROK_PROMPT.md](docs/execution/PHASE_02_GROK_PROMPT.md).
-- Current implementation: Phase 1 monorepo scaffold accepted; Phase 2 infrastructure is not implemented.
+- Active phase: Phase 3 — owner-authorized; implementation not started.
+- Phase prompt: supplied by Codex in the Phase 3 owner handoff.
+- Current implementation: Phase 1 scaffold and Phase 2 self-host platform accepted; no Phase 3 schema or authorization behavior implemented yet.
 - Current code commands: verified in AGENTS.md / Codebase Context Map.
-- Current phase report: none for Phase 2.
-- Current Codex verdict: PASS for Phase 1.
-- Previous Codex verdict: FAIL — CORRECTIONS REQUIRED; both correction rounds were resolved before acceptance.
-- Current accepted implementation commit: `4138239ea31eff267af3e9a9d9984ca51a763991`.
+- Current phase report: none for Phase 3.
+- Current Codex verdict: PASS for Phases 1 and 2.
+- Previous Codex verdict: Phase 2 PASS after three correction rounds and a hygiene revision.
+- Current accepted implementation: Phase 2 self-host platform in the commit that records this transition.

@@ -1,31 +1,40 @@
 import { describe, expect, it } from "vitest";
 
-import { loadSettings } from "./settings.js";
+import { loadSettings } from "../src/settings.js";
 
-describe("loadSettings", () => {
-  it("parses MCP settings from the environment", () => {
-    expect(
-      loadSettings({
-        MCP_ENV: "development",
-        MCP_HOST: "127.0.0.1",
-        MCP_PORT: "8100",
-      }),
-    ).toEqual({
+describe("mcp settings", () => {
+  it("accepts development defaults", () => {
+    const settings = loadSettings({
       MCP_ENV: "development",
-      MCP_HOST: "127.0.0.1",
-      MCP_PORT: 8100,
     });
+    expect(settings.MCP_ENV).toBe("development");
   });
 
-  it("fails when MCP_ENV is blank", () => {
+  it("rejects wildcard origins", () => {
     expect(() =>
       loadSettings({
-        MCP_ENV: "   ",
+        MCP_ENV: "development",
+        MCP_ALLOWED_ORIGINS: "https://*",
       }),
-    ).toThrow(/MCP_ENV must not be blank/);
+    ).toThrow(/wildcard/);
   });
 
-  it("fails when MCP_ENV is missing", () => {
-    expect(() => loadSettings({})).toThrow(/MCP_ENV/);
+  it("rejects exporter without endpoint", () => {
+    expect(() =>
+      loadSettings({
+        MCP_ENV: "development",
+        MCP_TELEMETRY_EXPORT: "otlp",
+        MCP_OTEL_EXPORTER_OTLP_ENDPOINT: "",
+      }),
+    ).toThrow(/exporter/);
+  });
+
+  it("requires issuer in self_host mode", () => {
+    expect(() =>
+      loadSettings({
+        MCP_ENV: "self_host",
+        MCP_OIDC_ISSUER: "",
+      }),
+    ).toThrow(/OIDC_ISSUER/);
   });
 });

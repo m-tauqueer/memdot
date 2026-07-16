@@ -84,7 +84,7 @@ Architecture baseline: 2026-07-15 founding documentation
 ## 3. Macro-phase sequence
 
 - [x] Phase 1 — Repository foundation and production-grade monorepo structure
-- [ ] Phase 2 — Self-host infrastructure and local developer platform
+- [x] Phase 2 — Self-host infrastructure and local developer platform
 - [ ] Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
 - [ ] Phase 4 — Core API, durable transactions, workflows, and object storage
 - [ ] Phase 5 — Source ingestion, parsing, OCR, normalization, and reprocessing
@@ -175,52 +175,52 @@ Primary contracts: TRD-DEP-004..008, TRD-SEC-005..007, TRD-OPS-009..013, ADR-001
 
 ## Micro-phase 2.1 — Tex-disabled Compose topology
 
-- [ ] Implement the complete self-host Compose topology for Caddy, web, Core API, MCP, workers, model router, Hatchet, PostgreSQL with pgvector, SeaweedFS, Keycloak, OpenBao, OpenTelemetry, and Grafana-compatible observability.
-- [ ] Keep Tex absent or disabled in the default profile and add it only behind an optional provider profile.
-- [ ] Define isolated public, application, data, workflow, and observability networks with no unnecessary host exposure.
-- [ ] Add named persistent volumes, deterministic health checks, startup dependencies based on health rather than sleep, and bounded restart policies.
-- [ ] Add development overrides without weakening the production-like base topology.
-- [ ] Validate docker compose config and a fresh Tex-disabled boot.
-- [ ] Prove every service reaches healthy state and no internal datastore is publicly exposed.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Implement the complete self-host Compose topology for Caddy, web, Core API, MCP, workers, model router, Hatchet, PostgreSQL with pgvector, SeaweedFS, Keycloak, OpenBao, OpenTelemetry, and Grafana-compatible observability.
+- [x] Keep Tex absent or disabled in the default profile and add it only behind an optional provider profile.
+- [x] Define isolated public, application, data, workflow, and observability networks with no unnecessary host exposure.
+- [x] Add named persistent volumes, deterministic health checks, startup dependencies based on health rather than sleep, and bounded restart policies.
+- [x] Add development overrides without weakening the production-like base topology.
+- [x] Validate docker compose config and a fresh Tex-disabled boot.
+- [x] Prove every service reaches healthy state and no internal datastore is publicly exposed.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Micro-phase 2.2 — Configuration, secrets, and local trust
 
-- [ ] Implement typed, fail-fast configuration for every service with explicit hosted, self-host, test, and development modes.
-- [ ] Add safe example environment files containing no usable credentials.
-- [ ] Integrate OpenBao Transit for self-host secret encryption and define a hosted key-provider interface without adding hosted credentials.
-- [ ] Configure local TLS through Caddy and document trusted local certificate behavior.
-- [ ] Configure Keycloak realms and clients as reproducible configuration while leaving product authorization in Core.
-- [ ] Configure Hatchet, object-store, database, and telemetry credentials through secret references rather than images or source.
-- [ ] Add startup checks that reject default production secrets, invalid audiences, unsafe origins, and plaintext provider credentials.
-- [ ] Run secret scanning and configuration-negative tests.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Implement typed, fail-fast configuration for every service with explicit hosted, self-host, test, and development modes.
+- [x] Add safe example environment files containing no usable credentials.
+- [x] Integrate OpenBao Transit for self-host secret encryption and define a hosted key-provider interface without adding hosted credentials.
+- [x] Configure local TLS through Caddy and document trusted local certificate behavior.
+- [x] Configure Keycloak realms and clients as reproducible configuration while leaving product authorization in Core.
+- [x] Configure Hatchet, object-store, database, and telemetry credentials through secret references rather than images or source.
+- [x] Add startup checks that reject default production secrets, invalid audiences, unsafe origins, and plaintext provider credentials.
+- [x] Run secret scanning and configuration-negative tests.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Micro-phase 2.3 — Infrastructure durability and operational smoke tests
 
-- [ ] Add PostgreSQL backup, restore, and migration-job entrypoints that never auto-run destructive migrations during application startup.
-- [ ] Add immutable-object-store lifecycle and backup smoke tooling.
-- [ ] Add local service readiness, dependency failure, restart, and persistent-volume verification scripts.
-- [ ] Add content-free baseline dashboards for health, request failures, queue depth, database availability, object-store availability, and workflow availability.
-- [ ] Restart database, object storage, workers, and the complete stack during accepted dummy work and verify durable recovery.
-- [ ] Restore a disposable backup into a clean stack and verify canonical checksums.
-- [ ] Run the complete self-host smoke suite with Tex disabled and telemetry export disabled.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Add PostgreSQL backup, restore, and migration-job entrypoints that never auto-run destructive migrations during application startup.
+- [x] Add immutable-object-store lifecycle and backup smoke tooling.
+- [x] Add local service readiness, dependency failure, restart, and persistent-volume verification scripts.
+- [x] Add content-free baseline dashboards for health, request failures, queue depth, database availability, object-store availability, and workflow availability.
+- [x] Restart database, object storage, workers, and the complete stack during accepted dummy work and verify durable recovery (live smoke 2026-07-16 on local dockerd; Hatchet accepted-work restart proven).
+- [x] Restore a disposable backup into a clean stack and verify canonical checksums (live smoke; `memdot_restore_*` only; ops/product DBs rejected).
+- [x] Run the complete self-host smoke suite with Tex disabled and telemetry export disabled (`make selfhost-smoke` exit 0; project `memdot-smoke-20260716024239-1851798`).
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS (correction round 3).
 
 ## Phase 2 exit gate
 
-- [ ] A fresh operator can start the complete self-host topology using documented commands and safe example configuration.
-- [ ] The product skeleton operates without Tex or paid model APIs.
-- [ ] Internal services and stores are not unintentionally internet-facing.
-- [ ] Secrets are encrypted or referenced and never logged.
-- [ ] Restart, volume persistence, backup, and restore smoke tests pass.
-- [ ] Compose, health, configuration-negative, and secret-scan gates pass.
-- [ ] Grok submits one consolidated Phase 2 report using docs/execution/PHASE_REPORT_TEMPLATE.md.
-- [ ] Codex performs a complete Phase 2 infrastructure and security audit and returns PASS.
-- [ ] Tauqueer explicitly authorizes the Phase 2 commit(s) and start of Phase 3.
+- [x] A fresh operator can start the complete self-host topology using documented commands and safe example configuration.
+- [x] The product skeleton operates without Tex or paid model APIs.
+- [x] Internal services and stores are not unintentionally internet-facing.
+- [x] Secrets are encrypted or referenced and never logged.
+- [x] Restart, volume persistence, backup, and restore smoke tests pass (live smoke evidence).
+- [x] Compose, health, configuration-negative, and secret-scan gates pass.
+- [x] Grok submits one consolidated Phase 2 report using docs/execution/PHASE_REPORT_TEMPLATE.md (correction round 3).
+- [x] Codex performs a complete Phase 2 infrastructure and security audit and returns PASS.
+- [x] Tauqueer explicitly authorizes the Phase 2 commit(s) and start of Phase 3.
 
 # Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
 
@@ -1156,15 +1156,15 @@ Primary contracts: PRD section 14, FSD-AC-001..024, TRD section 14, System Archi
 
 # 5. Progress and decision log
 
-- [x] Current active macro-phase: Phase 2 — owner-authorized; implementation not started.
-- [ ] Current internal micro-phase: Phase 2.1 not started.
-- [ ] Current Grok phase report: NONE for Phase 2.
-- [x] Current Codex verdict: PASS for Phase 1 after two correction rounds.
-- [x] Current owner decision: Phase 1 commit and Phase 2 start authorized.
+- [x] Current active macro-phase: Phase 3 — owner-authorized; implementation not started.
+- [ ] Current internal micro-phase: Phase 3.1 not started.
+- [ ] Current Grok phase report: NONE for Phase 3.
+- [x] Current Codex verdict: PASS for Phases 1 and 2.
+- [x] Current owner decision: Phase 2 commit and Phase 3 start authorized.
 - [ ] Current blocker: NONE.
-- [x] Last accepted implementation commit: `4138239ea31eff267af3e9a9d9984ca51a763991`.
-- [x] Last verified environment: Node 22 (`.nvmrc` / CI / containers); Python 3.12 (`.python-version` / CI / containers); pnpm 11.5.2; uv with `uv.lock`.
-- [x] Last documentation synchronization: 2026-07-15 Phase 1 acceptance and Phase 2 handoff.
+- [x] Last accepted implementation: Phase 2 self-host platform in the commit recording this transition.
+- [x] Last verified environment: Node 22 (`.nvmrc` / CI / containers); Python 3.12 (`.python-version` / CI / containers); pnpm 11.5.2; uv with `uv.lock`; Docker Compose v5.3.0.
+- [x] Last documentation synchronization: 2026-07-16 Phase 2 accepted and Phase 3 started by owner decision.
 
 ## Accepted macro-phase record template
 

@@ -144,6 +144,99 @@ jobs:
           MEMDOT_IMAGE_TAG: ci
         run: ./scripts/docker_health_smoke.sh
 
+  compose-policy:
+    name: Compose policy validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - run: |
+          uv python install 3.12
+          uv sync --all-packages --group dev --frozen --python 3.12
+      - name: Materialize disposable local env for render
+        run: FORCE_REMATERIALIZE=1 bash infra/compose/scripts/materialize_local_secrets.sh
+      - name: Validate compose policy
+        run: ./scripts/validate_compose_placeholder.sh
+      - name: Policy negative fixtures
+        run: uv run --python 3.12 pytest tests/infra -q
+
+  selfhost-smoke:
+    name: Self-host stack smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [compose-policy]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          uv python install 3.12
+          uv sync --all-packages --group dev --frozen --python 3.12
+      - name: Run self-host smoke
+        env:
+          MEMDOT_HTTP_PORT: "18080"
+          MEMDOT_HTTPS_PORT: "18443"
+          FORCE_REMATERIALIZE: "1"
+        run: bash infra/compose/scripts/selfhost_smoke.sh
+      - name: Capture diagnostics on failure
+        if: failure()
+        run: |
+          mkdir -p /tmp/memdot-smoke-logs
+          PROJECT="$(bash infra/compose/scripts/smoke_project_name.sh read /tmp/memdot-smoke-project-name 2>/dev/null || true)"
+          if [[ -n "${PROJECT}" ]]; then
+            docker compose --project-name "$PROJECT" \
+              --env-file /tmp/${PROJECT}-runtime/.env \
+              -f infra/compose/compose.yaml -f infra/compose/compose.test.yaml \
+              logs --no-color --tail=200 > /tmp/memdot-smoke-logs/logs.txt 2>&1 || true
+            docker compose --project-name "$PROJECT" ps -a > /tmp/memdot-smoke-logs/ps.txt 2>&1 || true
+          fi
+          # Also copy any project log dir if present (never used as project-name source).
+          if [[ -n "${PROJECT}" && -f "/tmp/${PROJECT}-logs/logs.txt" ]]; then
+            cp "/tmp/${PROJECT}-logs/logs.txt" /tmp/memdot-smoke-logs/logs-from-dir.txt || true
+          fi
+          docker ps -a > /tmp/memdot-smoke-logs/docker-ps.txt || true
+          echo "project=${PROJECT:-absent}" > /tmp/memdot-smoke-logs/project.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: selfhost-smoke-diagnostics
+          path: /tmp/memdot-smoke-logs
+      - name: Cleanup
+        if: always()
+        run: |
+          set +e
+          PROJECT="$(bash infra/compose/scripts/smoke_project_name.sh read /tmp/memdot-smoke-project-name)"
+          READ_RC=$?
+          set -e
+          if [[ "$READ_RC" -ne 0 || -z "${PROJECT:-}" ]]; then
+            echo "smoke cleanup skipped: project-name file absent or malformed"
+            exit 0
+          fi
+          echo "cleaning compose project=$PROJECT"
+          RUNTIME_ENV="/tmp/${PROJECT}-runtime/.env"
+          if [[ -f "$RUNTIME_ENV" ]]; then
+            docker compose --project-name "$PROJECT" --env-file "$RUNTIME_ENV" \
+              -f infra/compose/compose.yaml -f infra/compose/compose.test.yaml \
+              down -v --remove-orphans || true
+          else
+            docker compose --project-name "$PROJECT" \
+              -f infra/compose/compose.yaml -f infra/compose/compose.test.yaml \
+              down -v --remove-orphans || true
+          fi
+          rm -f /tmp/memdot-smoke-project-name
+          rm -rf "/tmp/${PROJECT}-runtime" "/tmp/${PROJECT}-logs" || true
+
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'

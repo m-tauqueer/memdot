@@ -87,11 +87,7 @@ export function upsertJob(accountId: string, job: ClientJob): ClientJob[] {
   return listJobs(accountId);
 }
 
-export function patchJob(
-  accountId: string,
-  jobId: string,
-  patch: Partial<ClientJob>,
-): ClientJob[] {
+export function patchJob(accountId: string, jobId: string, patch: Partial<ClientJob>): ClientJob[] {
   const existing = listJobs(accountId).find((row) => row.jobId === jobId);
   if (!existing) {
     return listJobs(accountId);

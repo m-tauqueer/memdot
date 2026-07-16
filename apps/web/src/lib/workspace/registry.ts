@@ -4,13 +4,7 @@
  */
 
 export type RegistryKind =
-  | "space"
-  | "source"
-  | "document"
-  | "course"
-  | "conversation"
-  | "proposal"
-  | "assessment";
+  "space" | "source" | "document" | "course" | "conversation" | "proposal" | "assessment";
 
 export type RegistryItem = {
   id: string;
@@ -67,7 +61,10 @@ export function listRegistry(accountId: string, kind?: RegistryKind): RegistryIt
 export function upsertRegistry(accountId: string, item: RegistryItem): RegistryItem[] {
   const file = read();
   const rows = file[accountId] ?? [];
-  file[accountId] = [...rows.filter((row) => !(row.kind === item.kind && row.id === item.id)), item];
+  file[accountId] = [
+    ...rows.filter((row) => !(row.kind === item.kind && row.id === item.id)),
+    item,
+  ];
   write(file);
   return listRegistry(accountId);
 }

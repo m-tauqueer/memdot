@@ -1,7 +1,9 @@
 # Memdot documentation
 
-Status: **Technical Phases 1–3 accepted; Waves 4–8 backend correction is in progress on `develop`**
-Baseline date: **2026-07-16**
+Status: **Technical Phases 1–3 accepted; Waves 4–10 are implemented on `develop`.
+Manual external configuration, the Alpha integration gate, and one final end-to-end
+audit remain before release acceptance.**
+Baseline date: **2026-07-17**
 
 This directory is the source of truth for Memdot v1. It describes a general,
 portable memory platform whose first deeply developed product mode is Learning.

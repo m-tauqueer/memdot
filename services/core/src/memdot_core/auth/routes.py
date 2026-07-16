@@ -36,6 +36,7 @@ from memdot_core.auth.sessions import (
 )
 from memdot_core.db.models.tenancy import (
     BrowserSession,
+    HostedAdultAttestation,
     SessionRevocation,
 )
 from memdot_core.db.tenant import TenantContext, tenant_scope
@@ -44,7 +45,7 @@ from memdot_core.settings import CoreSettings
 from memdot_domain.ids import new_uuid7
 from memdot_domain.tenancy import RequestPurpose
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -323,11 +324,23 @@ def session_status(
         ctx, browser_session = _load_browser_session(request, db)
     except HTTPException:
         return _problem(401, "session_invalid")
+    with tenant_scope(db, ctx):
+        adult_attested = (
+            db.execute(
+                select(HostedAdultAttestation.id).where(
+                    HostedAdultAttestation.account_id == browser_session.account_id,
+                    HostedAdultAttestation.user_id == browser_session.user_id,
+                    HostedAdultAttestation.confirmed.is_(True),
+                )
+            ).scalar_one_or_none()
+            is not None
+        )
     return JSONResponse(
         content={
             "authenticated": True,
             "account_id": str(ctx.account_id),
             "recent_auth": recent_auth_satisfied(browser_session.last_auth_at),
+            "adult_attested": adult_attested,
         }
     )
 

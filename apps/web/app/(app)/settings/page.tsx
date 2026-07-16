@@ -9,7 +9,13 @@ import { useSession } from "@/src/components/auth/SessionProvider";
 import { useConnectivity } from "@/src/components/connectivity/ConnectivityProvider";
 import { useJobs } from "@/src/components/jobs/JobsProvider";
 import { PageHeader } from "@/src/components/shell/PageHeader";
-import { ApiError, beginOidc, createTombstone, requestAccountExport, restoreReplay } from "@/src/lib/api/client";
+import {
+  ApiError,
+  beginOidc,
+  createTombstone,
+  requestAccountExport,
+  restoreReplay,
+} from "@/src/lib/api/client";
 import {
   estimateOfflineBytes,
   getReviewPack,
@@ -47,13 +53,15 @@ export default function SettingsPage() {
     if (!accountId) {
       return;
     }
-    void Promise.all([listPins(accountId), getReviewPack(accountId), estimateOfflineBytes(accountId)]).then(
-      ([nextPins, nextPack, nextBytes]) => {
-        setPins(nextPins);
-        setPack(nextPack);
-        setBytes(nextBytes);
-      },
-    );
+    void Promise.all([
+      listPins(accountId),
+      getReviewPack(accountId),
+      estimateOfflineBytes(accountId),
+    ]).then(([nextPins, nextPack, nextBytes]) => {
+      setPins(nextPins);
+      setPack(nextPack);
+      setBytes(nextBytes);
+    });
   }, [accountId]);
 
   useEffect(() => {
@@ -138,7 +146,10 @@ export default function SettingsPage() {
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li>Export creates a durable job (HTTP 202).</li>
             <li>Deletion tombstones immediately; purge checkpoints are server-owned.</li>
-            <li>Recent auth: {session.session?.recent_auth ? "satisfied" : "required for sensitive actions"}.</li>
+            <li>
+              Recent auth:{" "}
+              {session.session?.recent_auth ? "satisfied" : "required for sensitive actions"}.
+            </li>
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
@@ -166,20 +177,34 @@ export default function SettingsPage() {
           {exportMsg ? <p className="text-meta mt-3">{exportMsg}</p> : null}
           <div className="mt-6 border-t border-border pt-4">
             <h3 className="m-0 text-sm font-semibold">Deletion tombstone</h3>
-            <p className="text-meta mt-2">Requires recent auth. Purge checkpoints remain server-owned.</p>
+            <p className="text-meta mt-2">
+              Requires recent auth. Purge checkpoints remain server-owned.
+            </p>
             <div className="mt-3 grid gap-3">
-              <Input label="Entity ID" value={entityId} onChange={(e) => setEntityId(e.target.value)} />
-              <Input label="Entity type" value={entityType} onChange={(e) => setEntityType(e.target.value)} />
+              <Input
+                label="Entity ID"
+                value={entityId}
+                onChange={(e) => setEntityId(e.target.value)}
+              />
+              <Input
+                label="Entity type"
+                value={entityType}
+                onChange={(e) => setEntityType(e.target.value)}
+              />
               <div className="flex flex-wrap gap-2">
                 <Button
                   label="Create tombstone"
                   variant="danger"
-                  disabled={busy || !connectivity.online || !entityId || !session.session?.recent_auth}
+                  disabled={
+                    busy || !connectivity.online || !entityId || !session.session?.recent_auth
+                  }
                   onClick={() => {
                     setBusy(true);
                     setDeleteMsg(null);
                     void createTombstone({ entity_id: entityId, entity_type: entityType })
-                      .then((result) => setDeleteMsg(`Tombstone: ${JSON.stringify(result).slice(0, 160)}`))
+                      .then((result) =>
+                        setDeleteMsg(`Tombstone: ${JSON.stringify(result).slice(0, 160)}`),
+                      )
                       .catch((err: unknown) =>
                         setDeleteMsg(err instanceof ApiError ? err.message : "Tombstone failed"),
                       )
@@ -194,7 +219,9 @@ export default function SettingsPage() {
                     setBusy(true);
                     setDeleteMsg(null);
                     void restoreReplay({})
-                      .then((result) => setDeleteMsg(`Replay: ${JSON.stringify(result).slice(0, 160)}`))
+                      .then((result) =>
+                        setDeleteMsg(`Replay: ${JSON.stringify(result).slice(0, 160)}`),
+                      )
                       .catch((err: unknown) =>
                         setDeleteMsg(err instanceof ApiError ? err.message : "Replay failed"),
                       )
@@ -220,8 +247,8 @@ export default function SettingsPage() {
             <li>Local namespace ≈ {bytes} bytes</li>
           </ul>
           <p className="text-meta mt-3">
-            Logout clears this account&apos;s offline namespace on this device. Ordinary API responses are
-            never cached.
+            Logout clears this account&apos;s offline namespace on this device. Ordinary API
+            responses are never cached.
           </p>
         </section>
         <section className="rounded-2xl border border-border bg-card p-4 md:col-span-2">

@@ -53,8 +53,7 @@ export class ApiError extends Error {
     this.status = status;
     this.code = problem.code || "unknown";
     this.correlationId = problem.correlation_id || problem.correlationId;
-    this.currentRevisionId =
-      problem.currentRevisionId || problem.current_revision_id || undefined;
+    this.currentRevisionId = problem.currentRevisionId || problem.current_revision_id || undefined;
     this.problem = problem;
     this.retryAfterSeconds = retryAfterSeconds;
   }
@@ -166,6 +165,7 @@ export type SessionStatus = {
   authenticated: boolean;
   account_id?: string;
   recent_auth?: boolean;
+  adult_attested?: boolean;
 };
 
 export function fetchSession(signal?: AbortSignal): Promise<SessionStatus> {
@@ -423,9 +423,7 @@ export function deleteConversation(conversationId: string): Promise<unknown> {
   return apiRequest(`/api/v1/conversations/${conversationId}`, { method: "DELETE" });
 }
 
-export function createCourse(
-  body: CreateCourseBody,
-): Promise<{ courseId?: string; id?: string }> {
+export function createCourse(body: CreateCourseBody): Promise<{ courseId?: string; id?: string }> {
   return apiRequest("/api/v1/learning/courses", { method: "POST", body });
 }
 

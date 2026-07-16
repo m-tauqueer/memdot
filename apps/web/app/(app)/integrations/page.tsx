@@ -56,14 +56,18 @@ export default function IntegrationsPage() {
         description="Notion sync with write-boundary honesty, MCP consent surfaces, and external capture completeness labels."
       />
       {!connectivity.online ? (
-        <Banner tone="warning" title="Integrations require a connection" description="Sync and OAuth are online-only." />
+        <Banner
+          tone="warning"
+          title="Integrations require a connection"
+          description="Sync and OAuth are online-only."
+        />
       ) : null}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="m-0 text-sm font-semibold">Notion</h2>
           <p className="text-meta mt-2">
-            Live OAuth belongs to the Alpha integration gate. This UI exercises Core connect/select/sync/resolve,
-            including the HTTP emulator path.
+            Live OAuth belongs to the Alpha integration gate. This UI exercises Core
+            connect/select/sync/resolve, including the HTTP emulator path.
           </p>
           <div className="mt-3 grid gap-3">
             <Button
@@ -97,12 +101,19 @@ export default function IntegrationsPage() {
                   notionSelectPages({
                     connection_id: connectionId,
                     space_id: spaceId,
-                    notion_page_ids: pageIds.split(",").map((part) => part.trim()).filter(Boolean),
+                    notion_page_ids: pageIds
+                      .split(",")
+                      .map((part) => part.trim())
+                      .filter(Boolean),
                   }),
                 )
               }
             />
-            <Input label="Binding ID" value={bindingId} onChange={(e) => setBindingId(e.target.value)} />
+            <Input
+              label="Binding ID"
+              value={bindingId}
+              onChange={(e) => setBindingId(e.target.value)}
+            />
             <Input
               label="Fixture content (emulator)"
               value={fixture}
@@ -112,7 +123,9 @@ export default function IntegrationsPage() {
               <Button
                 label="Sync binding"
                 disabled={busy || !bindingId}
-                onClick={() => void run("sync", () => notionSyncBinding(bindingId, fixture || null))}
+                onClick={() =>
+                  void run("sync", () => notionSyncBinding(bindingId, fixture || null))
+                }
               />
               <Button
                 label="Resolve keep Memdot"
@@ -143,7 +156,9 @@ export default function IntegrationsPage() {
         </section>
       </div>
       {payload ? (
-        <pre className="mt-4 overflow-auto rounded-2xl border border-border bg-card p-4 text-xs">{payload}</pre>
+        <pre className="mt-4 overflow-auto rounded-2xl border border-border bg-card p-4 text-xs">
+          {payload}
+        </pre>
       ) : null}
     </>
   );

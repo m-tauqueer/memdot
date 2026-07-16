@@ -9,7 +9,7 @@ type SessionContextValue = {
   status: "loading" | "authenticated" | "anonymous" | "error";
   session: SessionStatus | null;
   error: Error | null;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -23,7 +23,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SessionContextValue>(() => {
     if (query.isLoading) {
-      return { status: "loading", session: null, error: null, refresh: () => void query.refetch() };
+      return {
+        status: "loading",
+        session: null,
+        error: null,
+        refresh: async () => {
+          await query.refetch();
+        },
+      };
     }
     if (query.isError) {
       const err = query.error;
@@ -32,14 +39,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           status: "anonymous",
           session: { authenticated: false },
           error: null,
-          refresh: () => void query.refetch(),
+          refresh: async () => {
+            await query.refetch();
+          },
         };
       }
       return {
         status: "error",
         session: null,
         error: err instanceof Error ? err : new Error("session_error"),
-        refresh: () => void query.refetch(),
+        refresh: async () => {
+          await query.refetch();
+        },
       };
     }
     if (query.data?.authenticated) {
@@ -47,14 +58,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         status: "authenticated",
         session: query.data,
         error: null,
-        refresh: () => void query.refetch(),
+        refresh: async () => {
+          await query.refetch();
+        },
       };
     }
     return {
       status: "anonymous",
       session: query.data ?? { authenticated: false },
       error: null,
-      refresh: () => void query.refetch(),
+      refresh: async () => {
+        await query.refetch();
+      },
     };
   }, [query]);
 

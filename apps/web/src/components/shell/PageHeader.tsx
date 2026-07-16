@@ -18,7 +18,9 @@ export function PageHeader({
         <h1 className="m-0 font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight">
           {title}
         </h1>
-        {description ? <p className="text-meta mt-2 max-w-2xl leading-relaxed">{description}</p> : null}
+        {description ? (
+          <p className="text-meta mt-2 max-w-2xl leading-relaxed">{description}</p>
+        ) : null}
       </div>
       {actions}
     </div>

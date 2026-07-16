@@ -120,7 +120,11 @@ function LibraryPageInner() {
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="m-0 text-sm font-semibold">Upload source</h2>
           <div className="mt-3 grid gap-3">
-            <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceDraft(e.target.value)} />
+            <Input
+              label="Space ID"
+              value={spaceId}
+              onChange={(e) => setSpaceDraft(e.target.value)}
+            />
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
             <label className="md-field">
               <span className="md-label">File</span>
@@ -148,7 +152,11 @@ function LibraryPageInner() {
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="m-0 text-sm font-semibold">Recent in this browser</h2>
           {sources.length === 0 && documents.length === 0 ? (
-            <SurfaceState kind="empty" title="No local items yet" description="Upload or create to populate this list." />
+            <SurfaceState
+              kind="empty"
+              title="No local items yet"
+              description="Upload or create to populate this list."
+            />
           ) : (
             <ul className="mt-3 divide-y divide-border">
               {sources.map((item) => (

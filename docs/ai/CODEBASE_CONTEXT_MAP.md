@@ -1,12 +1,15 @@
 # Codebase Context Map for AI Agents
 
-Version: **4.3 — Waves 9–10 frontend on `frontend`**
+Version: **4.5 — implementation complete; external integration and final audit pending**
 Date: **2026-07-17**
 Implementation status: **Technical Phases 1–3 accepted on `main` (`cc570eb`).
-Waves 4–8 Correction Round 2 tip `99ed500` on `develop`. Frontend Waves 9–10
-product UI is on branch `frontend` (worktree) awaiting combined Codex audit.
-Release-acceptance and Alpha integration gate remain open. Prompts/reports are
-chat-only.**
+Waves 4–8 Correction Round 2 tip `99ed500` is on `develop`. Frontend Waves 9–10
+and their safety corrections are committed on `develop`. Persisted offline content
+and review packs are disabled until Core provides an authorized encrypted-envelope
+contract. Tauqueer must manually configure test-only Google OIDC, Notion,
+encryption/KMS, MCP clients, and hosted test infrastructure outside the repository.
+Then run the Alpha integration gate and one final end-to-end audit before release
+acceptance. Prompts/reports are chat-only.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths

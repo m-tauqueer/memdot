@@ -19,7 +19,8 @@ function authErrorCopy(code: string | null): { title: string; description: strin
     case "provider_denied":
       return {
         title: "Sign-in was denied",
-        description: "The identity provider denied access. You can try again or use another account.",
+        description:
+          "The identity provider denied access. You can try again or use another account.",
       };
     case "cancelled":
       return {
@@ -29,7 +30,8 @@ function authErrorCopy(code: string | null): { title: string; description: strin
     case "session_expired":
       return {
         title: "Session expired",
-        description: "Sign in again to continue. Resource details from the previous session are not shown.",
+        description:
+          "Sign in again to continue. Resource details from the previous session are not shown.",
       };
     case "popup_blocked":
       return {
@@ -39,7 +41,8 @@ function authErrorCopy(code: string | null): { title: string; description: strin
     case "internal":
       return {
         title: "Sign-in failed",
-        description: "An internal error interrupted authentication. Retry, or contact an operator with the correlation ID if shown.",
+        description:
+          "An internal error interrupted authentication. Retry, or contact an operator with the correlation ID if shown.",
       };
     default:
       return null;
@@ -103,9 +106,7 @@ function AuthForm() {
           ? "Self-host Memdot uses your configured OIDC issuer through Memdot Core. Session and CSRF cookies are issued after a successful callback."
           : "Hosted Memdot uses Google through Memdot Core. Email/password and invite codes are not offered in v1."}
       </p>
-      <p className="text-meta mt-2">
-        Public beta · adults only · no payment required
-      </p>
+      <p className="text-meta mt-2">Public beta · adults only · no payment required</p>
       {recovery ? (
         <div className="mt-6">
           <Banner tone="warning" title={recovery.title} description={recovery.description} />
@@ -113,13 +114,7 @@ function AuthForm() {
       ) : null}
       <div className="mt-8 flex flex-col gap-3">
         <Button
-          label={
-            busy
-              ? "Redirecting…"
-              : isSelfHost
-                ? "Continue with OIDC"
-                : "Continue with Google"
-          }
+          label={busy ? "Redirecting…" : isSelfHost ? "Continue with OIDC" : "Continue with Google"}
           disabled={busy || session.status === "loading"}
           onClick={() => void startSignIn()}
         />

@@ -17,7 +17,10 @@ import {
 } from "@/src/lib/api/client";
 import { emptyMemdotDocument, type MemdotDocument } from "@/src/lib/document/memdot";
 
-function asMemdot(documentId: string, payload: Record<string, unknown> | undefined): MemdotDocument {
+function asMemdot(
+  documentId: string,
+  payload: Record<string, unknown> | undefined,
+): MemdotDocument {
   const body = payload?.document;
   if (body && typeof body === "object" && "root" in (body as object)) {
     const doc = body as MemdotDocument;
@@ -60,10 +63,7 @@ export default function DocumentDetailPage() {
   });
 
   const baseRevisionId = savedRevisionId ?? revisionFromDoc(docQuery.data);
-  const initial = useMemo(
-    () => asMemdot(documentId, docQuery.data),
-    [documentId, docQuery.data],
-  );
+  const initial = useMemo(() => asMemdot(documentId, docQuery.data), [documentId, docQuery.data]);
 
   async function onSave(doc: MemdotDocument) {
     setBusy(true);

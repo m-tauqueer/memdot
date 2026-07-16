@@ -67,13 +67,20 @@ export default function MemoryItemsPage() {
         title="Approved memory"
         description="Approved memories and retained interactions. Historical mode is a presentation filter — Core still owns eligibility."
         actions={
-          <Link className="text-sm text-primary underline-offset-2 hover:underline" href="/memory/proposed">
+          <Link
+            className="text-sm text-primary underline-offset-2 hover:underline"
+            href="/memory/proposed"
+          >
             Review proposals
           </Link>
         }
       />
       <label className="mb-4 flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={historical} onChange={(e) => setHistorical(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={historical}
+          onChange={(e) => setHistorical(e.target.checked)}
+        />
         Historical mode (show superseded / retained context labels when present)
       </label>
       <SurfaceState
@@ -92,7 +99,11 @@ export default function MemoryItemsPage() {
           onClick={() => void createItem()}
         />
         <Input label="Memory item ID" value={itemId} onChange={(e) => setItemId(e.target.value)} />
-        <Button label={busy ? "Loading…" : "Load"} disabled={busy || !itemId} onClick={() => void load()} />
+        <Button
+          label={busy ? "Loading…" : "Load"}
+          disabled={busy || !itemId}
+          onClick={() => void load()}
+        />
         {error ? (
           <p className="text-sm text-[color:var(--destructive)]" role="alert">
             {error}

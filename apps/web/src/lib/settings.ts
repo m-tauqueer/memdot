@@ -55,7 +55,10 @@ export function loadWebSettings(
     throw new Error("telemetry exporter enabled without explicit endpoint");
   }
 
-  if (!settings.WEB_CORE_BASE_URL.startsWith("http://") && !settings.WEB_CORE_BASE_URL.startsWith("https://")) {
+  if (
+    !settings.WEB_CORE_BASE_URL.startsWith("http://") &&
+    !settings.WEB_CORE_BASE_URL.startsWith("https://")
+  ) {
     throw new Error("WEB_CORE_BASE_URL must be an absolute URL");
   }
 

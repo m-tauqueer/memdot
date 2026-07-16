@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   clearAccountOffline,
-  getOnboardingProfile,
   listPins,
   memoryOfflineAdapter,
   pinItem,
   setOfflineAdapter,
-  setOnboardingProfile,
 } from "./store.js";
 
 describe("offline store", () => {
@@ -42,17 +40,5 @@ describe("offline store", () => {
     await clearAccountOffline("acct-a");
     expect(await listPins("acct-a")).toHaveLength(0);
     expect(await listPins("acct-b")).toHaveLength(1);
-  });
-
-  it("stores onboarding profile per account", async () => {
-    await setOnboardingProfile("acct-a", {
-      displayName: "Tau",
-      timezone: "Asia/Kolkata",
-      contentLanguages: ["en", "hi"],
-      spacePreference: "learning",
-      completedAt: "2026-07-17T00:00:00.000Z",
-    });
-    expect((await getOnboardingProfile("acct-a"))?.displayName).toBe("Tau");
-    expect(await getOnboardingProfile("acct-b")).toBeNull();
   });
 });

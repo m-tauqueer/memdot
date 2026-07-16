@@ -8,14 +8,15 @@ describe("cache policy", () => {
     expect(mayServiceWorkerCache("/api/v1/sources")).toBe(false);
   });
 
-  it("allows shell routes", () => {
-    expect(classifyRequest("/today")).toBe("shell");
+  it("allows only public/static shell assets", () => {
+    expect(classifyRequest("/today")).toBe("network_only");
     expect(mayServiceWorkerCache("/manifest.webmanifest")).toBe(true);
+    expect(mayServiceWorkerCache("/library")).toBe(false);
   });
 
   it("limits offline actions", () => {
     expect(offlineActionAllowed("ask", false)).toBe(false);
-    expect(offlineActionAllowed("read_pin", false)).toBe(true);
+    expect(offlineActionAllowed("read_pin", false)).toBe(false);
     expect(offlineActionAllowed("ask", true)).toBe(true);
   });
 });

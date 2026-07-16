@@ -36,7 +36,10 @@ export default function MemoryActivityPage() {
         ) : (
           <ul className="mt-3 divide-y divide-border">
             {rows.map((row) => (
-              <li key={`${row.kind}-${row.id}`} className="flex items-center justify-between gap-3 py-3 text-sm">
+              <li
+                key={`${row.kind}-${row.id}`}
+                className="flex items-center justify-between gap-3 py-3 text-sm"
+              >
                 <div>
                   <p className="m-0 font-semibold">{row.title}</p>
                   <p className="text-meta m-0">

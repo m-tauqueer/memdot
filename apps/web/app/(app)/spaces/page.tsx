@@ -71,12 +71,19 @@ export default function SpacesPage() {
               {spaces.map((space) => (
                 <li key={space.id} className="flex items-center justify-between gap-3 py-3">
                   <div>
-                    <Link className="text-sm font-semibold hover:underline" href={`/spaces/${space.id}`}>
+                    <Link
+                      className="text-sm font-semibold hover:underline"
+                      href={`/spaces/${space.id}`}
+                    >
                       {space.title}
                     </Link>
                     <p className="text-meta m-0">{space.id}</p>
                   </div>
-                  {space.title.includes("private") ? <Badge tone="warning">Private</Badge> : <Badge tone="neutral">Space</Badge>}
+                  {space.title.includes("private") ? (
+                    <Badge tone="warning">Private</Badge>
+                  ) : (
+                    <Badge tone="neutral">Space</Badge>
+                  )}
                 </li>
               ))}
             </ul>

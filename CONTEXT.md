@@ -333,16 +333,24 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
   Fixtures must not be claimed as live validation. Production Docling conversion,
   pgvector/rebuild workers, full export packaging, full deletion purge, and
   hosted KMS wiring remain external/incomplete where noted in the tracker.
-- Frontend Waves 9–10 are merged into `develop` @ `87d084a` (fast-forward from
-  `frontend`). Continue from primary checkout `/home/tauqueer/Desktop/memdot`.
-  Includes: typed OpenAPI client + CSRF/session shell, OIDC/onboarding, AppShell,
-  TipTap/MemdotDocument, source upload, Ask conversations/receipts, learning
-  Test/Review, Notion/MCP surfaces, deletion/offline ADR-0013 foundations.
-  Combined Wave 9+10 Codex audit is next. Remaining honesty gaps: Core lacks
-  account-wide source/space/proposal list GETs (browser registry stopgap); Ask
-  does not stream model answers; release-acceptance / Alpha live gate / founder
-  QA remain open.
-- Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
+- Frontend Waves 9–10 are on `develop` @ `e00aa01` with local safety corrections
+  ready to commit. They include a typed OpenAPI client + CSRF/session shell,
+  Core-owned 18+ attestation, AppShell, TipTap/MemdotDocument, source upload,
+  Ask conversations/receipts, learning Test/Review, Notion/MCP surfaces, and
+  safe offline boundaries. Persisted source/review content is deliberately
+  disabled until Core can issue authorized encrypted envelopes.
+- Before final acceptance, Tauqueer will configure the test-only external
+  dependencies manually: Google OIDC, Notion, encryption/KMS, selected MCP
+  clients, and hosted test infrastructure. Secrets and live identifiers remain
+  outside this repository.
+- After manual configuration, run the Alpha integration gate and then one final
+  end-to-end architecture, security, lifecycle, contract, and frontend-logic
+  audit. Only after fast gates are green should the combined Checkpoint A/B
+  `make selfhost-smoke` run once; do not repeat it during ordinary corrections.
+- Known product gaps remain explicit: Core lacks account-wide source/space/
+  proposal listing contracts; Ask does not stream answers; production Docling,
+  pgvector rebuilds, full export/deletion purge, and live-provider proof remain
+  open. No beta, merge, or production claim is authorized by this state.
 
 ## 15. Context maintenance
 

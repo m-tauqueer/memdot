@@ -75,9 +75,10 @@ Tex-disabled full-system fallback.
       hosted KMS/provider configuration, live MCP clients, and owner-authorized
       deployment validation. External credentials/resources are required; see
       `docs/technical/ALPHA_INTEGRATION_GATE.md`.
-- [x] Wave 9 / Phase 12 — frontend foundation (implemented on `frontend`; Codex audit pending).
-- [x] Wave 10 / Phases 13–15 — product UI implemented on `frontend` (release
-      acceptance + combined Codex audit still open).
+- [x] Wave 9 / Phase 12 — frontend foundation implemented on `develop`; final
+      acceptance is deferred to the post-configuration end-to-end audit.
+- [x] Wave 10 / Phases 13–15 — product UI implemented on `develop`; release
+      acceptance and the final end-to-end audit remain open.
 
 ## 4. Accepted baseline
 
@@ -394,11 +395,13 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 - [x] Implement generated API client and centralized request/problem wrapper.
 - [x] Implement session/CSRF/recent-auth/cache/correlation behavior.
-- [x] Implement hosted Google/self-host OIDC and 18+ onboarding presentation.
+- [x] Implement hosted Google/self-host OIDC and Core-owned 18+ attestation presentation.
 - [x] Implement accessible tokens, primitives, responsive shell, and navigation.
 - [x] Implement explicit loading/empty/partial/degraded/offline/rate/error states.
 - [x] Implement global job visibility and safe account switching/logout behavior.
-- [x] Implement installable PWA and encrypted account-partitioned offline foundation.
+- [ ] Implement encrypted account-partitioned pinned reading and review packs.
+      Current implementation safely disables persisted content until Core provides
+      an authorized encrypted-envelope contract.
 - [x] Test keyboard, focus, screen-reader landmarks, touch, zoom, reduced motion,
       responsive viewports, cache isolation, route smoke, and production build.
 - [x] Do not run full self-host smoke unless a smoke-owned backend seam changed.
@@ -409,22 +412,28 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 11.1 General Memory frontend
 
-- [x] Today, Library, Spaces, Private Spaces, source detail, history, and citations.
+- [ ] Today, Library, Spaces, Private Spaces, source detail, history, and citations.
+      Current screens are partial because Core lacks account-wide listing contracts.
 - [x] Upload, processing, failure, retry, reprocess, versions, and global jobs.
-- [x] Tiptap/MemdotDocument editor, autosave, recovery, history, and conflicts.
+- [ ] Tiptap/MemdotDocument editor, autosave, recovery, history, and conflicts.
+      Editor/conflict path exists; autosave and recovery are not complete.
 - [x] AI patch review and canonical proposal approval/rejection.
-- [x] Ask/search/context receipts, source conflicts, historical mode, and labels.
+- [ ] Ask/search/context receipts, source conflicts, historical mode, and labels.
+      Context receipts/capture exist; streamed answers and remaining views are incomplete.
 - [x] Memory proposals, approval history, activity, and degraded retrieval.
 
 ### 11.2 Learning and integrations frontend
 
 - [x] Course setup, syllabus map, concepts, prerequisites, and source coverage.
-- [x] Test, results, confidence, Review, Evidence Twin, and due reasons.
-- [x] Sealed-answer, hint/reveal, ungradable, retry, and offline states.
+- [ ] Test, results, confidence, Review, Evidence Twin, and due reasons.
+      Test lifecycle exists; due/review data uses a temporary local registry.
+- [ ] Sealed-answer, hint/reveal, ungradable, retry, and offline states.
+      Offline review is intentionally disabled pending a Core-authorized encrypted pack.
 - [x] MCP consent/revocation/receipts and external capture completeness.
 - [x] Notion selection, sync status, conflicts, and write-boundary presentation.
 - [x] Provider/BYOK, privacy, export, deletion, recovery, and settings surfaces.
-- [x] Pinned reading and bounded offline review reconciliation.
+- [ ] Pinned reading and bounded offline review reconciliation.
+      Disabled until the canonical encrypted offline contract exists.
 
 ### 11.3 Release acceptance
 
@@ -444,9 +453,14 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 - [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
 - [x] Backend Correction Round 2 tip on `develop` / merged into `frontend`: `99ed500`.
-- [ ] Active branch: `develop` @ `87d084a` (Waves 9–10 frontend merged from
-      `frontend`). Ready for **combined Wave 9 + 10 Codex audit**;
-      release-acceptance matrices remain open.
+- [ ] Active branch: `develop` contains the committed local safety corrections.
+      Before the final audit, Tauqueer will manually configure test-only Google
+      OIDC, Notion, encryption/KMS, selected MCP clients, and hosted test
+      infrastructure through the approved secret store.
+- [ ] After those external dependencies are configured, run the Alpha integration
+      gate and one final end-to-end architecture, security, lifecycle, contract,
+      and frontend-logic audit. Fix only evidence-backed defects from that audit.
 - [ ] Merge `develop` → `main` remains owner-controlled (`frontend` already
       fast-forwarded into `develop`).
-- [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.
+- [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; run it exactly once
+      after fast gates and the final-audit prerequisites are green.

@@ -143,7 +143,9 @@ function TestPageInner() {
       } else {
         setHintRevealed(true);
       }
-      setMessage(answer ? "Answer reveal recorded server-side" : "Hint reveal recorded server-side");
+      setMessage(
+        answer ? "Answer reveal recorded server-side" : "Hint reveal recorded server-side",
+      );
     } catch (err) {
       setMessage(err instanceof ApiError ? err.message : "Reveal failed");
     } finally {
@@ -190,14 +192,22 @@ function TestPageInner() {
       />
       <div className="mt-4 grid max-w-xl gap-3">
         <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceDraft(e.target.value)} />
-        <Input label="Course title" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} />
+        <Input
+          label="Course title"
+          value={courseTitle}
+          onChange={(e) => setCourseTitle(e.target.value)}
+        />
         <Button
           label={busy ? "Working…" : "Create course + sample item"}
           disabled={busy || !spaceId}
           onClick={() => void bootstrapCourse()}
         />
         <Input label="Course ID" value={courseId} onChange={(e) => setCourseId(e.target.value)} />
-        <Input label="Assessment item ID" value={itemId} onChange={(e) => setItemId(e.target.value)} />
+        <Input
+          label="Assessment item ID"
+          value={itemId}
+          onChange={(e) => setItemId(e.target.value)}
+        />
         <Input
           label="Assessment revision ID"
           value={revisionId}
@@ -208,13 +218,36 @@ function TestPageInner() {
           value={clientAttemptId}
           onChange={(e) => setClientAttemptId(e.target.value)}
         />
-        <Input label="Selected option" value={selected} onChange={(e) => setSelected(e.target.value)} />
-        <Input label="Confidence" value={confidence} onChange={(e) => setConfidence(e.target.value)} />
+        <Input
+          label="Selected option"
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+        />
+        <Input
+          label="Confidence"
+          value={confidence}
+          onChange={(e) => setConfidence(e.target.value)}
+        />
         <div className="flex flex-wrap gap-2">
-          <Button label="Load prompt" variant="secondary" disabled={busy || !itemId || !revisionId} onClick={() => void loadPrompt()} />
+          <Button
+            label="Load prompt"
+            variant="secondary"
+            disabled={busy || !itemId || !revisionId}
+            onClick={() => void loadPrompt()}
+          />
           <Button label="Start" disabled={busy} onClick={() => void runStart()} />
-          <Button label="Reveal hint" variant="secondary" disabled={busy} onClick={() => void runReveal(false)} />
-          <Button label="Reveal answer" variant="secondary" disabled={busy} onClick={() => void runReveal(true)} />
+          <Button
+            label="Reveal hint"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void runReveal(false)}
+          />
+          <Button
+            label="Reveal answer"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void runReveal(true)}
+          />
           <Button label="Submit" disabled={busy} onClick={() => void runSubmit()} />
         </div>
         {message ? (
@@ -223,7 +256,9 @@ function TestPageInner() {
           </p>
         ) : null}
         {promptView ? (
-          <pre className="overflow-auto rounded-2xl border border-border bg-card p-4 text-xs">{promptView}</pre>
+          <pre className="overflow-auto rounded-2xl border border-border bg-card p-4 text-xs">
+            {promptView}
+          </pre>
         ) : null}
       </div>
     </>

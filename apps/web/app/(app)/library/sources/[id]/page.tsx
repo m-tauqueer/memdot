@@ -75,9 +75,15 @@ export default function SourceDetailPage() {
       {statusQuery.isLoading || versionsQuery.isLoading ? <SurfaceState kind="loading" /> : null}
       {statusQuery.isError ? (
         <SurfaceState
-          kind={statusQuery.error instanceof ApiError && statusQuery.error.status === 401 ? "unauthorized" : "failed"}
+          kind={
+            statusQuery.error instanceof ApiError && statusQuery.error.status === 401
+              ? "unauthorized"
+              : "failed"
+          }
           description={
-            statusQuery.error instanceof ApiError ? statusQuery.error.message : "Could not load status"
+            statusQuery.error instanceof ApiError
+              ? statusQuery.error.message
+              : "Could not load status"
           }
         />
       ) : null}

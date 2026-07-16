@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useId,
-  useRef,
-  type KeyboardEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 export type DialogProps = {
   open: boolean;
@@ -72,7 +66,12 @@ export function Dialog({ open, title, description, onClose, children, footer }: 
 
   return (
     <div className="md-dialog-root" role="presentation" onKeyDown={onKeyDown}>
-      <button type="button" className="md-dialog-backdrop" aria-label="Close dialog" onClick={onClose} />
+      <button
+        type="button"
+        className="md-dialog-backdrop"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
       <div
         ref={panelRef}
         className="md-dialog"

@@ -8,11 +8,7 @@ import { useEffect } from "react";
 import { Button } from "@memdot/ui";
 
 import { HeadingWithBlockId, ParagraphWithBlockId } from "@/src/components/editor/blockId";
-import {
-  memdotToTipTap,
-  tipTapToMemdot,
-  type MemdotDocument,
-} from "@/src/lib/document/memdot";
+import { memdotToTipTap, tipTapToMemdot, type MemdotDocument } from "@/src/lib/document/memdot";
 
 export function DocumentEditor({
   documentId,

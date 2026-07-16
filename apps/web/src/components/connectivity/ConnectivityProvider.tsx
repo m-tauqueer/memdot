@@ -11,9 +11,7 @@ type ConnectivityValue = {
 const ConnectivityContext = createContext<ConnectivityValue | null>(null);
 
 export function ConnectivityProvider({ children }: { children: ReactNode }) {
-  const [online, setOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine,
-  );
+  const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
   const [swUpdateReady, setSwUpdateReady] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
@@ -44,9 +42,9 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
       online,
       swUpdateReady,
       applySwUpdate: () => {
-        waitingWorker?.postMessage({ type: "MEMDOT_SKIP_WAITING" });
-        setSwUpdateReady(false);
-        window.location.reload();
+        // Never force activation or reload from arbitrary product state. The
+        // browser applies the waiting worker on a later safe reload/close.
+        void waitingWorker;
       },
     }),
     [online, swUpdateReady, waitingWorker],

@@ -1,12 +1,12 @@
 # Alpha Integration Gate
 
-Status: **planned; not started**
+Status: **planned; manual owner configuration pending**
 
-This gate is deliberately after local backend correction work and before
-frontend implementation. It is the only phase allowed to use owner-provided
-credentials, connect an authorized third-party workspace, or make a
-non-production deployment validation call. Fixture, emulator, and stub tests
-do not satisfy any item in this document.
+This gate is deliberately after local implementation and before final release
+acceptance. It is the only gate allowed to use owner-provided credentials,
+connect an authorized third-party workspace, or make a non-production deployment
+validation call. Fixture, emulator, and stub tests do not satisfy any item in
+this document.
 
 ## Purpose
 
@@ -53,7 +53,8 @@ visibly degrade rather than changing canonical truth.
   provenance and a canonical revision.
 - A provider outage, revoked grant, KMS denial, parser failure, or MCP scope
   reduction has a tested safe failure state.
-- The owner explicitly accepts the evidence before frontend work is authorized.
+- The owner explicitly accepts the evidence before the final end-to-end audit
+  and any release decision.
 
 ## Explicit non-claims before this gate
 
@@ -61,3 +62,13 @@ Memdot must not claim live Google sign-in, live Notion synchronization,
 production Docling/OCR, hosted KMS-backed encryption, compatibility with a
 specific MCP host, Mumbai/Delhi deployment, SBOM/signing, or end-to-end
 self-host parity until the corresponding evidence above passes.
+
+## Final-audit handoff
+
+After the owner completes the manual configuration and the above evidence is
+collected, perform one final end-to-end logic and architecture audit. It must
+cover the public contracts, authorization/RLS, Private-Space exclusion, learning
+integrity, citations, lifecycle/deletion, external-provider failure states,
+frontend honesty, and the release-acceptance matrix. Run the combined full
+self-host smoke once only after its fast-gate prerequisites are green. The audit
+does not authorize a release; a separate owner decision does.

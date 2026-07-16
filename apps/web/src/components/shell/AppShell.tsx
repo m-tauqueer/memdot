@@ -143,15 +143,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Banner
               tone="info"
               title="Update ready"
-              description="A new app version is waiting. It will not interrupt an active test or dirty editor — apply when safe."
+              description="A new app version is waiting. Save or finish active work, then reload the browser when you are ready."
               action={
-                <Button label="Reload" size="sm" onClick={() => connectivity.applySwUpdate()} />
+                <Button label="Reload unavailable while work may be active" size="sm" disabled />
               }
             />
           </div>
         ) : null}
 
-        <main id="main-content" className="flex-1 overflow-auto px-4 pb-24 pt-5 md:px-8 md:pb-8" tabIndex={-1}>
+        <main
+          id="main-content"
+          className="flex-1 overflow-auto px-4 pb-24 pt-5 md:px-8 md:pb-8"
+          tabIndex={-1}
+        >
           {children}
         </main>
 

@@ -1,6 +1,6 @@
-/* Memdot service worker — ADR-0013 offline boundary (shell only by default). */
+/* Memdot service worker — ADR-0013 public/static assets only. */
 const CACHE = "memdot-shell-v1";
-const PRECACHE = ["/", "/today", "/auth", "/manifest.webmanifest", "/icon.svg"];
+const PRECACHE = ["/manifest.webmanifest", "/icon.svg"];
 
 function mayCache(pathname) {
   if (pathname.startsWith("/api/")) {
@@ -30,7 +30,11 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
+      ),
   );
   self.clients.claim();
 });

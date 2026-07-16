@@ -2,7 +2,8 @@
 
 Version: 2.0
 Approved: 2026-07-16
-Execution model: 10 delivery waves plus a pre-frontend Alpha integration gate, backend first, frontend last
+Execution model: 10 delivery waves plus an Alpha integration and final-audit gate;
+backend first, frontend last
 
 ## 1. Purpose
 
@@ -20,13 +21,13 @@ by grouping those phases into ten larger delivery waves:
 | 1 | 1 | Repository and monorepo foundation | Accepted |
 | 2 | 2 | Self-host platform and local operations | Accepted |
 | 3 | 3 | Canonical PostgreSQL, tenancy, identity, and RLS | Accepted |
-| 4 | 4–5 | Core runtime, durable workflows, object storage, and ingestion | Next |
-| 5 | 6–7 | Documents, memory, retrieval, Context Compiler, models, and Tex | Pending |
-| 6 | 8 | Learning backend and first full-system checkpoint | Pending |
-| 7 | 9–10 | MCP, conversations, Notion, export, and deletion | Pending |
-| 8 | 11 | Security, hosted deployment, evaluation, and pre-frontend checkpoint | Pending (backend Round 2 on develop) |
-| 9 | 12 | Frontend foundation, authentication, shell, and PWA | Implemented on `frontend` (combined 9+10 Codex) |
-| 10 | 13–15 | Complete product frontend, acceptance, and beta readiness | Product UI on `frontend`; release acceptance open |
+| 4 | 4–5 | Core runtime, durable workflows, object storage, and ingestion | Implemented on `develop`; final acceptance open |
+| 5 | 6–7 | Documents, memory, retrieval, Context Compiler, models, and Tex | Implemented on `develop`; final acceptance open |
+| 6 | 8 | Learning backend and first full-system checkpoint | Implemented on `develop`; checkpoint open |
+| 7 | 9–10 | MCP, conversations, Notion, export, and deletion | Implemented on `develop`; final acceptance open |
+| 8 | 11 | Security, hosted deployment, evaluation, and pre-frontend checkpoint | Implemented on `develop`; checkpoint open |
+| 9 | 12 | Frontend foundation, authentication, shell, and PWA | Implemented on `develop`; final acceptance open |
+| 10 | 13–15 | Complete product frontend and beta readiness | Implemented on `develop`; release acceptance open |
 
 One delivery wave is one Grok implementation run, one consolidated chat report,
 one Codex audit, and one owner-controlled commit decision.
@@ -423,9 +424,9 @@ Micro-phases:
 5. MCP consent/revocation, Notion sync/conflicts, providers/BYOK, settings,
    export, deletion, account recovery, and privacy surfaces.
 6. Accessibility/responsive/browser/PWA completion across every route and state.
-7. End-to-end FSD acceptance, adversarial security, benchmarks, live authorized
-   integration compatibility, restore/incident rehearsal, legal/license docs,
-   founder QA, and explicit launch decision.
+7. Prepare (but do not claim) the release-acceptance surfaces. Live authorized
+   integration compatibility and the final audit occur only after the owner
+   configures the external dependencies in the Alpha gate.
 
 Exit result:
 
@@ -454,10 +455,18 @@ needs them. Codex normally inspects the working tree directly.
 
 ## 8. Current execution pointer
 
-- Accepted waves: 1, 2, and 3.
-- Next eligible wave: Wave 4 covering technical Phases 4–5.
-- Active wave: none until Tauqueer authorizes the Wave 4 prompt.
-- Full smoke checkpoints: Wave 6 after Phase 8, and Wave 8 after Phase 11.
-- Frontend begins only in Wave 9 after Checkpoint B, the Alpha integration gate,
-  and owner authorization.
-- Phase prompts, correction prompts, and reports are delivered in chat only.
+- Waves 1–3 are accepted. Waves 4–10 are implemented on `develop` but are not
+  yet release-accepted.
+- The next work is the **Alpha integration and final-audit gate**, not another
+  implementation wave. Tauqueer will manually configure Google OIDC, Notion,
+  encryption/KMS, the selected MCP clients, and the test-only hosted environment
+  through the approved secret store; no credential belongs in the repository.
+- After that manual configuration, run the Alpha integration gate, fix only
+  evidence-backed defects, then perform one final end-to-end architecture,
+  security, contracts, lifecycle, and UX logic audit.
+- Run the combined Checkpoint A/B `make selfhost-smoke` once only after the fast
+  gates and final-audit prerequisites are green. Do not repeatedly run it during
+  ordinary corrections.
+- A final audit PASS and an explicit owner decision are required before any
+  release, merge to `main`, or beta claim. Phase prompts, correction prompts,
+  reports, raw logs, patches, and inventories remain in chat or `/tmp`.

@@ -42,7 +42,10 @@ export function emptyMemdotDocument(documentId: string): MemdotDocument {
 }
 
 /** Convert TipTap/ProseMirror JSON into a MemdotDocument envelope. */
-export function tipTapToMemdot(documentId: string, tipTapDoc: { type?: string; content?: unknown[] }): MemdotDocument {
+export function tipTapToMemdot(
+  documentId: string,
+  tipTapDoc: { type?: string; content?: unknown[] },
+): MemdotDocument {
   const blocks = (tipTapDoc.content ?? []).map((node) => normalizeBlock(node));
   return {
     schema: "memdot-document",

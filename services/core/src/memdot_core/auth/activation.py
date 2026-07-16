@@ -9,7 +9,7 @@ from memdot_core.auth.oidc import OidcClaims
 from memdot_core.db.models.tenancy import Account, HostedAdultAttestation
 from memdot_domain.ids import new_uuid7
 from memdot_domain.tenancy import AccountStatus
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 
@@ -103,6 +103,16 @@ def record_adult_attestation(
     account = session.get(Account, account_id)
     if account is None:
         raise AttestationRequiredError("account_missing")
+    existing = session.execute(
+        select(HostedAdultAttestation).where(
+            HostedAdultAttestation.account_id == account_id,
+            HostedAdultAttestation.user_id == user_id,
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        # Confirmation is canonical account state, not a one-time browser action.
+        account.status = AccountStatus.ACTIVE
+        return
     session.add(
         HostedAdultAttestation(
             id=new_uuid7(),

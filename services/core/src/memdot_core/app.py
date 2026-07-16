@@ -167,6 +167,11 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: object, _exc: Exception) -> JSONResponse:
+        logging.getLogger("memdot_core.unhandled").exception(
+            "unhandled_request_exception path=%s",
+            getattr(getattr(request, "url", None), "path", "unknown"),
+            exc_info=_exc,
+        )
         return problem_response(
             status=500,
             code=ErrorCode.INTERNAL_ERROR,

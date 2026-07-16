@@ -29,13 +29,22 @@ export default function SpaceDetailPage() {
         description={`Space ${spaceId}. Breadcrumb context for Library/Ask/Test defaults.`}
       />
       <div className="flex flex-wrap gap-3 text-sm">
-        <Link className="text-primary underline-offset-2 hover:underline" href={`/library?space=${spaceId}`}>
+        <Link
+          className="text-primary underline-offset-2 hover:underline"
+          href={`/library?space=${spaceId}`}
+        >
           Open Library
         </Link>
-        <Link className="text-primary underline-offset-2 hover:underline" href={`/ask?space=${spaceId}`}>
+        <Link
+          className="text-primary underline-offset-2 hover:underline"
+          href={`/ask?space=${spaceId}`}
+        >
           Ask in Space
         </Link>
-        <Link className="text-primary underline-offset-2 hover:underline" href={`/test?space=${spaceId}`}>
+        <Link
+          className="text-primary underline-offset-2 hover:underline"
+          href={`/test?space=${spaceId}`}
+        >
           Test in Space
         </Link>
       </div>

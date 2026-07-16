@@ -13,9 +13,7 @@ export function JobsPanel() {
       onClose={() => jobs.setOpen(false)}
       title="Jobs"
       description="Accepted work stays visible here. Core has no account-wide job list GET yet — this panel tracks jobs recorded from this browser session."
-      footer={
-        <Button label="Close" variant="secondary" onClick={() => jobs.setOpen(false)} />
-      }
+      footer={<Button label="Close" variant="secondary" onClick={() => jobs.setOpen(false)} />}
     >
       {jobs.jobs.length === 0 ? (
         <p className="text-meta m-0">No jobs recorded in this session.</p>

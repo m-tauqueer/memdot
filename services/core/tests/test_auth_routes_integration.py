@@ -180,6 +180,16 @@ def test_callback_pending_attestation_and_csrf(auth_client) -> None:
     session = auth_client.get("/api/v1/auth/session")
     assert session.status_code == 200
     assert session.json()["authenticated"] is True
+    assert session.json()["adult_attested"] is True
+
+    # A returning browser/device can safely reconfirm; canonical state is
+    # idempotent and never depends on a client-side onboarding marker.
+    repeated = auth_client.post(
+        "/api/v1/auth/attestation",
+        json={"confirmed": True},
+        headers={"x-csrf-token": csrf},
+    )
+    assert repeated.status_code == 200
 
 
 @pytest.mark.usefixtures("truncate_tables")

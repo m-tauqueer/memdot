@@ -42,7 +42,11 @@ export default function TodayPage() {
           <p className="text-label">Processing</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight">{jobs.activeCount}</p>
           <p className="text-meta mt-1">
-            <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => jobs.setOpen(true)}>
+            <button
+              type="button"
+              className="text-primary underline-offset-2 hover:underline"
+              onClick={() => jobs.setOpen(true)}
+            >
               Open jobs
             </button>
           </p>

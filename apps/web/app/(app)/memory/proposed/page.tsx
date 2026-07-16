@@ -92,7 +92,11 @@ export default function MemoryProposedPage() {
       <div className="mt-4 grid max-w-xl gap-3">
         <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} />
         <Input label="Target ID" value={targetId} onChange={(e) => setTargetId(e.target.value)} />
-        <Input label="Target type" value={targetType} onChange={(e) => setTargetType(e.target.value)} />
+        <Input
+          label="Target type"
+          value={targetType}
+          onChange={(e) => setTargetType(e.target.value)}
+        />
         <label className="md-field">
           <span className="md-label">Patch JSON</span>
           <textarea
@@ -107,9 +111,17 @@ export default function MemoryProposedPage() {
           disabled={busy || !spaceId || !targetId}
           onClick={() => void createLocalProposal()}
         />
-        <Input label="Proposal ID" value={proposalId} onChange={(e) => setProposalId(e.target.value)} />
+        <Input
+          label="Proposal ID"
+          value={proposalId}
+          onChange={(e) => setProposalId(e.target.value)}
+        />
         <div className="flex flex-wrap gap-2">
-          <Button label="Approve" disabled={busy || !proposalId} onClick={() => void decide("approve")} />
+          <Button
+            label="Approve"
+            disabled={busy || !proposalId}
+            onClick={() => void decide("approve")}
+          />
           <Button
             label="Reject"
             variant="danger"
@@ -121,7 +133,11 @@ export default function MemoryProposedPage() {
           <ul className="text-meta space-y-1">
             {local.map((row) => (
               <li key={row.id}>
-                <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => setProposalId(row.id)}>
+                <button
+                  type="button"
+                  className="text-primary underline-offset-2 hover:underline"
+                  onClick={() => setProposalId(row.id)}
+                >
                   {row.id}
                 </button>
               </li>

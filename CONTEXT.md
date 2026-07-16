@@ -11,22 +11,22 @@ Purpose: Durable starting context for Grok, Codex, and future implementation ses
   implementation-tracker documents.
 - Phase 1 monorepo scaffold is accepted at
   `4138239ea31eff267af3e9a9d9984ca51a763991`.
-- Phase 2 self-host infrastructure is **accepted after Codex PASS and owner
-  commit authorization**. Live
-  `make selfhost-smoke` passed on system `dockerd` (`unix:///var/run/docker.sock`)
-  as project `memdot-smoke-20260716024239-1851798` (Tex off, telemetry off;
-  durable canary effect count 1; accepted-work Hatchet restart; truthful
-  readiness degradation/recovery). Phase 3 is owner-authorized and active; its
-  implementation has not started.
-- No product domain schema, application authz, ingestion, retrieval, Learning,
-  MCP tools, Notion, or Tex provider wiring is claimed complete.
+- Phase 2 self-host infrastructure is **accepted** (Codex PASS; commit `2c96aa7`).
+  Phase 3 canonical PostgreSQL ledger, tenancy, identity, and authorization is
+  **accepted** in the commit containing this context update. Phase 4 has not
+  been owner-authorized.
+- Phase 3 delivers Alembic migrations (frozen SQL, not `create_all`), FORCE RLS with
+  Core-signed and time-bounded tenant context envelopes, atomic pointer/outbox writes,
+  evidence-ledger foundations, server-side OIDC authorization-code + PKCE routes, and
+  seeded per-table adversarial security tests. Ingestion, retrieval,
+  Learning product APIs, MCP tools, Notion, and Tex provider wiring remain Phase 4+.
 - Verified scaffold paths exist for apps/web, apps/mcp, services/core,
   services/workers, services/model-router, packages/contracts,
   packages/domain-python, packages/provider-adapters, packages/ui,
   infra/compose, infra/hosted, tests/benchmark, and tests/security.
-- Git branch `main` contains the accepted Phase 1 base and Phase 2 handoff; this
-  transition commit records the accepted self-host platform and Phase 3 start.
-- Verified commands are recorded in AGENTS.md and
+- Git branch `main` contains the accepted Phase 1, Phase 2, and Phase 3 work.
+  The full self-host smoke was not repeated during the final Phase 3 correction;
+  the prior green Phase 3 smoke remains accepted evidence. Verified commands are recorded in AGENTS.md and
   docs/ai/CODEBASE_CONTEXT_MAP.md.
 - This file must be updated whenever a phase changes verified repository state.
 
@@ -315,15 +315,16 @@ begins in Phase 12.
 
 ## 14. Current execution pointer
 
-- Active phase: Phase 3 — owner-authorized; implementation not started.
-- Builder prompt: supplied by Codex in the Phase 3 owner handoff.
+- Active phase: none — Phase 3 accepted; Phase 4 awaits owner authorization.
+- Builder prompt: none active.
 - Detailed checklist: IMPLEMENTATION_TRACKER.md Phase 3.
-- Current phase report: none for Phase 3.
-- Current Codex verdict: PASS for Phases 1 and 2.
-- Current accepted implementation: Phase 2 self-host platform in the commit recording this transition.
-- Phase 3 baseline is the accepted Phase 2 commit created with this transition.
+- Current phase report: `docs/execution/PHASE_03_CODEX_CORRECTION_REPORT.md`.
+- Current Codex verdict: PASS for Phases 1, 2, and 3.
+- Current accepted implementation: Phase 3 in the commit containing this context update.
+- Phase 3 baseline was `2c96aa7`; Phase 3 is now locally committed.
 - Verified commands: see AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
-- Phase 3 is authorized. Phase 4 remains unauthorized.
+- Phase 3 adds: `make migrate-domain`, `make check-rls`, `make phase3-gates`.
+- Phase 4 remains unauthorized.
 
 ## 15. Context maintenance
 

@@ -90,5 +90,8 @@ PHASE_02_CANDIDATE.patch
 PHASE_02_CANDIDATE.stat.txt
 docs/execution/PHASE_02_CANDIDATE.patch
 docs/execution/PHASE_02_UNTRACKED.txt
+docs/execution/PHASE_03_CANDIDATE.patch
+docs/execution/PHASE_03_CANDIDATE.stat.txt
+docs/execution/PHASE_03_UNTRACKED.txt
 /tmp/PHASE_02_*.patch
 /tmp/phase2-*

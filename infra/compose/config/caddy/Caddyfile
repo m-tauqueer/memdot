@@ -23,11 +23,12 @@
 	}
 
 	# Web health must win over Core /api/* proxy.
+	# Preserve /api prefix so Core OpenAPI routes (/api/v1/...) match TRD.
 	handle /api/health {
 		reverse_proxy web:3000
 	}
 
-	handle_path /api/* {
+	handle /api/* {
 		reverse_proxy core:8000
 	}
 

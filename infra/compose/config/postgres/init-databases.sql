@@ -13,6 +13,8 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'memdot_ops')\gexec
 
 \c memdot
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 \c memdot_ops
 CREATE EXTENSION IF NOT EXISTS vector;

@@ -6,44 +6,55 @@ or OpenBao Transit — never in image layers or committed state.
 
 Modes: `hosted` | `self_host` | `test` | `development`
 
-| Owner        | Key                               | Type        | Required modes      | Default                   | Secret | Reload  | Validation                     |
-| ------------ | --------------------------------- | ----------- | ------------------- | ------------------------- | ------ | ------- | ------------------------------ |
-| web          | `WEB_ENV`                         | enum        | all                 | `development`             | no     | restart | one of four modes              |
-| web          | `WEB_ALLOWED_ORIGINS`             | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`       |
-| web          | `WEB_OIDC_ISSUER`                 | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL when required     |
-| web          | `WEB_OIDC_AUDIENCE`               | string      | all                 | `memdot-web`              | no     | restart | non-empty                      |
-| web          | `WEB_TELEMETRY_EXPORT`            | string      | all                 | `off`                     | no     | restart | if enabled, endpoint required  |
-| web          | `WEB_OTEL_EXPORTER_OTLP_ENDPOINT` | URL         | when export on      | empty                     | no     | restart | absolute URL when export on    |
-| mcp          | `MCP_ENV`                         | enum        | all                 | required                  | no     | restart | one of four modes              |
-| mcp          | `MCP_HOST` / `MCP_PORT`           | host/port   | all                 | `0.0.0.0` / `8100`        | no     | restart | positive port                  |
-| mcp          | `MCP_OIDC_ISSUER`                 | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                   |
-| mcp          | `MCP_OIDC_DISCOVERY_URL`          | URL         | self_host (compose) | issuer                    | no     | restart | in-cluster discovery for ready |
-| mcp          | `MCP_OIDC_AUDIENCE`               | string      | self_host, hosted   | `memdot-mcp`              | no     | restart | non-empty                      |
-| mcp          | `MCP_ALLOWED_ORIGINS`             | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`       |
-| mcp          | `MCP_TELEMETRY_EXPORT`            | string      | all                 | `off`                     | no     | restart | endpoint required if enabled   |
-| mcp          | `MCP_PROVIDER_API_KEY`            | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys |
-| core         | `CORE_ENV`                        | enum        | all                 | `development`             | no     | restart | one of four modes              |
-| core         | `CORE_HOST` / `CORE_PORT`         | host/port   | all                 | `0.0.0.0` / `8000`        | no     | restart | positive port                  |
-| core         | `CORE_DATABASE_URL`               | DSN         | self_host, hosted   | empty                     | yes    | restart | absolute postgres URL          |
-| core         | `CORE_OBJECT_STORE_ENDPOINT`      | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                   |
-| core         | `CORE_OBJECT_STORE_ACCESS_KEY`    | string      | self_host           | empty                     | yes    | restart | required for S3 readiness      |
-| core         | `CORE_OBJECT_STORE_SECRET_KEY`    | string      | self_host           | empty                     | yes    | restart | required for S3 readiness      |
-| core         | `CORE_OIDC_ISSUER`                | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                   |
-| core         | `CORE_OIDC_AUDIENCE`              | string      | all                 | `memdot-core`             | no     | restart | non-empty                      |
-| core         | `CORE_OPENBAO_ADDR`               | URL         | self_host           | empty                     | no     | restart | absolute URL                   |
-| core         | `CORE_OPENBAO_TRANSIT_TOKEN_FILE` | path        | self_host           | `/run/secrets/...`        | yes    | restart | file token; not root/dev       |
-| core         | `CORE_OPENBAO_TRANSIT_TOKEN`      | token       | optional override   | empty                     | yes    | restart | reject placeholders/root       |
-| core         | `CORE_ALLOWED_ORIGINS`            | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`       |
-| core         | `CORE_TELEMETRY_EXPORT`           | string      | all                 | `off`                     | no     | restart | endpoint required if enabled   |
-| core         | `CORE_PROVIDER_API_KEY`           | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys |
-| workers      | `WORKERS_ENV`                     | enum        | all                 | `development`             | no     | restart | one of four modes              |
-| workers      | `WORKERS_HATCHET_HOST` / `PORT`   | host/port   | all                 | `hatchet-engine` / `7070` | no     | restart | non-empty host                 |
-| workers      | `WORKERS_TELEMETRY_EXPORT`        | string      | all                 | `off`                     | no     | restart | endpoint required if enabled   |
-| workers      | `WORKERS_PROVIDER_API_KEY`        | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys |
-| model-router | `MODEL_ROUTER_ENV`                | enum        | all                 | `development`             | no     | restart | one of four modes              |
-| model-router | `MODEL_ROUTER_TEX_ENABLED`        | bool        | all                 | `false`                   | no     | restart | must stay false until Phase 7  |
-| model-router | `MODEL_ROUTER_TELEMETRY_EXPORT`   | string      | all                 | `off`                     | no     | restart | endpoint required if enabled   |
-| model-router | `MODEL_ROUTER_PROVIDER_API_KEY`   | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys |
+| Owner        | Key                                 | Type        | Required modes      | Default                   | Secret | Reload  | Validation                                  |
+| ------------ | ----------------------------------- | ----------- | ------------------- | ------------------------- | ------ | ------- | ------------------------------------------- |
+| web          | `WEB_ENV`                           | enum        | all                 | `development`             | no     | restart | one of four modes                           |
+| web          | `WEB_ALLOWED_ORIGINS`               | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`                    |
+| web          | `WEB_OIDC_ISSUER`                   | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL when required                  |
+| web          | `WEB_OIDC_AUDIENCE`                 | string      | all                 | `memdot-web`              | no     | restart | non-empty                                   |
+| web          | `WEB_TELEMETRY_EXPORT`              | string      | all                 | `off`                     | no     | restart | if enabled, endpoint required               |
+| web          | `WEB_OTEL_EXPORTER_OTLP_ENDPOINT`   | URL         | when export on      | empty                     | no     | restart | absolute URL when export on                 |
+| mcp          | `MCP_ENV`                           | enum        | all                 | required                  | no     | restart | one of four modes                           |
+| mcp          | `MCP_HOST` / `MCP_PORT`             | host/port   | all                 | `0.0.0.0` / `8100`        | no     | restart | positive port                               |
+| mcp          | `MCP_OIDC_ISSUER`                   | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                                |
+| mcp          | `MCP_OIDC_DISCOVERY_URL`            | URL         | self_host (compose) | issuer                    | no     | restart | in-cluster discovery for ready              |
+| mcp          | `MCP_OIDC_AUDIENCE`                 | string      | self_host, hosted   | `memdot-mcp`              | no     | restart | non-empty                                   |
+| mcp          | `MCP_ALLOWED_ORIGINS`               | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`                    |
+| mcp          | `MCP_TELEMETRY_EXPORT`              | string      | all                 | `off`                     | no     | restart | endpoint required if enabled                |
+| mcp          | `MCP_PROVIDER_API_KEY`              | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys              |
+| core         | `CORE_ENV`                          | enum        | all                 | `development`             | no     | restart | one of four modes                           |
+| core         | `CORE_HOST` / `CORE_PORT`           | host/port   | all                 | `0.0.0.0` / `8000`        | no     | restart | positive port                               |
+| core         | `CORE_DATABASE_URL`                 | DSN         | self_host, hosted   | empty                     | yes    | restart | absolute postgres URL as **memdot_core**    |
+| core         | `MEMDOT_MIGRATION_DATABASE_URL`     | DSN         | migrate job         | empty                     | yes    | restart | absolute postgres URL as **memdot_migrate** |
+| core         | `MEMDOT_BOOTSTRAP_DATABASE_URL`     | DSN         | role bootstrap      | empty                     | yes    | restart | bootstrap superuser for role passwords      |
+| core         | `CORE_SESSION_SIGNING_PEPPER`       | string      | self_host, hosted   | dev placeholder           | yes    | restart | session hashing pepper (≥16)                |
+| core         | `CORE_TENANT_CONTEXT_SIGNING_KEY`   | string      | self_host, hosted   | dev placeholder           | yes    | restart | Core signs RLS context envelopes (≥32)      |
+| migrate      | `MEMDOT_TENANT_CONTEXT_SIGNING_KEY` | string      | migrate job         | empty                     | yes    | restart | same key installed into protected DB state  |
+| db-roles     | `MEMDOT_MIGRATE_PASSWORD`           | string      | self_host           | materialized              | yes    | restart | migrate role password                       |
+| db-roles     | `MEMDOT_CORE_PASSWORD`              | string      | self_host           | materialized              | yes    | restart | runtime role password                       |
+| db-roles     | `MEMDOT_TEST_ADMIN_PASSWORD`        | string      | test                | materialized              | yes    | restart | disposable test admin                       |
+| core         | `CORE_OBJECT_STORE_ENDPOINT`        | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                                |
+| core         | `CORE_OBJECT_STORE_ACCESS_KEY`      | string      | self_host           | empty                     | yes    | restart | required for S3 readiness                   |
+| core         | `CORE_OBJECT_STORE_SECRET_KEY`      | string      | self_host           | empty                     | yes    | restart | required for S3 readiness                   |
+| core         | `CORE_OIDC_ISSUER`                  | URL         | self_host, hosted   | empty                     | no     | restart | absolute URL                                |
+| core         | `CORE_OIDC_AUDIENCE`                | string      | all                 | `memdot-core`             | no     | restart | non-empty                                   |
+| core         | `CORE_OIDC_CLIENT_ID`               | string      | self_host, hosted   | `memdot-core`             | no     | restart | registered confidential OIDC client         |
+| core         | `CORE_OIDC_CLIENT_SECRET`           | string      | self_host, hosted   | empty                     | yes    | restart | server-side authorization-code exchange     |
+| core         | `CORE_OIDC_REDIRECT_URI`            | URL         | self_host, hosted   | local callback            | no     | restart | exact registered callback URI               |
+| core         | `CORE_OPENBAO_ADDR`                 | URL         | self_host           | empty                     | no     | restart | absolute URL                                |
+| core         | `CORE_OPENBAO_TRANSIT_TOKEN_FILE`   | path        | self_host           | `/run/secrets/...`        | yes    | restart | file token; not root/dev                    |
+| core         | `CORE_OPENBAO_TRANSIT_TOKEN`        | token       | optional override   | empty                     | yes    | restart | reject placeholders/root                    |
+| core         | `CORE_ALLOWED_ORIGINS`              | CSV origins | all                 | `http://localhost:3000`   | no     | restart | absolute http(s), no `*`                    |
+| core         | `CORE_TELEMETRY_EXPORT`             | string      | all                 | `off`                     | no     | restart | endpoint required if enabled                |
+| core         | `CORE_PROVIDER_API_KEY`             | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys              |
+| workers      | `WORKERS_ENV`                       | enum        | all                 | `development`             | no     | restart | one of four modes                           |
+| workers      | `WORKERS_HATCHET_HOST` / `PORT`     | host/port   | all                 | `hatchet-engine` / `7070` | no     | restart | non-empty host                              |
+| workers      | `WORKERS_TELEMETRY_EXPORT`          | string      | all                 | `off`                     | no     | restart | endpoint required if enabled                |
+| workers      | `WORKERS_PROVIDER_API_KEY`          | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys              |
+| model-router | `MODEL_ROUTER_ENV`                  | enum        | all                 | `development`             | no     | restart | one of four modes                           |
+| model-router | `MODEL_ROUTER_TEX_ENABLED`          | bool        | all                 | `false`                   | no     | restart | must stay false until Phase 7               |
+| model-router | `MODEL_ROUTER_TELEMETRY_EXPORT`     | string      | all                 | `off`                     | no     | restart | endpoint required if enabled                |
+| model-router | `MODEL_ROUTER_PROVIDER_API_KEY`     | string      | optional            | empty                     | yes    | restart | reject plaintext provider keys              |
 
 ## Readiness dependency classes (Phase 2)
 
@@ -69,7 +80,8 @@ Modes: `hosted` | `self_host` | `test` | `development`
 | File                                          | Purpose                                                                          |
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
 | `infra/compose/.env`                          | Non-secret operator overrides (ports, modes)                                     |
-| `infra/compose/secrets/postgres.env`          | Postgres password                                                                |
+| `infra/compose/secrets/postgres.env`          | Postgres bootstrap password                                                      |
+| `infra/compose/secrets/db-roles.env`          | memdot_migrate / memdot_core / memdot_test_admin passwords + migration URLs      |
 | `infra/compose/secrets/hatchet.env`           | Hatchet `DATABASE_URL` (not `HATCHET_DATABASE_URL`)                              |
 | `infra/compose/secrets/keycloak.env`          | Keycloak admin + DB password                                                     |
 | `infra/compose/secrets/openbao.env`           | `BAO_ADDR` only (no root/dev token env)                                          |

@@ -1,5 +1,5 @@
 .PHONY: bootstrap format format-check lint typecheck test contracts docs-validate build containers container-smoke check clean workspace-list \
-	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke
+	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke migrate-domain check-rls phase3-gates
 
 COMPOSE_DIR := infra/compose
 COMPOSE_ENV := $(COMPOSE_DIR)/.env
@@ -89,6 +89,15 @@ compose-logs:
 selfhost-smoke:
 	MEMDOT_HTTP_PORT=$(MEMDOT_HTTP_PORT) MEMDOT_HTTPS_PORT=$(MEMDOT_HTTPS_PORT) \
 		bash infra/compose/scripts/selfhost_smoke.sh
+
+migrate-domain:
+	bash scripts/migrate_domain.sh
+
+check-rls:
+	bash scripts/check_rls_registry.sh
+
+phase3-gates: migrate-domain check-rls
+	uv run pytest services/core/tests tests/security -q
 
 check: format-check lint typecheck test contracts docs-validate build
 	./scripts/check_focused_tests.sh

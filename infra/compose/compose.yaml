@@ -263,9 +263,12 @@ services:
     env_file:
       - path: ${MEMDOT_SECRETS_DIR:-./secrets}/postgres.env
         required: true
+      - path: ${MEMDOT_SECRETS_DIR:-./secrets}/db-roles.env
+        required: true
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./config/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+      - ./config/postgres/02-app-roles.sh:/docker-entrypoint-initdb.d/02-app-roles.sh:ro
     deploy:
       resources:
         limits:

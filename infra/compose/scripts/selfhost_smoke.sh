@@ -377,7 +377,71 @@ if bash "$COMPOSE_DIR/scripts/postgres_restore.sh" "$LOG_DIR/bad.dump" "$RESTORE
 fi
 
 echo "== migration seam =="
+set -a
+# shellcheck disable=SC1091
+source "$MEMDOT_SECRETS_DIR/db-roles.env"
+# shellcheck disable=SC1091
+source "$MEMDOT_SECRETS_DIR/core.env"
+set +a
+# Host-side migrate against published test postgres port
+PG_HOST="127.0.0.1"
+PG_PORT="15432"
+rewrite_pg_url() {
+  local url="$1"
+  echo "$url" | sed -E "s/@postgres:5432/@${PG_HOST}:${PG_PORT}/"
+}
+export MEMDOT_MIGRATION_DATABASE_URL="$(rewrite_pg_url "$MEMDOT_MIGRATION_DATABASE_URL")"
+export MEMDOT_BOOTSTRAP_DATABASE_URL="$(rewrite_pg_url "$MEMDOT_BOOTSTRAP_DATABASE_URL")"
+export MEMDOT_MIGRATION_DATABASE_URL_OVERRIDE="$MEMDOT_MIGRATION_DATABASE_URL"
+export MEMDOT_BOOTSTRAP_DATABASE_URL_OVERRIDE="$MEMDOT_BOOTSTRAP_DATABASE_URL"
+export MEMDOT_PG_HOST="$PG_HOST"
+export MEMDOT_PG_PORT="$PG_PORT"
+bash "$COMPOSE_DIR/scripts/ensure_db_roles.sh"
 bash "$COMPOSE_DIR/scripts/migration_job.sh" self_host
+
+echo "== phase3 runtime role + auth smoke =="
+export CORE_URL="$(rewrite_pg_url "$CORE_DATABASE_URL")"
+export MIGRATE_URL="$MEMDOT_MIGRATION_DATABASE_URL"
+uv run python - <<'PY'
+import os
+from sqlalchemy import create_engine, text
+
+def normalize(url: str) -> str:
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        return "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url
+
+core = create_engine(normalize(os.environ["CORE_URL"]))
+with core.connect() as conn:
+    user = conn.execute(text("SELECT current_user")).scalar()
+    assert user == "memdot_core", user
+    bypass = conn.execute(
+        text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
+    ).scalar()
+    assert bypass is False
+    owner = conn.execute(
+        text(
+            """
+            SELECT pg_get_userbyid(c.relowner) FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname='public' AND c.relname='account'
+            """
+        )
+    ).scalar()
+    assert owner == "memdot_migrate", owner
+migrate = create_engine(normalize(os.environ["MIGRATE_URL"]))
+with migrate.connect() as conn:
+    ver = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+    assert ver == "20260716_0001", ver
+print("core_runtime_role_ok")
+PY
+
+AUTH_CODE="$(curl -sk -o /tmp/memdot-auth-session.json -w '%{http_code}' \
+  "${MEMDOT_PUBLIC_URL}/api/v1/auth/session" || true)"
+[[ "$AUTH_CODE" == "401" ]] || { echo "auth_session_expected_401 got=$AUTH_CODE" >&2; exit 1; }
+echo "auth_session_endpoint_ok status=$AUTH_CODE"
 
 echo "== restart recovery =="
 MEMDOT_SECRETS_DIR="$MEMDOT_SECRETS_DIR" MEMDOT_ENV_FILE="$MEMDOT_ENV_FILE" \

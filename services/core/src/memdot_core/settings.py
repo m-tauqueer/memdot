@@ -35,6 +35,19 @@ class CoreSettings(BaseSettings):
     telemetry_export: str = "off"
     otel_exporter_otlp_endpoint: str = ""
     provider_api_key: str = ""
+    session_signing_pepper: str = Field(default="dev-session-pepper-change-me", min_length=16)
+    tenant_context_signing_key: str = Field(
+        default="dev-tenant-context-signing-key-change-me", min_length=32
+    )
+    oidc_client_id: str = "memdot-core"
+    oidc_client_secret: str = ""
+    oidc_redirect_uri: str = "http://localhost:8000/api/v1/auth/oidc/callback"
+
+    def is_hosted(self) -> bool:
+        return normalize_mode(self.env) == "hosted"
+
+    def is_self_host(self) -> bool:
+        return normalize_mode(self.env) == "self_host"
 
     def resolve_transit_token(self) -> str:
         if self.openbao_transit_token.strip():
@@ -48,6 +61,7 @@ class CoreSettings(BaseSettings):
         reject_blank("CORE_ENV", self.env)
         mode = normalize_mode(self.env)
         reject_blank("CORE_OIDC_AUDIENCE", self.oidc_audience)
+        reject_blank("CORE_OIDC_CLIENT_ID", self.oidc_client_id)
         for origin in self.allowed_origins.split(","):
             reject_unsafe_origin("CORE_ALLOWED_ORIGINS", origin)
         reject_enabled_exporter_without_endpoint(
@@ -63,6 +77,17 @@ class CoreSettings(BaseSettings):
             reject_malformed_url("CORE_DATABASE_URL", self.database_url)
             reject_malformed_url("CORE_OBJECT_STORE_ENDPOINT", self.object_store_endpoint)
             reject_malformed_url("CORE_OIDC_ISSUER", self.oidc_issuer)
+            reject_malformed_url("CORE_OIDC_REDIRECT_URI", self.oidc_redirect_uri)
+            reject_production_placeholder(
+                "CORE_TENANT_CONTEXT_SIGNING_KEY",
+                self.tenant_context_signing_key,
+                mode=mode,
+            )
+            reject_production_placeholder(
+                "CORE_SESSION_SIGNING_PEPPER",
+                self.session_signing_pepper,
+                mode=mode,
+            )
             if not self.oidc_audience.strip():
                 msg = "CORE_OIDC_AUDIENCE must be set when CORE_OIDC_ISSUER is configured"
                 raise ValueError(msg)

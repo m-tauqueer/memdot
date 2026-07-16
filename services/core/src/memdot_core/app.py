@@ -22,9 +22,13 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     app = FastAPI(
         title="Memdot Core API",
         version="0.1.0",
-        description="Canonical domain API skeleton. Product routes arrive in later phases.",
+        description="Canonical domain API. Phase 3 adds tenancy, ledger schema, and auth routes.",
     )
     app.state.settings = resolved
+
+    from memdot_core.auth.routes import router as auth_router
+
+    app.include_router(auth_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

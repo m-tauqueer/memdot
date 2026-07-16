@@ -54,7 +54,7 @@ make clean          # remove local caches/artifacts
 make workspace-list # discover pnpm and uv workspace members
 ```
 
-## Verified Phase 2 commands (candidate pending Codex audit)
+## Verified Phase 2 commands
 
 ```bash
 make compose-config   # render Compose + policy validation (Tex absent, digests, exposure)
@@ -65,7 +65,17 @@ make compose-down     # stop stack; preserves named volumes
 make selfhost-smoke   # bounded end-to-end infra smoke (TLS, OIDC, durability, canary)
 ```
 
+## Verified Phase 3 commands
+
+```bash
+make migrate-domain # explicit Alembic upgrade as memdot_migrate
+make check-rls      # live RLS registry gate against PostgreSQL
+make phase3-gates   # migrate-domain + check-rls + targeted pytest
+```
+
 Operator docs: `infra/compose/README.md`. Image digests: `infra/compose/images.lock.yaml`.
+Separate DB roles: `memdot_migrate` (owner/BYPASSRLS), `memdot_core` (runtime/NOBYPASSRLS),
+`memdot_test_admin` (disposable tests). Secrets: `infra/compose/secrets/db-roles.env.example`.
 
 Package managers: `pnpm@11.5.2`, `uv` with lockfile `uv.lock`.
 Node engines: `>=22 <23` (pinned via `.nvmrc` to 22).

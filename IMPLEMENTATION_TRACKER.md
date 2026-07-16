@@ -85,7 +85,7 @@ Architecture baseline: 2026-07-15 founding documentation
 
 - [x] Phase 1 — Repository foundation and production-grade monorepo structure
 - [x] Phase 2 — Self-host infrastructure and local developer platform
-- [ ] Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
+- [x] Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
 - [ ] Phase 4 — Core API, durable transactions, workflows, and object storage
 - [ ] Phase 5 — Source ingestion, parsing, OCR, normalization, and reprocessing
 - [ ] Phase 6 — Rich documents, canonical memory, conflicts, and proposed writes
@@ -228,67 +228,68 @@ Primary contracts: TRD-DATA-001..012, TRD-SEC-001, TRD-SEC-013, FSD-AUTH-*, FSD-
 
 ## Micro-phase 3.1 — Migration framework and tenancy schema
 
-- [ ] Configure SQLAlchemy and Alembic with separate runtime and migration roles.
-- [ ] Add UUIDv7 identity generation, immutable created metadata, and deterministic-ID utilities where the TRD requires UUIDv5.
-- [ ] Create account, user, account_member, space, space_member, age-attestation, and session/grant foundations.
-- [ ] Put account_id on every account-owned row and space_id on every space-owned row.
-- [ ] Add composite foreign-key or trigger validation preventing cross-account attachment.
-- [ ] Enable and FORCE PostgreSQL RLS on every account-owned table.
-- [ ] Add request-scoped app.account_id, app.actor_id, and app.purpose handling with pooled-connection reset.
-- [ ] Ensure runtime roles have no BYPASSRLS and cannot disable row security.
-- [ ] Run clean migration, repeat migration, schema-diff, and migration-role tests.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Configure SQLAlchemy and Alembic with separate runtime and migration roles.
+- [x] Add UUIDv7 identity generation, immutable created metadata, and deterministic-ID utilities where the TRD requires UUIDv5.
+- [x] Create account, user, account_member, space, space_member, age-attestation, and session/grant foundations.
+- [x] Put account_id on every account-owned row and space_id on every space-owned row.
+- [x] Add composite foreign-key or trigger validation preventing cross-account attachment.
+- [x] Enable and FORCE PostgreSQL RLS on every account-owned table.
+- [x] Add request-scoped app.account_id, app.actor_id, and app.purpose handling with pooled-connection reset.
+- [x] Ensure runtime roles have no BYPASSRLS and cannot disable row security.
+- [x] Run clean migration, repeat migration, schema-diff, and migration-role tests.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Micro-phase 3.2 — Evidence-ledger foundations
 
-- [ ] Create canonical source, source_revision, blob metadata, authored-document, document_revision, parse-run, element, provenance, truth-class, conflict-set, proposal, conversation, audit, and current-pointer foundations needed by later phases.
-- [ ] Separate immutable revisions and events from mutable current pointers.
-- [ ] Add canonical outbox_event, idempotency_record, job, job_attempt, and projection-state foundations.
-- [ ] Implement truth classes: source assertion, user assertion, external knowledge, derived proposal, approved derived, learner evidence, and system metadata.
-- [ ] Preserve conflicts and supersession without deleting historical evidence.
-- [ ] Add database constraints for immutable revisions, append-only event tables, and valid current-pointer ownership.
-- [ ] Add schema ownership notes mapping each table to Core, workers, or derived providers.
-- [ ] Run constraint, immutability, provenance, and cross-account attachment tests.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Create canonical source, source_revision, blob metadata, authored-document, document_revision, parse-run, element, provenance, truth-class, conflict-set, proposal, conversation, audit, and current-pointer foundations needed by later phases.
+- [x] Separate immutable revisions and events from mutable current pointers.
+- [x] Add canonical outbox_event, idempotency_record, job, job_attempt, and projection-state foundations.
+- [x] Implement truth classes: source assertion, user assertion, external knowledge, derived proposal, approved derived, learner evidence, and system metadata.
+- [x] Preserve conflicts and supersession without deleting historical evidence.
+- [x] Add database constraints for immutable revisions, append-only event tables, and valid current-pointer ownership.
+- [x] Add schema ownership notes mapping each table to Core, workers, or derived providers.
+- [x] Run constraint, immutability, provenance, and cross-account attachment tests.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Micro-phase 3.3 — Hosted Google authentication and self-host OIDC
 
-- [ ] Implement OIDC validation behind an issuer adapter.
-- [ ] Configure hosted mode to accept Google sign-in only through the documented broker.
-- [ ] Configure self-host mode for an operator-supplied OIDC issuer and first-operator bootstrap.
-- [ ] Require explicit 18+ self-attestation before creating an active hosted content account.
-- [ ] Reject a declined or missing attestation without collecting date of birth or identity documents.
-- [ ] Implement secure same-site browser sessions, CSRF protection, rotation, logout, recent-auth markers, and revocation.
-- [ ] Keep Keycloak authentication claims separate from product permissions and Private-Space rules.
-- [ ] Add issuer, audience, expiry, nonce, replay, CSRF, session-fixation, logout, and recent-auth tests.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Implement OIDC validation behind an issuer adapter.
+- [x] Configure hosted mode to accept Google sign-in only through the documented broker.
+- [x] Configure self-host mode for an operator-supplied OIDC issuer and first-operator bootstrap.
+- [x] Require explicit 18+ self-attestation before creating an active hosted content account.
+- [x] Reject a declined or missing attestation without collecting date of birth or identity documents.
+- [x] Implement secure same-site browser sessions, CSRF protection, rotation, logout, recent-auth markers, and revocation.
+- [x] Keep Keycloak authentication claims separate from product permissions and Private-Space rules.
+- [x] Add issuer, audience, expiry, nonce, replay, CSRF, session-fixation, logout, and recent-auth tests.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Micro-phase 3.4 — RLS and authorization adversarial suite
 
-- [ ] Build reusable account, actor, purpose, Space, Private-Space, and external-client test factories.
-- [ ] Test first-party versus external-AI eligibility as separate policies.
-- [ ] Prove external clients cannot read, infer, write into, enumerate, or receive errors revealing Private Spaces.
-- [ ] Test pooled-connection context reset and malicious transaction-setting attempts.
-- [ ] Test every current account-owned table for cross-account reads, writes, foreign-key attachment, pagination, and error leakage.
-- [ ] Add CI enforcement requiring new account-owned tables to register RLS and adversarial tests.
-- [ ] Run the Phase 3 cross-account matrix with zero leakage.
-- [ ] Record the micro-phase self-check in working notes and continue only if it passes.
-- [ ] Grok self-check: PENDING.
+- [x] Build reusable account, actor, purpose, Space, Private-Space, and external-client test factories.
+- [x] Test first-party versus external-AI eligibility as separate policies.
+- [x] Prove external clients cannot read, infer, write into, enumerate, or receive errors revealing Private Spaces.
+- [x] Test pooled-connection context reset and malicious transaction-setting attempts.
+- [x] Test every current account-owned table for cross-account reads, writes, foreign-key attachment, pagination, and error leakage.
+- [x] Add CI enforcement requiring new account-owned tables to register RLS and adversarial tests.
+- [x] Run the Phase 3 cross-account matrix with zero leakage.
+- [x] Record the micro-phase self-check in working notes and continue only if it passes.
+- [x] Grok self-check: PASS.
 
 ## Phase 3 exit gate
 
-- [ ] Migrations produce the same validated schema on a clean database and an upgraded database.
-- [ ] PostgreSQL is the enforceable authorization join point, not merely an application convention.
-- [ ] Hosted Google-only authentication, self-host OIDC, 18+ activation, sessions, CSRF, and recent authentication work as specified.
-- [ ] Every implemented account-owned table has FORCE RLS and passing adversarial tests.
-- [ ] Immutable revisions, append-only events, truth classes, conflicts, and canonical pointers are structurally enforced.
-- [ ] No Keycloak, Tex, provider, or UI claim can override product authorization.
-- [ ] Grok submits one consolidated Phase 3 report using docs/execution/PHASE_REPORT_TEMPLATE.md.
-- [ ] Codex performs a complete Phase 3 data and authorization audit and returns PASS.
-- [ ] Tauqueer explicitly authorizes the Phase 3 commit(s) and start of Phase 4.
+- [x] Migrations produce the same validated schema on a clean database and an upgraded database.
+- [x] PostgreSQL is the enforceable authorization join point, not merely an application convention.
+- [x] Hosted Google-only authentication, self-host OIDC, 18+ activation, sessions, CSRF, and recent authentication work as specified (API layer).
+- [x] Every implemented account-owned table has FORCE RLS and passing adversarial tests.
+- [x] Immutable revisions, append-only events, truth classes, conflicts, and canonical pointers are structurally enforced.
+- [x] No Keycloak, Tex, provider, or UI claim can override product authorization.
+- [x] Grok submits one consolidated Phase 3 report using docs/execution/PHASE_REPORT_TEMPLATE.md.
+- [x] Codex performs a complete Phase 3 data and authorization audit and returns PASS after direct corrections.
+- [x] Tauqueer explicitly authorizes the Phase 3 local commit.
+- [ ] Tauqueer explicitly authorizes the start of Phase 4.
 
 # Phase 4 — Core API, durable transactions, workflows, and object storage
 
@@ -1156,15 +1157,15 @@ Primary contracts: PRD section 14, FSD-AC-001..024, TRD section 14, System Archi
 
 # 5. Progress and decision log
 
-- [x] Current active macro-phase: Phase 3 — owner-authorized; implementation not started.
-- [ ] Current internal micro-phase: Phase 3.1 not started.
-- [ ] Current Grok phase report: NONE for Phase 3.
-- [x] Current Codex verdict: PASS for Phases 1 and 2.
-- [x] Current owner decision: Phase 2 commit and Phase 3 start authorized.
+- [x] Current active macro-phase: none — Phase 3 accepted; Phase 4 awaits owner authorization.
+- [x] Current internal micro-phase: Phase 3.4 complete.
+- [x] Current phase report: `docs/execution/PHASE_03_CODEX_CORRECTION_REPORT.md`.
+- [x] Current Codex verdict: PASS for Phases 1, 2, and 3.
+- [x] Current owner decision: Phase 3 local commit authorized; Phase 4 not authorized.
 - [ ] Current blocker: NONE.
-- [x] Last accepted implementation: Phase 2 self-host platform in the commit recording this transition.
+- [x] Last accepted implementation: Phase 3 canonical tenancy, ledger, identity, and authorization.
 - [x] Last verified environment: Node 22 (`.nvmrc` / CI / containers); Python 3.12 (`.python-version` / CI / containers); pnpm 11.5.2; uv with `uv.lock`; Docker Compose v5.3.0.
-- [x] Last documentation synchronization: 2026-07-16 Phase 2 accepted and Phase 3 started by owner decision.
+- [x] Last documentation synchronization: 2026-07-16 Phase 3 accepted after direct security corrections.
 
 ## Accepted macro-phase record template
 

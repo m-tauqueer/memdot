@@ -70,6 +70,38 @@ if should_materialize "$SECRETS/postgres.env"; then
   chmod 600 "$SECRETS/postgres.env"
 fi
 
+MIGRATE_PASSWORD="$(rand_secret)"
+CORE_DB_PASSWORD="$(rand_secret)"
+TEST_ADMIN_PASSWORD="$(rand_secret)"
+TENANT_CONTEXT_SIGNING_KEY="$(rand_secret)$(rand_secret)"
+if [[ -f "$SECRETS/db-roles.env" && "${FORCE_REMATERIALIZE:-}" != "1" ]]; then
+  MIGRATE_PASSWORD="$(grep '^MEMDOT_MIGRATE_PASSWORD=' "$SECRETS/db-roles.env" | cut -d= -f2-)"
+  CORE_DB_PASSWORD="$(grep '^MEMDOT_CORE_PASSWORD=' "$SECRETS/db-roles.env" | cut -d= -f2-)"
+  TEST_ADMIN_PASSWORD="$(grep '^MEMDOT_TEST_ADMIN_PASSWORD=' "$SECRETS/db-roles.env" | cut -d= -f2-)"
+  TENANT_CONTEXT_SIGNING_KEY="$(grep '^MEMDOT_TENANT_CONTEXT_SIGNING_KEY=' "$SECRETS/db-roles.env" | cut -d= -f2-)"
+fi
+if should_materialize "$SECRETS/db-roles.env"; then
+  cat >"$SECRETS/db-roles.env" <<EOF
+MEMDOT_MIGRATE_PASSWORD=${MIGRATE_PASSWORD}
+MEMDOT_CORE_PASSWORD=${CORE_DB_PASSWORD}
+MEMDOT_TEST_ADMIN_PASSWORD=${TEST_ADMIN_PASSWORD}
+MEMDOT_TENANT_CONTEXT_SIGNING_KEY=${TENANT_CONTEXT_SIGNING_KEY}
+MEMDOT_MIGRATION_DATABASE_URL=postgres://memdot_migrate:${MIGRATE_PASSWORD}@postgres:5432/memdot
+MEMDOT_TEST_ADMIN_DATABASE_URL=postgres://memdot_test_admin:${TEST_ADMIN_PASSWORD}@postgres:5432/memdot
+MEMDOT_BOOTSTRAP_DATABASE_URL=postgres://memdot:${POSTGRES_PASSWORD}@postgres:5432/memdot
+EOF
+  chmod 600 "$SECRETS/db-roles.env"
+else
+  set -a
+  # shellcheck source=/dev/null
+  source "$SECRETS/db-roles.env"
+  set +a
+  MIGRATE_PASSWORD="${MEMDOT_MIGRATE_PASSWORD}"
+  CORE_DB_PASSWORD="${MEMDOT_CORE_PASSWORD}"
+  TEST_ADMIN_PASSWORD="${MEMDOT_TEST_ADMIN_PASSWORD}"
+  TENANT_CONTEXT_SIGNING_KEY="${MEMDOT_TENANT_CONTEXT_SIGNING_KEY}"
+fi
+
 if should_materialize "$SECRETS/hatchet.env"; then
   printf 'DATABASE_URL=postgres://memdot:%s@postgres:5432/hatchet?sslmode=disable\n' "$POSTGRES_PASSWORD" >"$SECRETS/hatchet.env"
   chmod 600 "$SECRETS/hatchet.env"
@@ -121,7 +153,9 @@ fi
 if should_materialize "$SECRETS/core.env"; then
   cat >"$SECRETS/core.env" <<EOF
 CORE_ENV=self_host
-CORE_DATABASE_URL=postgres://memdot:${POSTGRES_PASSWORD}@postgres:5432/memdot
+CORE_DATABASE_URL=postgres://memdot_core:${CORE_DB_PASSWORD}@postgres:5432/memdot
+MEMDOT_MIGRATION_DATABASE_URL=postgres://memdot_migrate:${MIGRATE_PASSWORD}@postgres:5432/memdot
+MEMDOT_BOOTSTRAP_DATABASE_URL=postgres://memdot:${POSTGRES_PASSWORD}@postgres:5432/memdot
 CORE_OBJECT_STORE_ENDPOINT=http://seaweedfs:8333
 CORE_OBJECT_STORE_ACCESS_KEY=${SEAWEED_ACCESS}
 CORE_OBJECT_STORE_SECRET_KEY=${SEAWEED_SECRET}
@@ -132,6 +166,11 @@ CORE_OPENBAO_ADDR=http://openbao:8200
 CORE_OPENBAO_TRANSIT_TOKEN_FILE=/run/secrets/openbao_transit_token
 CORE_TELEMETRY_EXPORT=off
 CORE_OTEL_EXPORTER_OTLP_ENDPOINT=
+CORE_SESSION_SIGNING_PEPPER=$(rand_secret)
+CORE_TENANT_CONTEXT_SIGNING_KEY=${TENANT_CONTEXT_SIGNING_KEY}
+CORE_OIDC_CLIENT_ID=memdot-core
+CORE_OIDC_CLIENT_SECRET=${KEYCLOAK_CORE_CLIENT_SECRET}
+CORE_OIDC_REDIRECT_URI=https://localhost:8443/api/v1/auth/oidc/callback
 EOF
   chmod 600 "$SECRETS/core.env"
 fi

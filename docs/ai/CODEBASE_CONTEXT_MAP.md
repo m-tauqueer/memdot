@@ -1,8 +1,8 @@
 # Codebase Context Map for AI Agents
 
-Version: **3 — Phase 2 accepted; Phase 3 active**
+Version: **3.2 — Phase 3 accepted**
 Date: **2026-07-16**
-Implementation status: **Phases 1–2 are accepted. The Tex-disabled self-host Compose, configuration, secrets, readiness, durability, and operational smoke platform is implemented. Phase 3 is owner-authorized but no product schema or authorization behavior is implemented yet.**
+Implementation status: **Phases 1–3 are accepted. Phase 3 provides the canonical ledger, Core-signed protected RLS context, atomic pointer/outbox writes, and server-side OIDC code + PKCE auth. Phase 4 remains unauthorized.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -198,7 +198,7 @@ make clean
 make workspace-list
 ```
 
-Verified Phase 2 commands (candidate pending Codex audit):
+Verified Phase 2 commands:
 
 ```bash
 make compose-config
@@ -209,8 +209,16 @@ make compose-down
 make selfhost-smoke
 ```
 
+Verified Phase 3 commands:
+
+```bash
+make migrate-domain
+make check-rls
+make phase3-gates
+```
+
 Operator entrypoints live under `infra/compose/` (`README.md`, `images.lock.yaml`,
-`scripts/`).
+`scripts/`). Domain migrations use `memdot_migrate`; Core runtime uses `memdot_core`.
 
 Contract generation:
 

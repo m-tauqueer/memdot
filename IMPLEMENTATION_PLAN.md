@@ -472,11 +472,11 @@ Codex audits the complete phase, not Grok's summary alone.
 
 ## 8. Current execution pointer
 
-- Active phase: Phase 3 — owner-authorized; implementation not started.
+- Active phase: Phase 3 — accepted and authorized for local commit; Phase 4 is not authorized.
 - Phase prompt: supplied by Codex in the Phase 3 owner handoff.
-- Current implementation: Phase 1 scaffold and Phase 2 self-host platform accepted; no Phase 3 schema or authorization behavior implemented yet.
+- Current implementation: Phase 1 scaffold, Phase 2 self-host platform, and Phase 3 canonical tenancy, ledger, identity, and authorization are accepted.
 - Current code commands: verified in AGENTS.md / Codebase Context Map.
-- Current phase report: none for Phase 3.
-- Current Codex verdict: PASS for Phases 1 and 2.
-- Previous Codex verdict: Phase 2 PASS after three correction rounds and a hygiene revision.
-- Current accepted implementation: Phase 2 self-host platform in the commit that records this transition.
+- Current phase report: `docs/execution/PHASE_03_CODEX_CORRECTION_REPORT.md`.
+- Current Codex verdict: PASS for Phases 1, 2, and 3.
+- Previous correction history: Phase 3 required Grok round 1 and direct Codex security corrections.
+- Current accepted implementation: Phase 3 in the commit containing this pointer update.

@@ -20,6 +20,7 @@ technical requirements.
 
 - [Phase 1 Grok Prompt](PHASE_01_GROK_PROMPT.md)
 - [Phase 2 Grok Prompt](PHASE_02_GROK_PROMPT.md)
+- [Phase 3 Codex Correction and Acceptance Report](PHASE_03_CODEX_CORRECTION_REPORT.md)
 - [Phase Report Template](PHASE_REPORT_TEMPLATE.md)
 
 Add later phase prompts only after the preceding phase receives a Codex PASS, so

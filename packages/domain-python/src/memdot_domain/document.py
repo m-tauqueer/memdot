@@ -181,7 +181,8 @@ def canonical_document_json(doc: MemdotDocument | dict[str, Any]) -> str:
     if isinstance(doc, MemdotDocument):
         data = doc.model_dump(mode="json", by_alias=True)
     else:
-        data = doc
+        # Normalize dict payloads through the model so hashes match validated docs.
+        data = MemdotDocument.model_validate(doc).model_dump(mode="json", by_alias=True)
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
 
 

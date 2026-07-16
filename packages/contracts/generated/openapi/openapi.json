@@ -174,6 +174,26 @@
         "title": "AppendEventBody",
         "type": "object"
       },
+      "AppendTurnBody": {
+        "properties": {
+          "auto_native": {
+            "default": true,
+            "title": "Auto Native",
+            "type": "boolean"
+          },
+          "role": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "AppendTurnBody",
+        "type": "object"
+      },
       "AttestationBody": {
         "properties": {
           "confirmed": {
@@ -313,6 +333,32 @@
           "sealed_answer"
         ],
         "title": "CreateAssessmentBody",
+        "type": "object"
+      },
+      "CreateConversationBody": {
+        "properties": {
+          "completeness": {
+            "default": "complete",
+            "maxLength": 32,
+            "title": "Completeness",
+            "type": "string"
+          },
+          "source_client": {
+            "default": "native",
+            "maxLength": 64,
+            "title": "Source Client",
+            "type": "string"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id"
+        ],
+        "title": "CreateConversationBody",
         "type": "object"
       },
       "CreateCourseBody": {
@@ -461,6 +507,84 @@
         "title": "CreateSourceBody",
         "type": "object"
       },
+      "CreateTombstoneBody": {
+        "properties": {
+          "entity_id": {
+            "format": "uuid",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "restore_key": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restore Key"
+          },
+          "space_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Space Id"
+          }
+        },
+        "required": [
+          "entity_type",
+          "entity_id"
+        ],
+        "title": "CreateTombstoneBody",
+        "type": "object"
+      },
+      "ExportBody": {
+        "properties": {
+          "space_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Space Id"
+          }
+        },
+        "title": "ExportBody",
+        "type": "object"
+      },
+      "FetchBody": {
+        "properties": {
+          "id": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "FetchBody",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -472,6 +596,90 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "PrepareContextBody": {
+        "properties": {
+          "max_items": {
+            "default": 32,
+            "maximum": 128.0,
+            "minimum": 1.0,
+            "title": "Max Items",
+            "type": "integer"
+          },
+          "max_tokens": {
+            "default": 4096,
+            "maximum": 32768.0,
+            "minimum": 256.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          },
+          "query": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "PrepareContextBody",
+        "type": "object"
+      },
+      "ProposeMemoryBody": {
+        "properties": {
+          "assertion_text": {
+            "minLength": 1,
+            "title": "Assertion Text",
+            "type": "string"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_type": {
+            "default": "memory",
+            "maxLength": 64,
+            "title": "Target Type",
+            "type": "string"
+          },
+          "title": {
+            "default": "MCP proposal",
+            "maxLength": 512,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "assertion_text"
+        ],
+        "title": "ProposeMemoryBody",
         "type": "object"
       },
       "RebuildBody": {
@@ -494,6 +702,59 @@
         "title": "RebuildBody",
         "type": "object"
       },
+      "RecordInteractionBody": {
+        "properties": {
+          "client_conversation_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Client Conversation Id",
+            "type": "string"
+          },
+          "completeness": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Completeness",
+            "type": "string"
+          },
+          "content": {
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "context_receipt_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Receipt Id"
+          },
+          "role": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Role",
+            "type": "string"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "client_conversation_id",
+          "role",
+          "content",
+          "completeness"
+        ],
+        "title": "RecordInteractionBody",
+        "type": "object"
+      },
       "ReprocessBody": {
         "properties": {
           "revision_id": {
@@ -511,6 +772,21 @@
           "revision_id"
         ],
         "title": "ReprocessBody",
+        "type": "object"
+      },
+      "ResolveConflictBody": {
+        "properties": {
+          "resolution": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resolution"
+        ],
+        "title": "ResolveConflictBody",
         "type": "object"
       },
       "ReviewBody": {
@@ -584,6 +860,67 @@
           "document"
         ],
         "title": "SaveRevisionBody",
+        "type": "object"
+      },
+      "SearchBody": {
+        "properties": {
+          "query": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "SearchBody",
+        "type": "object"
+      },
+      "SelectPagesBody": {
+        "properties": {
+          "connection_id": {
+            "format": "uuid",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "notion_page_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Notion Page Ids",
+            "type": "array"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connection_id",
+          "space_id",
+          "notion_page_ids"
+        ],
+        "title": "SelectPagesBody",
+        "type": "object"
+      },
+      "SyncBindingBody": {
+        "properties": {
+          "fixture_content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixture Content"
+          }
+        },
+        "title": "SyncBindingBody",
         "type": "object"
       },
       "UploadIntentBody": {
@@ -882,6 +1219,280 @@
         ]
       }
     },
+    "/api/v1/conversations": {
+      "get": {
+        "operationId": "list_conversations_api_v1_conversations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "space_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Space Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Conversations",
+        "tags": [
+          "conversations"
+        ]
+      },
+      "post": {
+        "operationId": "create_conversation_api_v1_conversations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Conversation",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/conversations/{conversation_id}": {
+      "delete": {
+        "operationId": "delete_conversation_api_v1_conversations__conversation_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Conversation",
+        "tags": [
+          "conversations"
+        ]
+      },
+      "get": {
+        "operationId": "get_conversation_api_v1_conversations__conversation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Conversation",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/turns": {
+      "post": {
+        "operationId": "append_turn_api_v1_conversations__conversation_id__turns_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppendTurnBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Append Turn",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/deletion/restore-replay": {
+      "post": {
+        "operationId": "restore_replay_api_v1_deletion_restore_replay_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Restore Replay",
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/api/v1/deletion/tombstones": {
+      "post": {
+        "operationId": "create_tombstone_api_v1_deletion_tombstones_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTombstoneBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Tombstone",
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
     "/api/v1/documents": {
       "post": {
         "operationId": "create_document_api_v1_documents_post",
@@ -1100,6 +1711,45 @@
         "summary": "Get Revision",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/api/v1/export/account": {
+      "post": {
+        "operationId": "export_account_api_v1_export_account_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Account",
+        "tags": [
+          "export"
         ]
       }
     },
@@ -1451,6 +2101,201 @@
         ]
       }
     },
+    "/api/v1/mcp/fetch": {
+      "post": {
+        "operationId": "mcp_fetch_api_v1_mcp_fetch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp Fetch",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
+    "/api/v1/mcp/prepare-context": {
+      "post": {
+        "operationId": "mcp_prepare_context_api_v1_mcp_prepare_context_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareContextBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp Prepare Context",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
+    "/api/v1/mcp/propose-memory": {
+      "post": {
+        "operationId": "mcp_propose_memory_api_v1_mcp_propose_memory_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeMemoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp Propose Memory",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
+    "/api/v1/mcp/record-interaction": {
+      "post": {
+        "operationId": "mcp_record_interaction_api_v1_mcp_record_interaction_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordInteractionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp Record Interaction",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
+    "/api/v1/mcp/search": {
+      "post": {
+        "operationId": "mcp_search_api_v1_mcp_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp Search",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
     "/api/v1/memory/items": {
       "post": {
         "operationId": "create_memory_item_api_v1_memory_items_post",
@@ -1677,6 +2522,230 @@
         "summary": "Error Codes",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Metrics Api V1 Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "observability"
+        ]
+      }
+    },
+    "/api/v1/notion/bindings/{binding_id}/resolve": {
+      "post": {
+        "operationId": "resolve_conflict_api_v1_notion_bindings__binding_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "binding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Binding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveConflictBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Conflict",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/api/v1/notion/bindings/{binding_id}/sync": {
+      "post": {
+        "operationId": "sync_binding_api_v1_notion_bindings__binding_id__sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "binding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Binding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncBindingBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Binding",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/api/v1/notion/connect": {
+      "post": {
+        "operationId": "connect_api_v1_notion_connect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Connect",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/api/v1/notion/connections/{connection_id}/pages": {
+      "get": {
+        "operationId": "list_pages_api_v1_notion_connections__connection_id__pages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Pages",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/api/v1/notion/pages/select": {
+      "post": {
+        "operationId": "select_pages_api_v1_notion_pages_select_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectPagesBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Pages",
+        "tags": [
+          "notion"
         ]
       }
     },

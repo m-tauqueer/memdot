@@ -333,10 +333,13 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
   Fixtures must not be claimed as live validation. Production Docling conversion,
   pgvector/rebuild workers, full export packaging, full deletion purge, and
   hosted KMS wiring remain external/incomplete where noted in the tracker.
-- Frontend Waves 9–10 continue on branch `frontend` in worktree
-  `/home/tauqueer/Desktop/memdot-frontend` (merged `develop` @ `99ed500`).
-  Scaffold: Tailwind tokens, `@memdot/ui`, Core session/CSRF + OIDC begin,
-  AppShell/FSD nav, thin Wave 10 stubs, PWA SW stub. Not owner-accepted.
+- Frontend Wave 9 foundation is implemented on branch `frontend` in worktree
+  `/home/tauqueer/Desktop/memdot-frontend` (includes `develop` @ `99ed500`).
+  Includes: generated-contract typed client wrapper, session/CSRF/correlation/
+  recent-auth, hosted Google + self-host OIDC presentation, 18+ multi-step
+  onboarding, accessible shell/nav/jobs/banners/dialog, account-partitioned
+  offline store + ADR-0013 SW policy, route/cache/job tests, production build.
+  Thin Wave 10 stubs remain. Not owner-accepted; Wave 9 Codex audit pending.
 - Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
 - Merge `frontend` → `develop` only when UI milestone is ready and owner asks.
 

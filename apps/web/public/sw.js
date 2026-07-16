@@ -1,9 +1,31 @@
-/* Memdot service worker — ADR-0013 offline boundary (shell + pinned + review pack later). */
+/* Memdot service worker — ADR-0013 offline boundary (shell only by default). */
 const CACHE = "memdot-shell-v1";
-const PRECACHE = ["/", "/today", "/manifest.webmanifest", "/icon.svg"];
+const PRECACHE = ["/", "/today", "/auth", "/manifest.webmanifest", "/icon.svg"];
+
+function mayCache(pathname) {
+  if (pathname.startsWith("/api/")) {
+    return false;
+  }
+  if (pathname.startsWith("/_next/static/")) {
+    return true;
+  }
+  return PRECACHE.includes(pathname) || pathname === "/sw.js";
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE))
+      .then(() => {
+        /* Do not skipWaiting immediately — wait for client safe point (FSD-OFF-007). */
+      }),
+  );
+  self.clients.matchAll({ type: "window" }).then((clients) => {
+    for (const client of clients) {
+      client.postMessage({ type: "MEMDOT_SW_UPDATE_READY" });
+    }
+  });
 });
 
 self.addEventListener("activate", (event) => {
@@ -13,20 +35,29 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "MEMDOT_SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") {
     return;
   }
   const url = new URL(request.url);
-  if (url.pathname.startsWith("/api/")) {
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+  if (!mayCache(url.pathname)) {
     return;
   }
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request)
         .then((response) => {
-          if (response.ok && url.origin === self.location.origin) {
+          if (response.ok) {
             const copy = response.clone();
             void caches.open(CACHE).then((cache) => cache.put(request, copy));
           }

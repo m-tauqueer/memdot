@@ -9,6 +9,7 @@ export type SurfaceKind =
   | "failed"
   | "unauthorized"
   | "offline"
+  | "rate_limited"
   | "ready";
 
 export function SurfaceState({
@@ -65,6 +66,11 @@ export function SurfaceState({
         title: title ?? "You are offline",
         description:
           description ?? "Pinned reading and the review pack remain available when cached. Other actions need a connection.",
+      },
+      rate_limited: {
+        title: title ?? "Slow down",
+        description:
+          description ?? "Too many requests. Wait a moment, then retry. Correlation IDs stay visible for support.",
       },
     };
 

@@ -75,7 +75,7 @@ Tex-disabled full-system fallback.
       hosted KMS/provider configuration, live MCP clients, and owner-authorized
       deployment validation. External credentials/resources are required; see
       `docs/technical/ALPHA_INTEGRATION_GATE.md`.
-- [ ] Wave 9 / Phase 12 — frontend foundation.
+- [x] Wave 9 / Phase 12 — frontend foundation (implemented on `frontend`; Codex audit pending).
 - [ ] Wave 10 / Phases 13–15 — complete frontend and beta readiness.
 
 ## 4. Accepted baseline
@@ -391,17 +391,17 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ## 10. Wave 9 / Technical Phase 12 — Frontend foundation
 
-- [ ] Implement generated API client and centralized request/problem wrapper.
-- [ ] Implement session/CSRF/recent-auth/cache/correlation behavior.
-- [ ] Implement hosted Google/self-host OIDC and 18+ onboarding presentation.
-- [ ] Implement accessible tokens, primitives, responsive shell, and navigation.
-- [ ] Implement explicit loading/empty/partial/degraded/offline/rate/error states.
-- [ ] Implement global job visibility and safe account switching/logout behavior.
-- [ ] Implement installable PWA and encrypted account-partitioned offline foundation.
-- [ ] Test keyboard, focus, screen-reader landmarks, touch, zoom, reduced motion,
+- [x] Implement generated API client and centralized request/problem wrapper.
+- [x] Implement session/CSRF/recent-auth/cache/correlation behavior.
+- [x] Implement hosted Google/self-host OIDC and 18+ onboarding presentation.
+- [x] Implement accessible tokens, primitives, responsive shell, and navigation.
+- [x] Implement explicit loading/empty/partial/degraded/offline/rate/error states.
+- [x] Implement global job visibility and safe account switching/logout behavior.
+- [x] Implement installable PWA and encrypted account-partitioned offline foundation.
+- [x] Test keyboard, focus, screen-reader landmarks, touch, zoom, reduced motion,
       responsive viewports, cache isolation, route smoke, and production build.
-- [ ] Do not run full self-host smoke unless a smoke-owned backend seam changed.
-- [ ] Grok posts the Wave 9 chat report and stops for Codex audit.
+- [x] Do not run full self-host smoke unless a smoke-owned backend seam changed.
+- [x] Grok posts the Wave 9 chat report and stops for Codex audit.
 
 ## 11. Wave 10 / Technical Phases 13–15 — Complete product and release
 
@@ -441,9 +441,9 @@ citation, Tex/OSS, and model-egress evaluation gates.
 ## 12. Current pointer
 
 - [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
-- [ ] Active branch: `develop` @ `ada92dd` under Correction Round 2 (dirty tree; no
-      owner commit). Round 2 self-audit pending Codex logic re-audit.
-- [ ] Merge `develop` → `main` remains owner-controlled.
+- [x] Backend Correction Round 2 tip on `develop` / merged into `frontend`: `99ed500`.
+- [ ] Active frontend branch: `frontend` (worktree `/home/tauqueer/Desktop/memdot-frontend`).
+      Wave 9 foundation implemented; awaiting Wave 9 Codex audit / owner accept.
+- [ ] Merge `develop` → `main` and `frontend` → `develop` remain owner-controlled.
 - [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.
-- [ ] Frontend (Waves 9–10 / Phases 12–15) starts only after Checkpoint B,
-      Alpha integration gate, Codex PASS, and owner authorization.
+- [ ] Wave 10 product UI remains open after Wave 9 Codex PASS.

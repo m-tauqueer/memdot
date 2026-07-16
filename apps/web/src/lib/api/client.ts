@@ -3,6 +3,14 @@
  * Session cookie is HttpOnly; CSRF comes from readable `memdot_csrf` cookie.
  */
 
+import type {
+  CompileContextBody,
+  CreateSourceBody,
+  RevealAttemptBody,
+  StartAttemptBody,
+  SubmitAttemptBody,
+} from "./types";
+
 export const CSRF_COOKIE = "memdot_csrf";
 export const CSRF_HEADER = "X-CSRF-Token";
 
@@ -20,14 +28,28 @@ export class ApiError extends Error {
   readonly code: string;
   readonly correlationId: string | undefined;
   readonly problem: ProblemDetail;
+  readonly retryAfterSeconds: number | undefined;
 
-  constructor(problem: ProblemDetail, status: number) {
+  constructor(problem: ProblemDetail, status: number, retryAfterSeconds?: number) {
     super(problem.detail || problem.title || `Request failed (${status})`);
     this.name = "ApiError";
     this.status = status;
     this.code = problem.code || "unknown";
     this.correlationId = problem.correlation_id;
     this.problem = problem;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+
+  get isUnauthorized(): boolean {
+    return this.status === 401;
+  }
+
+  get isRateLimited(): boolean {
+    return this.status === 429 || this.code === "rate_limited";
+  }
+
+  get needsRecentAuth(): boolean {
+    return this.status === 403 && /recent.?auth/i.test(`${this.code} ${this.message}`);
   }
 }
 
@@ -44,7 +66,7 @@ function readCookie(name: string): string | null {
   return null;
 }
 
-function newCorrelationId(): string {
+export function newCorrelationId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -62,9 +84,10 @@ export type ApiRequestOptions = {
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
+  const correlationId = newCorrelationId();
   const headers: Record<string, string> = {
     Accept: "application/json",
-    "X-Correlation-Id": newCorrelationId(),
+    "X-Correlation-Id": correlationId,
     ...options.headers,
   };
 
@@ -80,6 +103,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     method,
     headers,
     credentials: "include",
+    cache: "no-store",
   };
   if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
@@ -100,7 +124,16 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       payload && typeof payload === "object"
         ? (payload as ProblemDetail)
         : { status: response.status, detail: response.statusText, code: "http_error" };
-    throw new ApiError(problem, response.status);
+    if (!problem.correlation_id) {
+      problem.correlation_id = correlationId;
+    }
+    const retryAfterHeader = response.headers.get("Retry-After");
+    const retryAfterSeconds = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : undefined;
+    throw new ApiError(
+      problem,
+      response.status,
+      Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : undefined,
+    );
   }
 
   return payload as T;
@@ -120,12 +153,20 @@ export function fetchSession(signal?: AbortSignal): Promise<SessionStatus> {
   return apiRequest<SessionStatus>("/api/v1/auth/session", options);
 }
 
-export function beginOidc(): Promise<{ authorization_url?: string; url?: string }> {
+export function beginOidc(): Promise<{
+  authorization_url?: string;
+  authorize_url?: string;
+  url?: string;
+}> {
   return apiRequest("/api/v1/auth/oidc/begin", { method: "POST", body: {} });
 }
 
 export function logout(): Promise<{ status: string }> {
   return apiRequest("/api/v1/auth/logout", { method: "POST", body: {} });
+}
+
+export function rotateSession(): Promise<{ status?: string }> {
+  return apiRequest("/api/v1/auth/session/rotate", { method: "POST", body: {} });
 }
 
 export function attestAdult(confirmed: boolean): Promise<{ status: string }> {
@@ -141,7 +182,7 @@ export type CreatedSource = {
   correlationId?: string;
 };
 
-export function createSource(body: { space_id: string; title: string }): Promise<CreatedSource> {
+export function createSource(body: CreateSourceBody): Promise<CreatedSource> {
   return apiRequest("/api/v1/sources", { method: "POST", body });
 }
 
@@ -193,51 +234,56 @@ export function rejectProposal(proposalId: string): Promise<unknown> {
   });
 }
 
-export type StartAttemptBody = {
-  course_id: string;
-  assessment_item_id: string;
-  assessment_revision_id: string;
-  client_attempt_id?: string;
-};
-
 export function startAttempt(
   body: StartAttemptBody,
 ): Promise<{ attemptId?: string; status?: string }> {
   return apiRequest("/api/v1/learning/attempts/start", { method: "POST", body });
 }
 
-export function revealAttempt(body: {
-  attempt_id: string;
-  hint?: boolean;
-  answer?: boolean;
-}): Promise<unknown> {
+export function revealAttempt(body: RevealAttemptBody): Promise<unknown> {
   return apiRequest("/api/v1/learning/attempts/reveal", { method: "POST", body });
 }
 
-export function submitAttempt(body: {
+export type SubmitAttemptInput = {
   course_id: string;
   assessment_item_id: string;
   assessment_revision_id: string;
-  response: Record<string, unknown>;
+  response: SubmitAttemptBody["response"];
   confidence: string;
   client_attempt_id: string;
   hint_revealed?: boolean;
   answer_revealed?: boolean;
-}): Promise<unknown> {
-  return apiRequest("/api/v1/learning/attempts", { method: "POST", body });
+};
+
+export function submitAttempt(body: SubmitAttemptInput): Promise<unknown> {
+  const payload: SubmitAttemptBody = {
+    course_id: body.course_id,
+    assessment_item_id: body.assessment_item_id,
+    assessment_revision_id: body.assessment_revision_id,
+    response: body.response,
+    confidence: body.confidence,
+    client_attempt_id: body.client_attempt_id,
+    hint_revealed: body.hint_revealed ?? false,
+    answer_revealed: body.answer_revealed ?? false,
+  };
+  return apiRequest("/api/v1/learning/attempts", { method: "POST", body: payload });
 }
 
 export function requestAccountExport(): Promise<unknown> {
   return apiRequest("/api/v1/export/account", { method: "POST", body: {} });
 }
 
-export function compileContext(body: {
-  query: string;
-  purpose?: string | null;
-  max_items?: number;
-  max_tokens?: number;
-}): Promise<Record<string, unknown>> {
-  return apiRequest("/api/v1/context/compile", { method: "POST", body });
+export function compileContext(
+  body: Pick<CompileContextBody, "query"> & Partial<CompileContextBody>,
+): Promise<Record<string, unknown>> {
+  return apiRequest("/api/v1/context/compile", {
+    method: "POST",
+    body: {
+      max_items: 32,
+      max_tokens: 4096,
+      ...body,
+    },
+  });
 }
 
 export function listConversations(): Promise<unknown> {

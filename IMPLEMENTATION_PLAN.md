@@ -24,8 +24,8 @@ by grouping those phases into ten larger delivery waves:
 | 5 | 6–7 | Documents, memory, retrieval, Context Compiler, models, and Tex | Pending |
 | 6 | 8 | Learning backend and first full-system checkpoint | Pending |
 | 7 | 9–10 | MCP, conversations, Notion, export, and deletion | Pending |
-| 8 | 11 | Security, hosted deployment, evaluation, and pre-frontend checkpoint | Pending |
-| 9 | 12 | Frontend foundation, authentication, shell, and PWA | Pending |
+| 8 | 11 | Security, hosted deployment, evaluation, and pre-frontend checkpoint | Pending (backend Round 2 on develop) |
+| 9 | 12 | Frontend foundation, authentication, shell, and PWA | Implemented on `frontend` (Codex audit pending) |
 | 10 | 13–15 | Complete product frontend, acceptance, and beta readiness | Pending |
 
 One delivery wave is one Grok implementation run, one consolidated chat report,

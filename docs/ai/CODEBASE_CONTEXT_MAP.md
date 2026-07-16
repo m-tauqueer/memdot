@@ -1,13 +1,12 @@
 # Codebase Context Map for AI Agents
 
-Version: **4.1 — Correction Round 2 on develop (uncommitted)**
+Version: **4.2 — Wave 9 frontend foundation on `frontend`**
 Date: **2026-07-17**
 Implementation status: **Technical Phases 1–3 accepted on `main` (`cc570eb`).
-Waves 4–8 Correction Round 2 is in progress on `develop` @ `ada92dd` (dirty
-tree; no owner commit). Backend auth/MCP/jobs/learning/conversation seams are
-being corrected locally. Live provider and deployment proof belongs to the
-pre-frontend Alpha integration gate; it is not represented by fixture success.
-Frontend Waves 9–10 have not started. Prompts and reports are chat-only.**
+Waves 4–8 Correction Round 2 tip `99ed500` on `develop`. Frontend Wave 9
+foundation is on branch `frontend` (worktree) awaiting Codex audit. Wave 10
+product UI remains open. Live provider/deployment proof belongs to the Alpha
+integration gate. Prompts and reports are chat-only.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -37,7 +36,7 @@ Verified scaffold paths:
 
 ```text
 apps/
-  web/                 Next.js shell (health only; frontend starts Wave 9)
+  web/                 Next.js PWA shell (Wave 9 foundation + thin Wave 10 stubs)
   mcp/                 MCP edge (OAuth metadata, frozen tools, Core delegation)
 services/
   core/                FastAPI, auth, tenancy, ledger, sources API, documents/memory/

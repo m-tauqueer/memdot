@@ -333,19 +333,16 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
   Fixtures must not be claimed as live validation. Production Docling conversion,
   pgvector/rebuild workers, full export packaging, full deletion purge, and
   hosted KMS wiring remain external/incomplete where noted in the tracker.
-- Frontend Wave 9 foundation is implemented on branch `frontend` in worktree
-  `/home/tauqueer/Desktop/memdot-frontend` (includes `develop` @ `99ed500`).
-  Includes: generated-contract typed client wrapper, session/CSRF/correlation/
-  recent-auth, hosted Google + self-host OIDC presentation, 18+ multi-step
-  onboarding, accessible shell/nav/jobs/banners/dialog, account-partitioned
-  offline store + ADR-0013 SW policy, route/cache/job tests, production build.
-  Waves 9–10 frontend product UI is on `frontend` (logic-gap hardening included)
-  and merges to `develop` for combined Codex audit. Remaining honesty gaps:
-  Core lacks account-wide source/space/proposal list GETs (browser registry
-  stopgap); Ask does not stream model answers; release-acceptance / Alpha live
-  gate / founder QA remain open.
+- Frontend Waves 9–10 are merged into `develop` @ `87d084a` (fast-forward from
+  `frontend`). Continue from primary checkout `/home/tauqueer/Desktop/memdot`.
+  Includes: typed OpenAPI client + CSRF/session shell, OIDC/onboarding, AppShell,
+  TipTap/MemdotDocument, source upload, Ask conversations/receipts, learning
+  Test/Review, Notion/MCP surfaces, deletion/offline ADR-0013 foundations.
+  Combined Wave 9+10 Codex audit is next. Remaining honesty gaps: Core lacks
+  account-wide source/space/proposal list GETs (browser registry stopgap); Ask
+  does not stream model answers; release-acceptance / Alpha live gate / founder
+  QA remain open.
 - Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
-- Merge `frontend` → `develop` only when UI milestone is ready and owner asks.
 
 ## 15. Context maintenance
 

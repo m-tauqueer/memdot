@@ -447,5 +447,6 @@ citation, Tex/OSS, and model-egress evaluation gates.
 - [ ] Active branch: `develop` @ `87d084a` (Waves 9–10 frontend merged from
       `frontend`). Ready for **combined Wave 9 + 10 Codex audit**;
       release-acceptance matrices remain open.
-- [ ] Merge `develop` → `main` and `frontend` → `develop` remain owner-controlled.
+- [ ] Merge `develop` → `main` remains owner-controlled (`frontend` already
+      fast-forwarded into `develop`).
 - [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.

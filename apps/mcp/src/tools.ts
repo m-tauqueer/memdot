@@ -83,6 +83,11 @@ export const MCP_TOOLS: McpToolDefinition[] = [
           type: "string",
           enum: ["single_turn", "partial_thread", "complete_import"],
         },
+        idempotency_key: { type: "string" },
+        occurred_at: { type: "string", format: "date-time" },
+        parent_turn_id: { type: "string", format: "uuid" },
+        context_receipt_id: { type: "string", format: "uuid" },
+        client_turn_id: { type: "string" },
       },
       required: ["space_id", "client_conversation_id", "role", "content", "completeness"],
       additionalProperties: false,
@@ -90,17 +95,15 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   },
 ];
 
-export function buildProtectedResourceMetadata(settings: McpSettings): OAuthProtectedResourceMetadata {
+export function buildProtectedResourceMetadata(
+  settings: McpSettings,
+): OAuthProtectedResourceMetadata {
   const resource = settings.MCP_OIDC_AUDIENCE || "memdot-mcp";
   const issuer = settings.MCP_OIDC_ISSUER.trim();
   return {
     resource,
     authorization_servers: issuer ? [issuer] : [],
-    scopes_supported: [
-      "memdot.memory.read",
-      "memdot.memory.propose",
-      "memdot.interaction.record",
-    ],
+    scopes_supported: ["memdot.memory.read", "memdot.memory.propose", "memdot.interaction.record"],
     bearer_methods_supported: ["header"],
   };
 }
@@ -108,27 +111,38 @@ export function buildProtectedResourceMetadata(settings: McpSettings): OAuthProt
 export type ToolCallInput = {
   name: string;
   arguments: Record<string, unknown>;
-  accountId: string;
-  actorId: string;
+  identity: Omit<CoreMcpHeaders, "purpose" | "correlationId">;
   coreBaseUrl: string;
 };
 
+const PURPOSE_BY_TOOL: Record<string, CoreMcpHeaders["purpose"]> = {
+  search: "external_read",
+  fetch: "external_read",
+  prepare_context: "external_read",
+  propose_memory: "external_propose",
+  record_interaction: "external_interaction",
+};
+
+const SCOPE_BY_TOOL: Record<string, string> = {
+  search: "memdot.memory.read",
+  fetch: "memdot.memory.read",
+  prepare_context: "memdot.memory.read",
+  propose_memory: "memdot.memory.propose",
+  record_interaction: "memdot.interaction.record",
+};
+
 export async function invokeTool(input: ToolCallInput): Promise<unknown> {
-  const purposeByTool: Record<string, CoreMcpHeaders["purpose"]> = {
-    search: "external_read",
-    fetch: "external_read",
-    prepare_context: "external_read",
-    propose_memory: "external_propose",
-    record_interaction: "external_interaction",
-  };
-  const purpose = purposeByTool[input.name];
-  if (!purpose) {
+  const purpose = PURPOSE_BY_TOOL[input.name];
+  const requiredScope = SCOPE_BY_TOOL[input.name];
+  if (!purpose || !requiredScope) {
     throw new Error(`unknown tool: ${input.name}`);
+  }
+  if (!input.identity.scopes.includes(requiredScope)) {
+    throw new Error("insufficient_scope");
   }
 
   const client = new CoreMcpClient(input.coreBaseUrl, {
-    accountId: input.accountId,
-    actorId: input.actorId,
+    ...input.identity,
     purpose,
   });
 
@@ -176,6 +190,21 @@ export async function invokeTool(input: ToolCallInput): Promise<unknown> {
         role: String(input.arguments.role ?? ""),
         content: String(input.arguments.content ?? ""),
         completeness: String(input.arguments.completeness ?? "single_turn"),
+        ...(typeof input.arguments.idempotency_key === "string"
+          ? { idempotency_key: input.arguments.idempotency_key }
+          : {}),
+        ...(typeof input.arguments.occurred_at === "string"
+          ? { occurred_at: input.arguments.occurred_at }
+          : {}),
+        ...(typeof input.arguments.parent_turn_id === "string"
+          ? { parent_turn_id: input.arguments.parent_turn_id }
+          : {}),
+        ...(typeof input.arguments.context_receipt_id === "string"
+          ? { context_receipt_id: input.arguments.context_receipt_id }
+          : {}),
+        ...(typeof input.arguments.client_turn_id === "string"
+          ? { client_turn_id: input.arguments.client_turn_id }
+          : {}),
       });
     default:
       throw new Error(`unknown tool: ${input.name}`);

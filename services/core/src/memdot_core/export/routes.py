@@ -27,6 +27,8 @@ def _require_ctx(ctx: RequestContext | None, request: Request) -> RequestContext
         return safe_not_found(correlation_id=uuid.uuid4())
     if not GLOBAL_RATE_LIMITER.allow(str(ctx.account_id)):
         return rate_limited_response(correlation_id=ctx.correlation_id)
+    if not ctx.require_recent_auth():
+        return safe_not_found(correlation_id=ctx.correlation_id)
     return ctx
 
 
@@ -45,5 +47,5 @@ def export_account(
         manifest = export_service.create_export(db, resolved, space_id=body.space_id)
     except Exception:
         return safe_not_found(correlation_id=resolved.correlation_id)
-    response.status_code = 201
+    response.status_code = 202
     return {**manifest, "correlationId": str(resolved.correlation_id)}

@@ -159,16 +159,10 @@
             "default": false,
             "title": "Substantive Hint",
             "type": "boolean"
-          },
-          "user_id": {
-            "format": "uuid",
-            "title": "User Id",
-            "type": "string"
           }
         },
         "required": [
           "course_id",
-          "user_id",
           "event_type"
         ],
         "title": "AppendEventBody",
@@ -180,6 +174,53 @@
             "default": true,
             "title": "Auto Native",
             "type": "boolean"
+          },
+          "client_turn_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Turn Id"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "context_receipt_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Receipt Id"
+          },
+          "parent_turn_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Turn Id"
           },
           "role": {
             "maxLength": 32,
@@ -688,16 +729,10 @@
             "format": "uuid",
             "title": "Course Id",
             "type": "string"
-          },
-          "user_id": {
-            "format": "uuid",
-            "title": "User Id",
-            "type": "string"
           }
         },
         "required": [
-          "course_id",
-          "user_id"
+          "course_id"
         ],
         "title": "RebuildBody",
         "type": "object"
@@ -710,6 +745,18 @@
             "title": "Client Conversation Id",
             "type": "string"
           },
+          "client_turn_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Turn Id"
+          },
           "completeness": {
             "maxLength": 32,
             "minLength": 1,
@@ -717,6 +764,7 @@
             "type": "string"
           },
           "content": {
+            "maxLength": 65536,
             "minLength": 1,
             "title": "Content",
             "type": "string"
@@ -732,6 +780,42 @@
               }
             ],
             "title": "Context Receipt Id"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "parent_turn_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Turn Id"
           },
           "role": {
             "maxLength": 32,
@@ -789,51 +873,28 @@
         "title": "ResolveConflictBody",
         "type": "object"
       },
-      "ReviewBody": {
+      "RevealAttemptBody": {
         "properties": {
-          "assessment_item_id": {
-            "format": "uuid",
-            "title": "Assessment Item Id",
-            "type": "string"
-          },
-          "assessment_revision_id": {
-            "format": "uuid",
-            "title": "Assessment Revision Id",
-            "type": "string"
-          },
-          "correct": {
-            "title": "Correct",
-            "type": "boolean"
-          },
-          "course_id": {
-            "format": "uuid",
-            "title": "Course Id",
-            "type": "string"
-          },
-          "revealed": {
+          "answer": {
             "default": false,
-            "title": "Revealed",
+            "title": "Answer",
             "type": "boolean"
           },
-          "substantive_hint": {
-            "default": false,
-            "title": "Substantive Hint",
-            "type": "boolean"
-          },
-          "user_id": {
+          "attempt_id": {
             "format": "uuid",
-            "title": "User Id",
+            "title": "Attempt Id",
             "type": "string"
+          },
+          "hint": {
+            "default": false,
+            "title": "Hint",
+            "type": "boolean"
           }
         },
         "required": [
-          "course_id",
-          "user_id",
-          "assessment_item_id",
-          "assessment_revision_id",
-          "correct"
+          "attempt_id"
         ],
-        "title": "ReviewBody",
+        "title": "RevealAttemptBody",
         "type": "object"
       },
       "SaveRevisionBody": {
@@ -904,6 +965,99 @@
           "notion_page_ids"
         ],
         "title": "SelectPagesBody",
+        "type": "object"
+      },
+      "StartAttemptBody": {
+        "properties": {
+          "assessment_item_id": {
+            "format": "uuid",
+            "title": "Assessment Item Id",
+            "type": "string"
+          },
+          "assessment_revision_id": {
+            "format": "uuid",
+            "title": "Assessment Revision Id",
+            "type": "string"
+          },
+          "client_attempt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Attempt Id"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "assessment_item_id",
+          "assessment_revision_id"
+        ],
+        "title": "StartAttemptBody",
+        "type": "object"
+      },
+      "SubmitAttemptBody": {
+        "properties": {
+          "answer_revealed": {
+            "default": false,
+            "title": "Answer Revealed",
+            "type": "boolean"
+          },
+          "assessment_item_id": {
+            "format": "uuid",
+            "title": "Assessment Item Id",
+            "type": "string"
+          },
+          "assessment_revision_id": {
+            "format": "uuid",
+            "title": "Assessment Revision Id",
+            "type": "string"
+          },
+          "client_attempt_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Client Attempt Id",
+            "type": "string"
+          },
+          "confidence": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Confidence",
+            "type": "string"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "hint_revealed": {
+            "default": false,
+            "title": "Hint Revealed",
+            "type": "boolean"
+          },
+          "response": {
+            "additionalProperties": true,
+            "title": "Response",
+            "type": "object"
+          }
+        },
+        "required": [
+          "course_id",
+          "assessment_item_id",
+          "assessment_revision_id",
+          "response",
+          "confidence",
+          "client_attempt_id"
+        ],
+        "title": "SubmitAttemptBody",
         "type": "object"
       },
       "SyncBindingBody": {
@@ -1843,6 +1997,123 @@
         ]
       }
     },
+    "/api/v1/learning/attempts": {
+      "post": {
+        "operationId": "submit_attempt_api_v1_learning_attempts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAttemptBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Attempt",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/attempts/reveal": {
+      "post": {
+        "operationId": "reveal_attempt_api_v1_learning_attempts_reveal_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealAttemptBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reveal Attempt",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/attempts/start": {
+      "post": {
+        "operationId": "start_attempt_api_v1_learning_attempts_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartAttemptBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Attempt",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
     "/api/v1/learning/courses": {
       "post": {
         "operationId": "create_course_api_v1_learning_courses_post",
@@ -1986,6 +2257,7 @@
     },
     "/api/v1/learning/events": {
       "post": {
+        "description": "Public arbitrary learner-event append is removed (Round 2).\n\nEvidence must flow through the server-owned attempt lifecycle only.",
         "operationId": "append_event_api_v1_learning_events_post",
         "requestBody": {
           "content": {
@@ -2057,45 +2329,6 @@
           }
         },
         "summary": "Rebuild Evidence",
-        "tags": [
-          "learning"
-        ]
-      }
-    },
-    "/api/v1/learning/reviews": {
-      "post": {
-        "operationId": "review_api_v1_learning_reviews_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Review",
         "tags": [
           "learning"
         ]

@@ -42,8 +42,10 @@ def test_ocr_stub_is_gated_low_quality() -> None:
         language_hints=("hi",),
         parse_run_id=run_id,
     )
-    assert result.quality_score < 0.45
-    assert result.elements[0].warnings
+    assert result.quality_score == 0.0
+    assert result.elements == ()
+    assert "ocr_fail_closed" in result.diagnostics
+    assert "not_promotable" in result.diagnostics
 
 
 def test_deterministic_element_ids() -> None:

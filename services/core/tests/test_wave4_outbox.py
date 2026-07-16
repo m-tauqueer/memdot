@@ -46,6 +46,20 @@ def test_outbox_claim_ack_and_job_lifecycle(db_session, truncate_tables) -> None
         )
     db_session.commit()
 
+    # Runtime role queries are RLS-scoped, so lifecycle operations retain the
+    # originating tenant context. The administrative role is only used for the
+    # outbox-claim probe below.
+    with tenant_scope(db_session, ctx.tenant()):
+        attempt_id = start_job_attempt(db_session, account_id=bundle.account_id, job_id=job.job_id)
+        complete_job(
+            db_session,
+            account_id=bundle.account_id,
+            job_id=job.job_id,
+            attempt_id=attempt_id,
+            succeeded=True,
+        )
+        mark_dead_letter(db_session, account_id=bundle.account_id, job_id=job.job_id)
+
     db_session.execute(text("SET ROLE memdot_test_admin"))
     claimed = claim_outbox_batch(db_session, worker_id="worker-1", batch_size=5, lease_seconds=30)
     assert len(claimed) == 1
@@ -57,16 +71,8 @@ def test_outbox_claim_ack_and_job_lifecycle(db_session, truncate_tables) -> None
         claim_token=uuid.UUID(str(row["claim_token"])),
     )
     assert acked
+    db_session.execute(text("RESET ROLE"))
 
-    attempt_id = start_job_attempt(db_session, account_id=bundle.account_id, job_id=job.job_id)
-    complete_job(
-        db_session,
-        account_id=bundle.account_id,
-        job_id=job.job_id,
-        attempt_id=attempt_id,
-        succeeded=True,
-    )
-    mark_dead_letter(db_session, account_id=bundle.account_id, job_id=job.job_id)
     assert retry_delay_seconds(3) >= 8
 
 
@@ -99,3 +105,4 @@ def test_duplicate_ack_is_idempotent(db_session, truncate_tables) -> None:
     assert not ack_outbox_event(
         db_session, account_id=account_id, event_id=event_id, claim_token=token
     )
+    db_session.execute(text("RESET ROLE"))

@@ -30,6 +30,8 @@ def _require_ctx(ctx: RequestContext | None, request: Request) -> RequestContext
         return safe_not_found(correlation_id=uuid.uuid4())
     if not GLOBAL_RATE_LIMITER.allow(str(ctx.account_id)):
         return rate_limited_response(correlation_id=ctx.correlation_id)
+    if not ctx.require_recent_auth():
+        return safe_not_found(correlation_id=ctx.correlation_id)
     return ctx
 
 
@@ -73,7 +75,5 @@ def restore_replay(
     resolved = _require_ctx(ctx, request)
     if isinstance(resolved, Response):
         return resolved
-    applied = deletion_service.replay_tombstones_after_restore(
-        db, account_id=resolved.account_id
-    )
+    applied = deletion_service.replay_tombstones_after_restore(db, account_id=resolved.account_id)
     return {"applied": applied, "correlationId": str(resolved.correlation_id)}

@@ -26,6 +26,11 @@ from memdot_core.ingestion.normalize import promote_active_parse_run, validate_p
 from memdot_core.jobs.service import complete_job, start_job_attempt
 from memdot_core.parsers.ocr_fallback import OCR_QUALITY_THRESHOLD
 from memdot_core.parsers.registry import select_parser
+from memdot_core.parsers.resource_limits import (
+    ResourceLimitExceeded,
+    check_file_size,
+    check_page_count,
+)
 from memdot_core.request_context import RequestContext
 
 
@@ -198,6 +203,40 @@ def run_ingestion_for_revision(
         source.updated_at = datetime.now(UTC)
 
         content = load_revision_bytes(storage, revision, account_id)
+        try:
+            check_file_size(len(content))
+        except ResourceLimitExceeded as exc:
+            failed = _persist_parse_run(
+                db,
+                account_id=account_id,
+                space_id=revision.space_id,
+                revision=revision,
+                profile="resource_limits",
+                profile_hash="resource_limits_v1",
+                run_uuid=new_uuid7(),
+                status=ParseRunStatus.FAILED,
+                quality_score=0.0,
+                stage_checkpoint={"stage": "resource_limits", "error": exc.code},
+                artifact_key=None,
+                error_code=exc.code,
+                error_detail_safe=exc.code,
+                is_shadow=shadow,
+            )
+            source.processing_status = SourceProcessingStatus.FAILED.value
+            if job_id is not None and attempt_id is not None:
+                complete_job(
+                    db,
+                    account_id=account_id,
+                    job_id=job_id,
+                    attempt_id=attempt_id,
+                    succeeded=False,
+                )
+            return IngestionOutcome(
+                parse_run_id=failed.id,
+                status=ParseRunStatus.FAILED,
+                quality_score=0.0,
+                element_count=0,
+            )
         mime = sniff_mime(revision.mime_type or "", revision.object_key or "", content[:16])
         hints = language_hints_from_revision(revision)
 
@@ -233,6 +272,41 @@ def run_ingestion_for_revision(
                 mime_type=mime,
                 language_hints=hints,
                 parse_run_id=run_uuid,
+            )
+            check_page_count(result.page_count)
+        except ResourceLimitExceeded as exc:
+            failed = _persist_parse_run(
+                db,
+                account_id=account_id,
+                space_id=revision.space_id,
+                revision=revision,
+                profile=primary.profile.value,
+                profile_hash=primary.profile_hash(),
+                run_uuid=run_uuid,
+                status=ParseRunStatus.FAILED,
+                quality_score=0.0,
+                stage_checkpoint={"stage": "resource_limits", "error": exc.code},
+                artifact_key=None,
+                error_code=exc.code,
+                error_detail_safe=exc.code,
+                is_shadow=shadow,
+            )
+            source.processing_status = SourceProcessingStatus.FAILED.value
+            if job_id is not None and attempt_id is not None:
+                complete_job(
+                    db,
+                    account_id=account_id,
+                    job_id=job_id,
+                    attempt_id=attempt_id,
+                    succeeded=False,
+                    error_code=exc.code,
+                    error_detail_safe=exc.code,
+                )
+            return IngestionOutcome(
+                parse_run_id=failed.id,
+                status=ParseRunStatus.FAILED,
+                quality_score=0.0,
+                element_count=0,
             )
         except ValueError as exc:
             failed = _persist_parse_run(

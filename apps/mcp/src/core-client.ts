@@ -1,10 +1,18 @@
-/** Thin Core HTTP client for MCP tool delegation. */
+/** Thin Core HTTP client for MCP tool delegation via service-auth + bearer. */
+
+import { buildServiceAuthHeaders } from "./service-auth.js";
 
 export type CoreMcpHeaders = {
   accountId: string;
   actorId: string;
   purpose: "external_read" | "external_propose" | "external_interaction";
+  scopes: string[];
+  clientId: string;
+  subject: string;
+  authorization: string;
+  serviceSecret: string;
   correlationId?: string;
+  exp?: number;
 };
 
 export type SearchResult = {
@@ -25,22 +33,33 @@ export class CoreMcpClient {
     private readonly headers: CoreMcpHeaders,
   ) {}
 
-  private buildHeaders(): Record<string, string> {
+  private buildHeaders(purpose?: CoreMcpHeaders["purpose"]): Record<string, string> {
+    const resolvedPurpose = purpose ?? this.headers.purpose;
+    const identity: Parameters<typeof buildServiceAuthHeaders>[1] = {
+      accountId: this.headers.accountId,
+      actorId: this.headers.actorId,
+      purpose: resolvedPurpose,
+      scopes: this.headers.scopes,
+      clientId: this.headers.clientId,
+      subject: this.headers.subject,
+      authorization: this.headers.authorization,
+    };
+    if (this.headers.exp !== undefined) {
+      identity.exp = this.headers.exp;
+    }
+    const serviceHeaders = buildServiceAuthHeaders(this.headers.serviceSecret, identity);
     return {
       "Content-Type": "application/json",
-      "X-Memdot-Account-Id": this.headers.accountId,
-      "X-Memdot-Actor-Id": this.headers.actorId,
-      "X-Memdot-Purpose": this.headers.purpose,
-      ...(this.headers.correlationId
-        ? { "X-Correlation-Id": this.headers.correlationId }
-        : {}),
+      Authorization: this.headers.authorization,
+      ...serviceHeaders,
+      ...(this.headers.correlationId ? { "X-Correlation-Id": this.headers.correlationId } : {}),
     };
   }
 
   async search(query: string): Promise<SearchResult> {
     const response = await fetch(`${this.baseUrl}/api/v1/mcp/search`, {
       method: "POST",
-      headers: this.buildHeaders(),
+      headers: this.buildHeaders("external_read"),
       body: JSON.stringify({ query }),
     });
     if (!response.ok) {
@@ -52,7 +71,7 @@ export class CoreMcpClient {
   async fetch(id: string): Promise<FetchResult> {
     const response = await fetch(`${this.baseUrl}/api/v1/mcp/fetch`, {
       method: "POST",
-      headers: this.buildHeaders(),
+      headers: this.buildHeaders("external_read"),
       body: JSON.stringify({ id }),
     });
     if (!response.ok) {
@@ -69,7 +88,7 @@ export class CoreMcpClient {
   }): Promise<Record<string, unknown>> {
     const response = await fetch(`${this.baseUrl}/api/v1/mcp/prepare-context`, {
       method: "POST",
-      headers: this.buildHeaders(),
+      headers: this.buildHeaders("external_read"),
       body: JSON.stringify(body),
     });
     if (!response.ok) {
@@ -85,10 +104,7 @@ export class CoreMcpClient {
   }): Promise<Record<string, unknown>> {
     const response = await fetch(`${this.baseUrl}/api/v1/mcp/propose-memory`, {
       method: "POST",
-      headers: {
-        ...this.buildHeaders(),
-        "X-Memdot-Purpose": "external_propose",
-      },
+      headers: this.buildHeaders("external_propose"),
       body: JSON.stringify(body),
     });
     if (!response.ok) {
@@ -103,13 +119,15 @@ export class CoreMcpClient {
     role: string;
     content: string;
     completeness: string;
+    idempotency_key?: string;
+    occurred_at?: string;
+    parent_turn_id?: string;
+    context_receipt_id?: string;
+    client_turn_id?: string;
   }): Promise<Record<string, unknown>> {
     const response = await fetch(`${this.baseUrl}/api/v1/mcp/record-interaction`, {
       method: "POST",
-      headers: {
-        ...this.buildHeaders(),
-        "X-Memdot-Purpose": "external_interaction",
-      },
+      headers: this.buildHeaders("external_interaction"),
       body: JSON.stringify(body),
     });
     if (!response.ok) {

@@ -182,9 +182,7 @@ def compile_context_for_request(
             if visibilities.get(space_id, SpaceVisibility.GENERAL) != SpaceVisibility.PRIVATE
         }
 
-    raw_candidates, corpus = _local_candidates(
-        db, ctx, query=query, eligible_space_ids=eligible
-    )
+    raw_candidates, corpus = _local_candidates(db, ctx, query=query, eligible_space_ids=eligible)
     lane_results = {CandidateLane.EXACT: raw_candidates}
     fused = fuse_candidates(lane_results)
     fused = exclude_private_spaces(fused, space_visibility=visibilities, purpose=active_purpose)

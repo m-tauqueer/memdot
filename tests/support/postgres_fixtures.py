@@ -45,6 +45,13 @@ def migrated_engine(pg_engine: Engine) -> Generator[Engine, None, None]:
     os.environ["MEMDOT_TENANT_CONTEXT_SIGNING_KEY"] = signing_key
     os.environ["CORE_TENANT_CONTEXT_SIGNING_KEY"] = signing_key
     os.environ["CORE_SESSION_SIGNING_PEPPER"] = "test-session-signing-pepper-32bytes"
+    os.environ["CORE_JOB_AUTH_SNAPSHOT_KEY"] = "test-job-auth-snapshot-key-32bytes!!"
+    os.environ["CORE_CONVERSATION_PAYLOAD_KEY"] = "test-conversation-payload-key-32b!"
+    os.environ["CORE_MCP_SERVICE_SECRET"] = "test-mcp-service-secret-32bytes-xx"
+    os.environ["CORE_MCP_RESOURCE"] = "memdot-mcp"
+    os.environ["CORE_MCP_AUDIENCE_AS_RESOURCE"] = "true"
+    os.environ["CORE_OIDC_ISSUER"] = "https://issuer.example"
+    os.environ["CORE_OIDC_AUDIENCE"] = "memdot-mcp"
     from alembic import command
     from alembic.config import Config
 

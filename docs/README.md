@@ -1,6 +1,6 @@
 # Memdot documentation
 
-Status: **Technical Phases 1–3 accepted; Waves 4–6 backend implementation in progress**
+Status: **Technical Phases 1–3 accepted; Waves 4–8 backend correction is in progress on `develop`**
 Baseline date: **2026-07-16**
 
 This directory is the source of truth for Memdot v1. It describes a general,
@@ -29,6 +29,7 @@ scaffold paths and commands only — not product behavior.
 7. [Technical Requirements Document](technical/TRD.md)
 8. [Security, Privacy, and Threat Model](technical/SECURITY_PRIVACY_THREAT_MODEL.md)
 9. [Evaluation and Release Gates](technical/EVALUATION_RELEASE_GATES.md)
+10. [Alpha Integration Gate](technical/ALPHA_INTEGRATION_GATE.md)
 
 ### AI agent orientation
 
@@ -51,6 +52,7 @@ scaffold paths and commands only — not product behavior.
 | ADRs                   | One durable architectural decision per record                                      | Repeated full specifications                                 |
 | Security/Privacy       | Threats, controls, data lifecycle, incident gates                                  | Feature prioritisation                                       |
 | Evaluation             | Corpora, metrics, hard gates, release process                                      | Product implementation                                       |
+| Alpha Integration Gate | Live credentialed-provider and deployment proof before frontend authorization      | Fixture/emulator success as proof of external compatibility  |
 | Codebase Context Map   | Target repository shape and safe AI-agent routing                                  | Unverified current-state claims                              |
 | Implementation Tracker | Delivery waves, micro-phases, validation gates, and progress                       | Product or technical requirements that belong in PRD/FSD/TRD |
 | Implementation Plan    | Wave/phase map, smoke schedule, reporting policy, and review boundary              | Transient prompts, reports, logs, or patches                 |

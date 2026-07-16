@@ -288,6 +288,10 @@ BEGIN
   RETURN NEW;
 END; $$;
 
+-- Phase 3 installed both immutable and append-only guards. Replace both;
+-- otherwise the earlier immutable trigger fires first and makes completion
+-- impossible even though this migration permits progress fields.
+DROP TRIGGER IF EXISTS trg_job_attempt_immutable ON job_attempt;
 DROP TRIGGER IF EXISTS trg_job_attempt_append_only ON job_attempt;
 CREATE TRIGGER trg_job_attempt_progress_update
   BEFORE UPDATE ON job_attempt

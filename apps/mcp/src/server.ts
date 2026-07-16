@@ -1,11 +1,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
-import {
-  MCP_TOOLS,
-  buildProtectedResourceMetadata,
-  invokeTool,
-  mcpToolResponse,
-} from "./tools.js";
+import { validateBearerToken } from "./bearer.js";
+import { handleSdkMcpRequest } from "./mcp-sdk-server.js";
+import { MCP_TOOLS, buildProtectedResourceMetadata, invokeTool, mcpToolResponse } from "./tools.js";
 import type { McpSettings } from "./settings.js";
 
 export type HealthResponse = {
@@ -76,6 +73,118 @@ function writeJson(res: ServerResponse, status: number, payload: unknown): void 
   res.end(JSON.stringify(payload));
 }
 
+function authorizationFrom(req: IncomingMessage): string | undefined {
+  const value = req.headers.authorization;
+  return typeof value === "string" ? value : undefined;
+}
+
+async function requireBearerIdentity(req: IncomingMessage, settings: McpSettings) {
+  const issuer = settings.MCP_OIDC_ISSUER || "https://issuer.example";
+  const options: {
+    issuer: string;
+    audience: string;
+    resource?: string;
+    hs256Key?: string;
+    jwksUri?: string;
+  } = {
+    issuer,
+    audience: settings.MCP_OIDC_AUDIENCE || "memdot-mcp",
+    resource: settings.MCP_OIDC_AUDIENCE || "memdot-mcp",
+  };
+  if (settings.MCP_JWT_HS256_KEY) {
+    options.hs256Key = settings.MCP_JWT_HS256_KEY;
+  } else if (issuer.startsWith("http://") || issuer.startsWith("https://")) {
+    // Keycloak-compatible default JWKS path when HS256 test key is unset.
+    options.jwksUri = `${issuer.replace(/\/$/, "")}/protocol/openid-connect/certs`;
+  }
+  return validateBearerToken(authorizationFrom(req), options);
+}
+
+/** Legacy JSON-RPC handler (test/dev isolation); production uses Streamable HTTP SDK. */
+export async function handleJsonRpc(
+  req: IncomingMessage,
+  res: ServerResponse,
+  settings: McpSettings,
+): Promise<void> {
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req);
+  } catch {
+    writeJson(res, 400, {
+      jsonrpc: "2.0",
+      error: { code: -32700, message: "Parse error" },
+      id: null,
+    });
+    return;
+  }
+  const id = body.id ?? null;
+  const method = String(body.method ?? "");
+  const params = (body.params ?? {}) as Record<string, unknown>;
+
+  if (method === "initialize") {
+    writeJson(res, 200, {
+      jsonrpc: "2.0",
+      id,
+      result: {
+        protocolVersion: "2024-11-05",
+        capabilities: { tools: {} },
+        serverInfo: { name: "memdot-mcp", version: "0.1.0" },
+      },
+    });
+    return;
+  }
+
+  if (method === "tools/list") {
+    writeJson(res, 200, {
+      jsonrpc: "2.0",
+      id,
+      result: { tools: MCP_TOOLS },
+    });
+    return;
+  }
+
+  if (method === "tools/call") {
+    try {
+      const identity = await requireBearerIdentity(req, settings);
+      const name = String(params.name ?? "");
+      const args = (params.arguments ?? {}) as Record<string, unknown>;
+      const payload = await invokeTool({
+        name,
+        arguments: args,
+        coreBaseUrl: settings.MCP_CORE_BASE_URL,
+        identity: {
+          accountId: identity.accountId,
+          actorId: identity.actorId,
+          scopes: identity.scopes,
+          clientId: identity.clientId,
+          subject: identity.subject,
+          authorization: `Bearer ${identity.token}`,
+          serviceSecret: settings.MCP_CORE_SERVICE_SECRET,
+          exp: identity.exp,
+        },
+      });
+      writeJson(res, 200, {
+        jsonrpc: "2.0",
+        id,
+        result: mcpToolResponse(payload),
+      });
+    } catch {
+      writeJson(res, 401, {
+        jsonrpc: "2.0",
+        id,
+        error: { code: -32001, message: "Unauthorized" },
+      });
+    }
+    return;
+  }
+
+  writeJson(res, 404, {
+    jsonrpc: "2.0",
+    id,
+    error: { code: -32601, message: "Method not found" },
+  });
+}
+
 async function handleMcpRoutes(
   req: IncomingMessage,
   res: ServerResponse,
@@ -87,32 +196,54 @@ async function handleMcpRoutes(
     return true;
   }
 
+  // Legacy /mcp/tools is isolated to non-production environments.
   if (req.method === "GET" && url === "/mcp/tools") {
+    if (settings.MCP_ENV === "hosted" || settings.MCP_ENV === "self_host") {
+      writeJson(res, 404, { error: "not_found" });
+      return true;
+    }
     writeJson(res, 200, { tools: MCP_TOOLS });
     return true;
   }
 
+  if (req.method === "POST" && url === "/mcp") {
+    await handleSdkMcpRequest(req, res, settings);
+    return true;
+  }
+
   if (req.method === "POST" && url === "/mcp/tools/call") {
-    const accountId = req.headers["x-memdot-account-id"];
-    const actorId = req.headers["x-memdot-actor-id"];
-    if (typeof accountId !== "string" || typeof actorId !== "string") {
-      writeJson(res, 404, { code: "not_found" });
+    if (settings.MCP_ENV === "hosted" || settings.MCP_ENV === "self_host") {
+      writeJson(res, 404, { error: "not_found" });
       return true;
     }
     try {
+      const identity = await requireBearerIdentity(req, settings);
       const body = await readJsonBody(req);
       const name = String(body.name ?? "");
       const args = (body.arguments ?? {}) as Record<string, unknown>;
       const payload = await invokeTool({
         name,
         arguments: args,
-        accountId,
-        actorId,
         coreBaseUrl: settings.MCP_CORE_BASE_URL,
+        identity: {
+          accountId: identity.accountId,
+          actorId: identity.actorId,
+          scopes: identity.scopes,
+          clientId: identity.clientId,
+          subject: identity.subject,
+          authorization: `Bearer ${identity.token}`,
+          serviceSecret: settings.MCP_CORE_SERVICE_SECRET,
+          exp: identity.exp,
+        },
       });
       writeJson(res, 200, mcpToolResponse(payload));
     } catch {
-      writeJson(res, 404, { code: "not_found" });
+      const resource = settings.MCP_OIDC_AUDIENCE || "memdot-mcp";
+      res.writeHead(401, {
+        "Content-Type": "application/json",
+        "WWW-Authenticate": `Bearer realm="memdot-mcp", resource="${resource}"`,
+      });
+      res.end(JSON.stringify({ code: "unauthorized" }));
     }
     return true;
   }

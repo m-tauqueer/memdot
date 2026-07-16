@@ -115,9 +115,7 @@ def create_document(
             payload_sha256=payload_sha256(outbox_payload),
             payload_json=json.dumps(outbox_payload),
         )
-    return DocumentCreateResult(
-        document_id=document_id, revision_id=revision_id, space_id=space_id
-    )
+    return DocumentCreateResult(document_id=document_id, revision_id=revision_id, space_id=space_id)
 
 
 def save_revision(

@@ -5,34 +5,45 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from memdot_domain.ids import new_uuid7
 from memdot_domain.mcp import (
     citation_url,
     decode_mcp_public_id,
     encode_mcp_public_id,
     map_mcp_completeness_to_conversation,
 )
-from memdot_core.context.service import local_candidates
 from memdot_domain.retrieval import CandidateLane, exclude_private_spaces, fuse_candidates
 from memdot_domain.tenancy import RequestPurpose, SpaceVisibility, TruthClass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from memdot_core.context import service as context_service
-from memdot_core.deletion import service as deletion_service
+from memdot_core.context.service import local_candidates
+from memdot_core.conversations.crypto import decrypt_payload, encrypt_payload, payload_content
 from memdot_core.db.models.ledger import (
     AuthoredDocument,
     Conversation,
     ConversationTurn,
     CurrentDocumentRevision,
+    CurriculumEdge,
     DocumentRevision,
     MemoryItem,
     MemoryRevision,
 )
 from memdot_core.db.models.tenancy import Space
 from memdot_core.db.tenant import tenant_scope
+from memdot_core.deletion import service as deletion_service
+from memdot_core.errors import ErrorCode
 from memdot_core.memory import service as memory_service
 from memdot_core.request_context import RequestContext
-from memdot_domain.ids import new_uuid7
+from memdot_core.retrieval.filters import (
+    filter_pending_and_retracted,
+    filter_private_spaces,
+    filter_tombstoned,
+)
+from memdot_core.retrieval.graph_lane import graph_candidates
+from memdot_core.retrieval.semantic_lane import semantic_candidates
+from memdot_core.retrieval.temporal_lane import temporal_candidates
 
 
 def _space_visibility_map(db: Session, account_id: uuid.UUID) -> dict[uuid.UUID, SpaceVisibility]:
@@ -43,7 +54,20 @@ def _space_visibility_map(db: Session, account_id: uuid.UUID) -> dict[uuid.UUID,
 def _eligible_non_private_spaces(
     ctx: RequestContext, visibilities: dict[uuid.UUID, SpaceVisibility]
 ) -> set[uuid.UUID]:
-    eligible = set(ctx.eligible_space_ids) if ctx.eligible_space_ids else set(visibilities.keys())
+    # External contexts always carry an explicit eligible set (possibly empty).
+    # Empty means no access — never expand to all Spaces.
+    from memdot_domain.tenancy import RequestPurpose as RP
+
+    if ctx.purpose in {
+        RP.EXTERNAL_READ,
+        RP.EXTERNAL_PROPOSE,
+        RP.EXTERNAL_INTERACTION,
+    }:
+        eligible = set(ctx.eligible_space_ids)
+    else:
+        eligible = (
+            set(ctx.eligible_space_ids) if ctx.eligible_space_ids else set(visibilities.keys())
+        )
     return {
         space_id
         for space_id in eligible
@@ -70,6 +94,7 @@ def search(
     query: str,
     public_base_url: str,
     max_results: int = 20,
+    as_of: object | None = None,
 ) -> dict[str, Any]:
     """Company-knowledge-compatible search over eligible non-private account."""
     trimmed = query.strip()
@@ -78,13 +103,30 @@ def search(
 
     visibilities = _space_visibility_map(db, ctx.account_id)
     eligible = _eligible_non_private_spaces(ctx, visibilities)
-    candidates, _corpus = local_candidates(
-        db, ctx, query=trimmed, eligible_space_ids=eligible
+    exact, _corpus = local_candidates(db, ctx, query=trimmed, eligible_space_ids=eligible)
+    graph = graph_candidates(db, ctx, query=trimmed, eligible_space_ids=eligible)
+    semantic = semantic_candidates(db, ctx, query=trimmed, eligible_space_ids=eligible, as_of=as_of)
+    temporal = temporal_candidates(
+        db,
+        ctx,
+        query=trimmed,
+        eligible_space_ids=eligible,
+        as_of=as_of,  # type: ignore[arg-type]
     )
-    fused = fuse_candidates({CandidateLane.EXACT: candidates})
+    fused = fuse_candidates(
+        {
+            CandidateLane.TEMPORAL_EXACT: temporal,
+            CandidateLane.EXACT: exact,
+            CandidateLane.GRAPH: graph,
+            CandidateLane.OSS_SEMANTIC: semantic,
+        }
+    )
     fused = exclude_private_spaces(
         fused, space_visibility=visibilities, purpose=RequestPurpose.EXTERNAL_READ.value
     )
+    fused = filter_private_spaces(db, account_id=ctx.account_id, candidates=fused)
+    fused = filter_tombstoned(db, account_id=ctx.account_id, candidates=fused)
+    fused = filter_pending_and_retracted(db, account_id=ctx.account_id, candidates=fused)
 
     results: list[dict[str, str]] = []
     for item in fused[:max_results]:
@@ -159,12 +201,19 @@ def fetch(
             mcp_id=mcp_id,
             visibilities=visibilities,
         )
+    if canonical_type == "curriculum_edge":
+        return _fetch_curriculum_edge(
+            db,
+            ctx,
+            edge_id=canonical_id,
+            public_base_url=public_base_url,
+            mcp_id=mcp_id,
+            visibilities=visibilities,
+        )
     return None
 
 
-def _space_is_private(
-    visibilities: dict[uuid.UUID, SpaceVisibility], space_id: uuid.UUID
-) -> bool:
+def _space_is_private(visibilities: dict[uuid.UUID, SpaceVisibility], space_id: uuid.UUID) -> bool:
     return visibilities.get(space_id, SpaceVisibility.GENERAL) == SpaceVisibility.PRIVATE
 
 
@@ -303,6 +352,35 @@ def _fetch_element(
     }
 
 
+def _fetch_curriculum_edge(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    edge_id: uuid.UUID,
+    public_base_url: str,
+    mcp_id: str,
+    visibilities: dict[uuid.UUID, SpaceVisibility],
+) -> dict[str, Any] | None:
+    edge = db.execute(
+        select(CurriculumEdge).where(
+            CurriculumEdge.account_id == ctx.account_id, CurriculumEdge.id == edge_id
+        )
+    ).scalar_one_or_none()
+    if edge is None or _space_is_private(visibilities, edge.space_id):
+        return None
+    return {
+        "id": mcp_id,
+        "title": f"{edge.edge_kind} relationship",
+        "text": f"{edge.from_node_id} {edge.edge_kind} {edge.to_node_id}",
+        "url": citation_url(public_base_url, "curriculum_edge", edge_id),
+        "metadata": {
+            "canonicalType": "curriculum_edge",
+            "revisionId": str(edge.id),
+            "confirmation": edge.confirmation,
+        },
+    }
+
+
 def prepare_context(
     db: Session,
     ctx: RequestContext,
@@ -378,11 +456,23 @@ def record_interaction(
     content: str,
     completeness: str,
     context_receipt_id: uuid.UUID | None = None,
+    idempotency_key: str | None = None,
+    client_turn_id: str | None = None,
+    parent_turn_id: uuid.UUID | None = None,
+    occurred_at: object | None = None,
 ) -> dict[str, Any]:
     """Append explicit external turn; never mutates learner evidence."""
+    from datetime import UTC, datetime
+
     visibilities = _space_visibility_map(db, ctx.account_id)
     if visibilities.get(space_id) == SpaceVisibility.PRIVATE:
         msg = "private space excluded"
+        raise ValueError(msg)
+    if role not in {"user", "assistant", "system", "tool"}:
+        msg = "invalid_role"
+        raise ValueError(msg)
+    if len(content) > 65536:
+        msg = "content_too_large"
         raise ValueError(msg)
 
     external_ctx = RequestContext(
@@ -395,6 +485,9 @@ def record_interaction(
         eligible_space_ids=ctx.eligible_space_ids,
     )
     conversation_label = map_mcp_completeness_to_conversation(completeness).value
+    turn_key = client_turn_id or idempotency_key
+    ciphertext, nonce = encrypt_payload({"content": content})
+    occurred = occurred_at if isinstance(occurred_at, datetime) else datetime.now(UTC)
 
     with tenant_scope(db, external_ctx.tenant()):
         conversation = db.execute(
@@ -436,6 +529,39 @@ def record_interaction(
             ).scalar_one_or_none()
             turn_index = (last_turn or -1) + 1
 
+        if turn_key:
+            existing = db.execute(
+                select(ConversationTurn).where(
+                    ConversationTurn.account_id == ctx.account_id,
+                    ConversationTurn.conversation_id == conversation_id,
+                    ConversationTurn.client_turn_id == turn_key,
+                )
+            ).scalar_one_or_none()
+            if existing is not None:
+                existing_content = (
+                    payload_content(
+                        decrypt_payload(existing.payload_ciphertext, existing.payload_nonce)
+                    )
+                    if existing.payload_ciphertext and existing.payload_nonce
+                    else payload_content(existing.payload_json)
+                )
+                if (
+                    existing.role != role
+                    or existing_content != content
+                    or existing.parent_turn_id != parent_turn_id
+                    or existing.context_receipt_id != context_receipt_id
+                    or existing.occurred_at != occurred
+                ):
+                    raise ValueError(ErrorCode.IDEMPOTENCY_CONFLICT.value)
+                return {
+                    "conversationId": str(conversation_id),
+                    "turnId": str(existing.id),
+                    "turnIndex": existing.turn_index,
+                    "completeness": conversation_label,
+                    "learnerEvidenceChanged": False,
+                    "idempotent": True,
+                }
+
         turn_id = new_uuid7()
         db.add(
             ConversationTurn(
@@ -445,12 +571,18 @@ def record_interaction(
                 conversation_id=conversation_id,
                 role=role,
                 turn_index=turn_index,
+                # Never store plaintext interaction content in payload_json.
+                payload_json={"encrypted": True},
+                payload_ciphertext=ciphertext,
+                payload_nonce=nonce,
+                occurred_at=occurred,
+                parent_turn_id=parent_turn_id,
+                context_receipt_id=context_receipt_id,
+                client_turn_id=turn_key or f"{client_conversation_id}:{turn_index}",
             )
         )
 
     # Learner evidence is intentionally untouched — no learner_event writes.
-    _ = context_receipt_id
-    _ = content  # Content stored in future column; turn row records capture seam only.
 
     return {
         "conversationId": str(conversation_id),
@@ -458,4 +590,5 @@ def record_interaction(
         "turnIndex": turn_index,
         "completeness": conversation_label,
         "learnerEvidenceChanged": False,
+        "idempotent": False,
     }

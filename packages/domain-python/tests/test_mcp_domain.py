@@ -8,11 +8,11 @@ import pytest
 from memdot_domain.mcp import (
     CaptureOrigin,
     ConversationCompleteness,
+    capture_origin_for_client,
     citation_url,
     decode_mcp_public_id,
     encode_mcp_public_id,
     map_mcp_completeness_to_conversation,
-    capture_origin_for_client,
 )
 
 
@@ -33,13 +33,9 @@ def test_invalid_mcp_id_raises() -> None:
 
 def test_completeness_mapping() -> None:
     assert (
-        map_mcp_completeness_to_conversation("complete_import")
-        == ConversationCompleteness.COMPLETE
+        map_mcp_completeness_to_conversation("complete_import") == ConversationCompleteness.COMPLETE
     )
-    assert (
-        map_mcp_completeness_to_conversation("single_turn")
-        == ConversationCompleteness.PARTIAL
-    )
+    assert map_mcp_completeness_to_conversation("single_turn") == ConversationCompleteness.PARTIAL
     assert map_mcp_completeness_to_conversation("bogus") == ConversationCompleteness.UNKNOWN
 
 

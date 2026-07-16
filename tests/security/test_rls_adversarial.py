@@ -77,6 +77,9 @@ REGISTERED_ACCOUNT_OWNED_TABLES = frozenset(
         "notion_page_binding",
         "deletion_tombstone",
         "export_job",
+        "assessment_attempt",
+        "deletion_workflow",
+        "semantic_projection",
     }
 )
 

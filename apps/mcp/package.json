@@ -13,6 +13,7 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.12.1",
     "zod": "^3.25.0"
   },
   "devDependencies": {

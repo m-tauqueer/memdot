@@ -43,6 +43,10 @@ class CoreSettings(BaseSettings):
     oidc_client_secret: str = ""
     oidc_redirect_uri: str = "http://localhost:8000/api/v1/auth/oidc/callback"
     public_url: str = "http://localhost:3000"
+    mcp_service_secret: str = Field(default="dev-mcp-service-secret-change-me-32b", min_length=32)
+    mcp_resource: str = "memdot-mcp"
+    mcp_jwt_hs256_key: str = ""
+    job_auth_snapshot_key: str = ""
 
     def is_hosted(self) -> bool:
         return normalize_mode(self.env) == "hosted"

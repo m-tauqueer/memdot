@@ -68,9 +68,6 @@ class TelemetryContentRejectedError(ValueError):
     """Raised when telemetry payload contains forbidden user-content fields."""
 
 
-from typing import Any, cast
-
-
 def _walk_keys(value: object, *, prefix: str = "") -> list[str]:
     keys: list[str] = []
     if isinstance(value, dict):

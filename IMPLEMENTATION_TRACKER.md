@@ -63,11 +63,18 @@ Tex-disabled full-system fallback.
 - [x] Wave 1 / Phase 1 — repository foundation.
 - [x] Wave 2 / Phase 2 — self-host platform.
 - [x] Wave 3 / Phase 3 — canonical data and authorization (`e77b299`).
-- [x] Wave 4 / Phases 4–5 — Core runtime and ingestion (on develop; focused gates green).
-- [x] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, Tex stubs (on develop).
-- [x] Wave 6 / Phase 8 — learning backend on develop (Checkpoint A smoke pending Compose DB).
-- [x] Wave 7 / Phases 9–10 — MCP, conversations, Notion, export, deletion (on develop; stubs where noted).
-- [x] Wave 8 / Phase 11 — hardening/telemetry/hosted skeleton/eval gates on develop (Checkpoint B smoke pending).
+- [ ] Wave 4 / Phases 4–5 — Core runtime and ingestion on `develop`; correction
+      and complete wave acceptance are pending.
+- [ ] Wave 5 / Phases 6–7 — documents, memory, retrieval, context, models, and
+      Tex stubs on `develop`; complete wave acceptance is pending.
+- [ ] Wave 6 / Phase 8 — learning backend on `develop`; correction, complete
+      wave acceptance, and Checkpoint A are pending.
+- [ ] Wave 7 / Phases 9–10 — MCP/conversations/Notion/export/deletion under security correction on `develop` (service-auth/CSRF/signed snapshots/payload persistence in progress; live Notion/GCP/smoke unproven).
+- [ ] Wave 8 / Phase 11 — hardening/telemetry/hosted skeleton/eval gates under correction (Checkpoint B smoke **not** run; SBOM via `scripts/generate_sbom.sh` stub).
+- [ ] Alpha integration gate — live Google OIDC, Notion authorized test workspace,
+      hosted KMS/provider configuration, live MCP clients, and owner-authorized
+      deployment validation. External credentials/resources are required; see
+      `docs/technical/ALPHA_INTEGRATION_GATE.md`.
 - [ ] Wave 9 / Phase 12 — frontend foundation.
 - [ ] Wave 10 / Phases 13–15 — complete frontend and beta readiness.
 
@@ -137,8 +144,9 @@ handling, abuse, egress; parser and operational evaluation gates.
 - [x] Implement durable job states, attempts, progress, cancellation, and terminal errors.
 - [x] Implement bounded exponential retry with jitter and explicit dead-letter state.
 - [x] Prevent duplicate acceptance, dispatch, effect, completion, and response publication.
-- [x] Carry immutable signed authorization snapshots into workers and revalidate before effect.
-- [x] Ensure revoked/deleted/disabled state wins over accepted but unexecuted work.
+- [x] Carry versioned signed expiring authorization snapshots into workers and revalidate before ingestion effects.
+- [ ] Revalidate signed snapshots on every durable worker effect path (export/deletion purge completion still partial).
+- [x] Ensure revoked/deleted/disabled state wins over accepted but unexecuted ingestion work (unit + processor negative tests).
 - [x] Minimize job/event error content and exclude user content from telemetry.
 - [x] Add property/integration tests for crash points, duplicate delivery, lease expiry,
       reordered events, cancellation, and replay.
@@ -172,10 +180,14 @@ handling, abuse, egress; parser and operational evaluation gates.
 ### 5.6 Ingestion orchestration
 
 - [x] MIME-sniff content rather than trusting extension or client MIME.
-- [x] Enforce file-size, page, decompression, archive, recursion, and resource limits.
-- [x] Implement native text/office/PDF extraction and parser profile versioning.
-- [x] Integrate Docling through a replaceable adapter without canonical ownership.
-- [x] Gate OCR fallback by extraction quality and supported English/Hindi/Hinglish profiles.
+- [x] Enforce file-size and page resource limits on the ingestion path (archive/decompression helpers present; not fully wired for nested archives).
+- [ ] Implement native office/deep PDF extraction via production Docling dependency
+      (adapter is `DoclingParserAdapter`; fail-closed when Docling is unavailable —
+      not a substitute pypdf “Docling” path).
+- [x] Parser profile versioning and replaceable Docling adapter seam exist; live
+      Docling conversion remains an external dependency gate.
+- [x] OCR fallback fails closed (no `[ocr-unavailable]` promotion); quality threshold gating exists.
+- [ ] Multilingual English/Hindi/Hinglish OCR/parser profiles proven with corpus fixtures.
 - [x] Persist stage checkpoints and bounded content-safe diagnostic codes.
 - [x] Make each stage retryable/idempotent and resume from durable state.
 - [x] Never overwrite original bytes or successful historical parse artifacts.
@@ -315,39 +327,40 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 8.1 MCP OAuth and frozen tools
 
-- [x] Implement OAuth protected-resource metadata and Streamable HTTP MCP.
+- [x] Implement OAuth protected-resource metadata and Streamable HTTP MCP (`POST /mcp`).
 - [x] Implement compatible `search({query})` and `fetch({id})` shapes.
 - [x] Implement `prepare_context`, `propose_memory`, and `record_interaction`.
 - [x] Preserve whole-account non-private read consent and absolute Private exclusion.
-- [x] Add safe errors, pagination, citations, idempotency, and side-effect tests.
+- [ ] Live OIDC JWKS validation against a real issuer (test HS256 / service-auth path only).
+- [ ] Add safe errors, pagination, citations, idempotency, and side-effect tests (partial).
 
 ### 8.2 Conversations and capture
 
-- [x] Capture native chats automatically with canonical turn ordering.
+- [x] Capture native chats with payload fields + `client_turn_id` idempotency.
 - [x] Record external interactions only when explicitly supplied.
 - [x] Persist complete/partial/summary/unknown completeness labels.
 - [x] Prevent conversation activity from changing learner evidence.
-- [x] Implement conversation export and deletion with immediate invisibility.
+- [ ] Implement conversation export and deletion with immediate invisibility (deletion yes; full export pack partial).
 
 ### 8.3 Notion synchronization
 
-- [x] Implement OAuth connection, page selection, pagination, and rate handling.
-- [x] Snapshot exact source page content and copy expiring assets.
-- [x] Detect base/Notion/Memdot conflicts and pause only the affected item.
+- [x] Provider port + adapter with encrypted token, pagination cursor, rate-limit stub.
+- [ ] Live Notion OAuth / HTTP (fixture adapter mode only; not live-connected).
+- [x] Detect fixture conflicts and pause only the affected item.
 - [x] Support Keep Notion, Keep Memdot, and reviewed merge without silent overwrite.
 
 ### 8.4 Export, deletion, and restore
 
-- [x] Export portable canonical content manifest JSON.
+- [x] Export durable job + object-storage tar package with sha256.
 - [x] Make tombstones immediately exclude data from APIs, retrieval, and MCP.
-- [x] Replay tombstones after restore before serving traffic.
+- [x] Replay tombstones after restore before serving traffic (tombstone-first workflow).
 
 ### 8.5 Wave 7 integrated fast gate
 
-- [x] MCP schema/auth/private-space adversarial tests pass.
-- [x] Conversation completeness and no-learning-side-effect tests pass.
-- [x] Notion fixture conflict pause tests pass.
-- [x] Export verification and tombstone exclusion tests pass.
+- [ ] MCP schema/auth/private-space adversarial tests pass (correction in progress).
+- [ ] Conversation completeness and no-learning-side-effect tests pass.
+- [ ] Notion fixture conflict pause tests pass under session+CSRF.
+- [ ] Export verification and tombstone exclusion tests pass.
 - [ ] Full workspace/docs/security gates pass.
 - [ ] `make selfhost-smoke` is not run.
 - [ ] Grok posts the Wave 7 chat report and stops for Codex audit.
@@ -356,20 +369,20 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 9.1 Security and observability
 
-- [x] Enforce telemetry allowlist and prove prohibited content never leaves services.
+- [x] Enforce telemetry allowlist + Core log redaction filter.
 - [x] Implement abuse/rate/concurrency breakers and safe overload behavior.
-- [x] Add SLO metrics, alerts, queue/job visibility, and failure injection.
+- [ ] Add SLO metrics, alerts, queue/job visibility, and failure injection (partial).
 
 ### 9.2 Hosted and supply-chain platform
 
-- [x] Implement India-first GCP Mumbai application/content/inference topology.
-- [x] Restrict Delhi to encrypted disaster-recovery backups.
-- [ ] Pin and scan images/dependencies; generate SBOM and license reports.
+- [x] Terraform variable validation for Mumbai/Delhi scaffold (no live provision).
+- [x] Restrict Delhi to encrypted disaster-recovery backups (docs/scaffold only).
+- [ ] Pin and scan images/dependencies; generate SBOM and license reports (`scripts/generate_sbom.sh` stub).
 
 ### 9.3 Evaluation platform and Checkpoint B
 
-- [x] Automate parser/retrieval/citation/learning/MCP/security/lifecycle benchmarks.
-- [x] Pass focused `make phase7-gates` and `make phase8-gates` fast gates.
+- [x] Benchmark runner fails on negative fixtures (not hard-coded pass).
+- [ ] Pass focused `make phase7-gates` / `make phase8-gates` / `make backend-fast-gates` after correction.
 - [ ] Run exactly one successful `make selfhost-smoke` Checkpoint B.
 - [ ] Prove telemetry-off, Tex-disabled, lifecycle-safe stable backend behavior.
 - [ ] Store raw smoke evidence in `/tmp` and report it in chat only.
@@ -427,8 +440,10 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ## 12. Current pointer
 
-- [x] Accepted through Wave 3 / technical Phase 3 at `e77b299`.
-- [x] Active branch: `develop` through technical Phases 4–11 implementation.
+- [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
+- [ ] Active branch: `develop` @ `ada92dd` under Correction Round 2 (dirty tree; no
+      owner commit). Round 2 self-audit pending Codex logic re-audit.
 - [ ] Merge `develop` → `main` remains owner-controlled.
-- [ ] Checkpoint A/B full `make selfhost-smoke` pending Compose-backed DB URL in this environment.
-- [ ] Frontend (Waves 9–10 / Phases 12–15) starts only after Checkpoint B, Codex PASS, and owner authorization.
+- [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.
+- [ ] Frontend (Waves 9–10 / Phases 12–15) starts only after Checkpoint B,
+      Alpha integration gate, Codex PASS, and owner authorization.

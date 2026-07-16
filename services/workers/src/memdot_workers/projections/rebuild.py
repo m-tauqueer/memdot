@@ -15,8 +15,7 @@ def payload_hash(text: str) -> str:
 
 
 class ProjectionUpsertSession(Protocol):
-    def execute(self, statement: object, params: dict[str, object] | None = None) -> object:
-        ...
+    def execute(self, statement: object, params: dict[str, object] | None = None) -> object: ...
 
 
 def upsert_local_lexical_projection(
@@ -47,7 +46,9 @@ def upsert_local_lexical_projection(
           :canonical_type, :canonical_id, :canonical_revision_id,
           :provider_document_id, :payload_hash, 'active', :indexed_at
         )
-        ON CONFLICT (account_id, provider, surface, canonical_type, canonical_id, canonical_revision_id)
+        ON CONFLICT (
+          account_id, provider, surface, canonical_type, canonical_id, canonical_revision_id
+        )
         DO UPDATE SET
           payload_hash = EXCLUDED.payload_hash,
           status = 'active',

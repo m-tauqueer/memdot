@@ -2,7 +2,7 @@
 
 Version: 2.0
 Approved: 2026-07-16
-Execution model: 10 delivery waves, backend first, frontend last
+Execution model: 10 delivery waves plus a pre-frontend Alpha integration gate, backend first, frontend last
 
 ## 1. Purpose
 
@@ -458,5 +458,6 @@ needs them. Codex normally inspects the working tree directly.
 - Next eligible wave: Wave 4 covering technical Phases 4–5.
 - Active wave: none until Tauqueer authorizes the Wave 4 prompt.
 - Full smoke checkpoints: Wave 6 after Phase 8, and Wave 8 after Phase 11.
-- Frontend begins only in Wave 9 after Checkpoint B and owner authorization.
+- Frontend begins only in Wave 9 after Checkpoint B, the Alpha integration gate,
+  and owner authorization.
 - Phase prompts, correction prompts, and reports are delivered in chat only.

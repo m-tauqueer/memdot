@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from memdot_core.deps import get_db_session, get_request_context
+from memdot_core.documents import service as document_service
 from memdot_core.errors import ErrorCode, problem_response, safe_not_found
 from memdot_core.idempotency import (
     begin_idempotency,
@@ -21,7 +22,6 @@ from memdot_core.idempotency import (
 )
 from memdot_core.policy import GLOBAL_RATE_LIMITER, rate_limited_response
 from memdot_core.request_context import RequestContext
-from memdot_core.documents import service as document_service
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -142,9 +142,7 @@ def save_revision(
             "code": ErrorCode.CONFLICT.value,
             "detail": "Base revision is stale.",
             "correlationId": str(resolved.correlation_id),
-            "currentRevisionId": str(exc.current_revision_id)
-            if exc.current_revision_id
-            else None,
+            "currentRevisionId": str(exc.current_revision_id) if exc.current_revision_id else None,
         }
         return JSONResponse(
             status_code=409,

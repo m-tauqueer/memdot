@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from collections.abc import Generator
 from typing import Annotated
 
@@ -69,29 +68,6 @@ def get_request_context(
     request: Request,
     db: Annotated[Session, Depends(get_db_session)],
 ) -> RequestContext | None:
+    """First-party auth is browser session only. Mutating methods require CSRF."""
     require_csrf = request.method not in {"GET", "HEAD", "OPTIONS"}
-    if require_csrf and request.headers.get("X-CSRF-Token") is None:
-        # Allow missing CSRF only for routes that do not mutate in tests without header.
-        pass
-    session_ctx = load_session_context(request, db, require_csrf=False)
-    if session_ctx is not None:
-        return session_ctx
-    account_raw = request.headers.get("X-Memdot-Account-Id")
-    actor_raw = request.headers.get("X-Memdot-Actor-Id")
-    if account_raw and actor_raw:
-        try:
-            account_id = uuid.UUID(account_raw.strip())
-            actor_id = uuid.UUID(actor_raw.strip())
-        except ValueError:
-            return None
-        from memdot_core.external_context import load_first_party_context_from_headers
-        from memdot_domain.tenancy import RequestPurpose
-
-        return load_first_party_context_from_headers(
-            request,
-            account_id=account_id,
-            actor_id=actor_id,
-            purpose=RequestPurpose.FIRST_PARTY,
-            db=db,
-        )
-    return None
+    return load_session_context(request, db, require_csrf=require_csrf)

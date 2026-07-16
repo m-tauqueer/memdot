@@ -5,9 +5,9 @@ from __future__ import annotations
 import uuid
 
 from memdot_domain.retrieval import (
-    CandidateLane,
     LANE_WEIGHTS,
     RRF_K,
+    CandidateLane,
     RetrievalCandidate,
     fuse_candidates,
     rrf_contribution,
@@ -38,7 +38,10 @@ def test_rrf_contribution_uses_k60_and_weight() -> None:
 def test_fuse_candidates_is_deterministic() -> None:
     lane_results = {
         CandidateLane.EXACT: [_candidate("a", CandidateLane.EXACT, 1)],
-        CandidateLane.TEX: [_candidate("a", CandidateLane.TEX, 2), _candidate("b", CandidateLane.TEX, 1)],
+        CandidateLane.TEX: [
+            _candidate("a", CandidateLane.TEX, 2),
+            _candidate("b", CandidateLane.TEX, 1),
+        ],
     }
     fused = fuse_candidates(lane_results)
     assert fused[0].candidate_id == "a"

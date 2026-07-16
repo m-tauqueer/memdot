@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import os
+
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -22,16 +25,64 @@ from memdot_core.errors import (
 from memdot_core.settings import CoreSettings
 
 
+def _sync_runtime_secrets(settings: CoreSettings) -> None:
+    os.environ.setdefault("CORE_SESSION_SIGNING_PEPPER", settings.session_signing_pepper)
+    os.environ.setdefault("CORE_TENANT_CONTEXT_SIGNING_KEY", settings.tenant_context_signing_key)
+    os.environ.setdefault("CORE_MCP_SERVICE_SECRET", settings.mcp_service_secret)
+    if settings.job_auth_snapshot_key:
+        os.environ.setdefault("CORE_JOB_AUTH_SNAPSHOT_KEY", settings.job_auth_snapshot_key)
+    if settings.mcp_jwt_hs256_key:
+        os.environ.setdefault("CORE_MCP_JWT_HS256_KEY", settings.mcp_jwt_hs256_key)
+    if settings.oidc_issuer:
+        os.environ.setdefault("CORE_OIDC_ISSUER", settings.oidc_issuer)
+    if settings.oidc_audience:
+        os.environ.setdefault("CORE_OIDC_AUDIENCE", settings.oidc_audience)
+    if settings.mcp_resource:
+        os.environ.setdefault("CORE_MCP_RESOURCE", settings.mcp_resource)
+
+
+class TelemetryRedactingFilter(logging.Filter):
+    """Sanitize log records that include forbidden content keys."""
+
+    _BASE_KEYS = frozenset(logging.makeLogRecord({}).__dict__.keys())
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        from memdot_domain.telemetry import FORBIDDEN_TELEMETRY_KEYS
+
+        for key in list(record.__dict__):
+            if key in self._BASE_KEYS or key.startswith("_"):
+                continue
+            if key.lower() in FORBIDDEN_TELEMETRY_KEYS:
+                setattr(record, key, "[redacted]")
+        try:
+            message = str(record.getMessage())
+        except Exception:
+            return True
+        lowered = message.lower()
+        if any(
+            f"{forbidden}=" in lowered or f'"{forbidden}"' in lowered
+            for forbidden in FORBIDDEN_TELEMETRY_KEYS
+        ):
+            record.msg = "[redacted-log]"
+            record.args = ()
+        return True
+
+
 def create_app(settings: CoreSettings | None = None) -> FastAPI:
     resolved = settings or CoreSettings()
     resolved.validate_runtime()
+    _sync_runtime_secrets(resolved)
 
     app = FastAPI(
         title="Memdot Core API",
         version="0.1.0",
-        description="Canonical domain API. Adds documents, memory, context, sources, jobs, and ingestion routes.",
+        description=(
+            "Canonical domain API. Adds documents, memory, context, sources, "
+            "jobs, and ingestion routes."
+        ),
     )
     app.state.settings = resolved
+    logging.getLogger("memdot_core").addFilter(TelemetryRedactingFilter())
 
     from memdot_core.auth.routes import router as auth_router
     from memdot_core.context.routes import router as context_router

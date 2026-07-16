@@ -32,9 +32,7 @@ def test_problem_json_fixture_validates(problem_schema: dict) -> None:
 
 @pytest.mark.contract
 def test_memdot_document_v1_fixture() -> None:
-    schema = json.loads(
-        (SCHEMAS / "json" / "memdot-document.v1.json").read_text(encoding="utf-8")
-    )
+    schema = json.loads((SCHEMAS / "json" / "memdot-document.v1.json").read_text(encoding="utf-8"))
     doc_id = "0194f123-4567-7890-abcd-ef1234567890"
     block_id = "0194f123-4567-7890-abcd-ef1234567891"
     payload = {

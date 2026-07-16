@@ -12,23 +12,24 @@ Purpose: Durable starting context for Grok, Codex, and future implementation ses
 - Phase 1 monorepo scaffold is accepted at
   `4138239ea31eff267af3e9a9d9984ca51a763991`.
 - Phase 2 self-host infrastructure is **accepted** (Codex PASS; commit `2c96aa7`).
-  Phase 3 canonical PostgreSQL ledger, tenancy, identity, and authorization is
-  **accepted** in the commit containing this context update. Phase 4 has not
-  been owner-authorized.
+- Phase 3 canonical PostgreSQL ledger, tenancy, identity, and authorization is
+  **accepted**.
+- Current `main` tip is `cc570eb` (authored documents / policy-aware retrieval on
+  top of Phases 1–3 + Wave 4 ingestion baseline). Do not claim older SHAs as current
+  `main`.
+- Active implementation and Codex FAIL security corrections proceed on `develop`
+  (merge-base with `main`: `cc570eb`). Waves 4–8 are **not** owner-accepted while
+  stubs, incomplete Docling/OCR office parsing, live Notion OAuth, live GCP
+  provision, and Checkpoint A/B smoke remain unproven.
 - Phase 3 delivers Alembic migrations (frozen SQL, not `create_all`), FORCE RLS with
   Core-signed and time-bounded tenant context envelopes, atomic pointer/outbox writes,
   evidence-ledger foundations, server-side OIDC authorization-code + PKCE routes, and
-  seeded per-table adversarial security tests. Wave 4 Core runtime/ingestion and Wave 5
-  documents/memory/retrieval/context/model-router stubs are implemented on `main`;
-  combined gates remain deferred to Wave 6.
+  seeded per-table adversarial security tests.
 - Verified scaffold paths exist for apps/web, apps/mcp, services/core,
   services/workers, services/model-router, packages/contracts,
   packages/domain-python, packages/provider-adapters, packages/ui,
   infra/compose, infra/hosted, tests/benchmark, and tests/security.
-- Git branch `main` contains the accepted Phase 1, Phase 2, and Phase 3 work.
-  The full self-host smoke was not repeated during the final Phase 3 correction;
-  the prior green Phase 3 smoke remains accepted evidence. Verified commands are recorded in AGENTS.md and
-  docs/ai/CODEBASE_CONTEXT_MAP.md.
+- Verified commands are recorded in AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
 - This file must be updated whenever a phase changes verified repository state.
 
 ## 2. Roles and decision flow
@@ -300,10 +301,14 @@ larger waves:
 1. Phase 1 — repository foundation (accepted).
 2. Phase 2 — self-host/local platform (accepted).
 3. Phase 3 — canonical ledger, identity, and authorization (accepted).
-4. Phases 4–5 — Core API, durable work, object storage, ingestion, and parsing.
-5. Phases 6–7 — documents, memory, retrieval, context, models, and Tex fallback.
-6. Phase 8 — learning backend, followed by full-smoke Checkpoint A.
-7. Phases 9–10 — MCP, conversations, Notion, export, deletion, and restore.
+4. Phases 4–5 — Core API, durable work, object storage, ingestion, and parsing
+   (implemented on `develop`, pending correction-wave acceptance).
+5. Phases 6–7 — documents, memory, retrieval, context, models, and Tex fallback
+   (implemented on `develop`, pending correction-wave acceptance).
+6. Phase 8 — learning backend, followed by full-smoke Checkpoint A (implemented
+   on `develop`, pending correction-wave acceptance).
+7. Phases 9–10 — MCP, conversations, Notion, export, deletion, and restore
+   (implemented on `develop`, pending correction-wave acceptance).
 8. Phase 11 — security, hosted deployment, and evaluation, followed by
    full-smoke Checkpoint B.
 9. Phase 12 — frontend foundation.
@@ -315,11 +320,26 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
 
 ## 14. Current execution pointer
 
-- Active branch: `develop` (MCP, lifecycle, hardening implemented; awaiting Codex review).
-- Accepted on `main`: Phases 1–3; Wave 4 ingestion on `main`.
-- Detailed checklist: `IMPLEMENTATION_TRACKER.md` Waves 7–8.
-- Focused gates: `make phase4-gates` … `make phase8-gates` (see AGENTS.md).
-- Next full smoke: Checkpoint B after `make phase8-gates` (not run in implementation tasks).
+- Active branch: `develop` (dirty tree; Correction Round 2 code complete for
+  self-audit; **no owner commit**). Starting/ending HEAD remain
+  `ada92dde39ffff948df2b66fb43dc9116bcff6cb` until Tauqueer commits.
+- Accepted on `main`: `cc570eb`. Merge-base with `main`: `cc570eb`.
+- Round 2 landed (uncommitted): grant-resolved MCP auth (no browser MCP fallback),
+  durable `service_auth_nonce` + `memdot_resolve_external_grant`, dedicated ≥32-byte
+  service-auth/job-snapshot/conversation keys, MCP SDK Streamable HTTP + SDK-client
+  protocol tests, job↔outbox `durable_job_id` binding, attempt start/reveal routes,
+  encrypted MCP `record_interaction`, Docling adapter fail-closed (dependency still
+  external), Notion injectable HTTP + emulator, schema head `20260722_0007`.
+- External integrations move to a dedicated pre-frontend **Alpha integration
+  gate**: live Google OIDC, a live authorized Notion test workspace, hosted KMS,
+  real MCP-client compatibility, and owner-authorized hosted deployment checks.
+  These require credentials/resources and must not be claimed from fixtures.
+- The Alpha gate is defined in `docs/technical/ALPHA_INTEGRATION_GATE.md`.
+  Current local code does **not** yet provide production Docling conversion,
+  pgvector/rebuild workers, full export packaging, full deletion purge, hosted
+  KMS envelope-key wiring, or live provider compatibility proof.
+- Detailed checklist: `IMPLEMENTATION_TRACKER.md` (external gates remain unchecked).
+- Do not run `make selfhost-smoke` until Codex logic re-audit + owner authorization.
 
 ## 15. Context maintenance
 

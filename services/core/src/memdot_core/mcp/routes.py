@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request, Response
+from memdot_domain.tenancy import RequestPurpose
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from memdot_core.auth.bearer import scopes_allow_purpose
 from memdot_core.deps import get_db_session, get_settings
 from memdot_core.errors import safe_not_found
 from memdot_core.external_context import load_mcp_context
@@ -52,9 +55,13 @@ class RecordInteractionBody(BaseModel):
     space_id: uuid.UUID
     client_conversation_id: str = Field(min_length=1, max_length=128)
     role: str = Field(min_length=1, max_length=32)
-    content: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=65536)
     completeness: str = Field(min_length=1, max_length=32)
     context_receipt_id: uuid.UUID | None = None
+    idempotency_key: str | None = Field(default=None, max_length=128)
+    occurred_at: datetime | None = None
+    parent_turn_id: uuid.UUID | None = None
+    client_turn_id: str | None = Field(default=None, max_length=128)
 
 
 def _require_mcp_ctx(
@@ -65,7 +72,8 @@ def _require_mcp_ctx(
 ) -> RequestContext | Response:
     if not GLOBAL_OVERLOAD_BREAKER.try_acquire():
         return overload_reject_response()
-    ctx = load_mcp_context(request, db)
+    required = RequestPurpose(purpose) if purpose else None
+    ctx = load_mcp_context(request, db, required_purpose=required)
     if ctx is None:
         GLOBAL_OVERLOAD_BREAKER.release()
         return safe_not_found(correlation_id=uuid.uuid4())
@@ -73,6 +81,13 @@ def _require_mcp_ctx(
         GLOBAL_OVERLOAD_BREAKER.release()
         return rate_limited_response(correlation_id=ctx.correlation_id)
     if purpose and ctx.purpose.value != purpose:
+        GLOBAL_OVERLOAD_BREAKER.release()
+        return safe_not_found(correlation_id=ctx.correlation_id)
+    if (
+        required is not None
+        and ctx.purpose != RequestPurpose.FIRST_PARTY
+        and not scopes_allow_purpose(ctx.scopes, required)
+    ):
         GLOBAL_OVERLOAD_BREAKER.release()
         return safe_not_found(correlation_id=ctx.correlation_id)
     return ctx
@@ -205,6 +220,25 @@ def mcp_record_interaction(
             content=body.content,
             completeness=body.completeness,
             context_receipt_id=body.context_receipt_id,
+            idempotency_key=body.idempotency_key,
+            client_turn_id=body.client_turn_id,
+            parent_turn_id=body.parent_turn_id,
+            occurred_at=body.occurred_at,
+        )
+    except ValueError as exc:
+        _release_overload()
+        from memdot_core.errors import ErrorCode, problem_response
+
+        code = (
+            ErrorCode.IDEMPOTENCY_CONFLICT
+            if str(exc) == ErrorCode.IDEMPOTENCY_CONFLICT.value
+            else ErrorCode.VALIDATION_ERROR
+        )
+        return problem_response(
+            status=409 if code == ErrorCode.IDEMPOTENCY_CONFLICT else 422,
+            code=code,
+            detail=str(exc),
+            correlation_id=resolved.correlation_id,
         )
     except Exception:
         _release_overload()

@@ -333,6 +333,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learning/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Attempt */
+        post: operations["submit_attempt_api_v1_learning_attempts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learning/attempts/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reveal Attempt */
+        post: operations["reveal_attempt_api_v1_learning_attempts_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learning/attempts/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Attempt */
+        post: operations["start_attempt_api_v1_learning_attempts_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learning/courses": {
         parameters: {
             query?: never;
@@ -393,7 +444,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Append Event */
+        /**
+         * Append Event
+         * @description Public arbitrary learner-event append is removed (Round 2).
+         *
+         *     Evidence must flow through the server-owned attempt lifecycle only.
+         */
         post: operations["append_event_api_v1_learning_events_post"];
         delete?: never;
         options?: never;
@@ -412,23 +468,6 @@ export interface paths {
         put?: never;
         /** Rebuild Evidence */
         post: operations["rebuild_evidence_api_v1_learning_evidence_rebuild_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/learning/reviews": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Review */
-        post: operations["review_api_v1_learning_reviews_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -985,11 +1024,6 @@ export interface components {
              * @default false
              */
             substantive_hint: boolean;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
         };
         /** AppendTurnBody */
         AppendTurnBody: {
@@ -998,6 +1032,14 @@ export interface components {
              * @default true
              */
             auto_native: boolean;
+            /** Client Turn Id */
+            client_turn_id?: string | null;
+            /** Content */
+            content?: string | null;
+            /** Context Receipt Id */
+            context_receipt_id?: string | null;
+            /** Parent Turn Id */
+            parent_turn_id?: string | null;
             /** Role */
             role: string;
         };
@@ -1217,22 +1259,25 @@ export interface components {
              * Format: uuid
              */
             course_id: string;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
         };
         /** RecordInteractionBody */
         RecordInteractionBody: {
             /** Client Conversation Id */
             client_conversation_id: string;
+            /** Client Turn Id */
+            client_turn_id?: string | null;
             /** Completeness */
             completeness: string;
             /** Content */
             content: string;
             /** Context Receipt Id */
             context_receipt_id?: string | null;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
+            /** Occurred At */
+            occurred_at?: string | null;
+            /** Parent Turn Id */
+            parent_turn_id?: string | null;
             /** Role */
             role: string;
             /**
@@ -1259,40 +1304,23 @@ export interface components {
             /** Resolution */
             resolution: string;
         };
-        /** ReviewBody */
-        ReviewBody: {
+        /** RevealAttemptBody */
+        RevealAttemptBody: {
             /**
-             * Assessment Item Id
-             * Format: uuid
-             */
-            assessment_item_id: string;
-            /**
-             * Assessment Revision Id
-             * Format: uuid
-             */
-            assessment_revision_id: string;
-            /** Correct */
-            correct: boolean;
-            /**
-             * Course Id
-             * Format: uuid
-             */
-            course_id: string;
-            /**
-             * Revealed
+             * Answer
              * @default false
              */
-            revealed: boolean;
+            answer: boolean;
             /**
-             * Substantive Hint
-             * @default false
-             */
-            substantive_hint: boolean;
-            /**
-             * User Id
+             * Attempt Id
              * Format: uuid
              */
-            user_id: string;
+            attempt_id: string;
+            /**
+             * Hint
+             * @default false
+             */
+            hint: boolean;
         };
         /** SaveRevisionBody */
         SaveRevisionBody: {
@@ -1322,6 +1350,62 @@ export interface components {
              * Format: uuid
              */
             space_id: string;
+        };
+        /** StartAttemptBody */
+        StartAttemptBody: {
+            /**
+             * Assessment Item Id
+             * Format: uuid
+             */
+            assessment_item_id: string;
+            /**
+             * Assessment Revision Id
+             * Format: uuid
+             */
+            assessment_revision_id: string;
+            /** Client Attempt Id */
+            client_attempt_id?: string | null;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+        };
+        /** SubmitAttemptBody */
+        SubmitAttemptBody: {
+            /**
+             * Answer Revealed
+             * @default false
+             */
+            answer_revealed: boolean;
+            /**
+             * Assessment Item Id
+             * Format: uuid
+             */
+            assessment_item_id: string;
+            /**
+             * Assessment Revision Id
+             * Format: uuid
+             */
+            assessment_revision_id: string;
+            /** Client Attempt Id */
+            client_attempt_id: string;
+            /** Confidence */
+            confidence: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /**
+             * Hint Revealed
+             * @default false
+             */
+            hint_revealed: boolean;
+            /** Response */
+            response: {
+                [key: string]: unknown;
+            };
         };
         /** SyncBindingBody */
         SyncBindingBody: {
@@ -2015,6 +2099,105 @@ export interface operations {
             };
         };
     };
+    submit_attempt_api_v1_learning_attempts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitAttemptBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_attempt_api_v1_learning_attempts_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevealAttemptBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_attempt_api_v1_learning_attempts_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartAttemptBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_course_api_v1_learning_courses_post: {
         parameters: {
             query?: never;
@@ -2161,39 +2344,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RebuildBody"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    review_api_v1_learning_reviews_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReviewBody"];
             };
         };
         responses: {

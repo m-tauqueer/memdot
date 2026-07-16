@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 from memdot_domain.ports.model import ModelBudget, StructuredCompletionRequest
-
 from memdot_model_router.adapters import DEFAULT_ADAPTER, DEFAULT_POLICY
 from memdot_model_router.policy import validate_request
 

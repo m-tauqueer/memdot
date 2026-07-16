@@ -29,13 +29,15 @@ def payload_sha256(payload: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def auth_snapshot_from_context(ctx: RequestContext) -> dict[str, object]:
-    return {
-        "account_id": str(ctx.account_id),
-        "actor_id": str(ctx.actor_id),
-        "purpose": ctx.purpose.value,
-        "correlation_id": str(ctx.correlation_id),
-    }
+def auth_snapshot_from_context(
+    ctx: RequestContext,
+    *,
+    space_id: uuid.UUID | None = None,
+    resource_ids: dict[str, str] | None = None,
+) -> dict[str, object]:
+    from memdot_core.jobs.auth_snapshot import auth_snapshot_from_context as signed_snapshot
+
+    return signed_snapshot(ctx, space_id=space_id, resource_ids=resource_ids)
 
 
 def enqueue_job_with_outbox(
@@ -57,11 +59,20 @@ def enqueue_job_with_outbox(
             )
         ).scalar_one_or_none()
         if existing is not None:
+            existing_payload = dict(existing.payload or {})
+            existing_payload.pop("durable_job_id", None)
+            if (
+                existing.job_type != job_type
+                or existing.space_id != space_id
+                or payload_sha256(existing_payload) != digest
+            ):
+                msg = "idempotency_conflict"
+                raise ValueError(msg)
             existing_event = db.execute(
                 select(OutboxEvent)
                 .where(
                     OutboxEvent.account_id == ctx.account_id,
-                    OutboxEvent.payload_sha256 == digest,
+                    OutboxEvent.durable_job_id == existing.id,
                     OutboxEvent.event_type == event_type,
                 )
                 .order_by(OutboxEvent.created_at.desc())
@@ -70,16 +81,9 @@ def enqueue_job_with_outbox(
                 return EnqueuedJob(job_id=existing.id, outbox_event_id=existing_event.id)
     job_id = new_uuid7()
     event_id = new_uuid7()
+    bound_payload = {**payload, "durable_job_id": str(job_id)}
+    digest = payload_sha256(bound_payload)
     with tenant_scope(db, ctx.tenant()):
-        db.add(
-            OutboxEvent(
-                id=event_id,
-                account_id=ctx.account_id,
-                event_type=event_type,
-                payload_sha256=digest,
-                payload=payload,
-            )
-        )
         db.add(
             DurableJob(
                 id=job_id,
@@ -89,8 +93,26 @@ def enqueue_job_with_outbox(
                 status=JobStatus.QUEUED.value,
                 correlation_id=ctx.correlation_id,
                 idempotency_key=idempotency_key,
-                payload=payload,
-                auth_snapshot=auth_snapshot_from_context(ctx),
+                payload=bound_payload,
+                auth_snapshot=auth_snapshot_from_context(
+                    ctx,
+                    space_id=space_id,
+                    resource_ids={
+                        key: str(value)
+                        for key, value in bound_payload.items()
+                        if key.endswith("_id") and value is not None
+                    },
+                ),
+            )
+        )
+        db.add(
+            OutboxEvent(
+                id=event_id,
+                account_id=ctx.account_id,
+                event_type=event_type,
+                payload_sha256=digest,
+                payload=bound_payload,
+                durable_job_id=job_id,
             )
         )
     return EnqueuedJob(job_id=job_id, outbox_event_id=event_id)

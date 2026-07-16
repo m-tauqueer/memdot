@@ -231,7 +231,9 @@ def extract_plain_text(doc: MemdotDocument | dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def document_from_markdown(markdown: str, *, document_id: uuid.UUID | None = None) -> dict[str, Any]:
+def document_from_markdown(
+    markdown: str, *, document_id: uuid.UUID | None = None
+) -> dict[str, Any]:
     """Simple markdown import: headings and paragraphs only."""
     doc_id = document_id or new_uuid7()
     blocks: list[dict[str, Any]] = []

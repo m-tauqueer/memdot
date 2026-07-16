@@ -1,30 +1,10 @@
-"""Database package exports."""
+"""Database package — import model modules so metadata is populated."""
 
-from memdot_core.db.base import Base
-from memdot_core.db.models import ledger, tenancy  # noqa: F401
-from memdot_core.db.registry import (
-    ACCOUNT_OWNED_TABLES,
-    APPEND_ONLY_TABLES,
-    IMMUTABLE_TABLES,
-    MUTABLE_POINTER_TABLES,
-)
-from memdot_core.db.tenant import (
-    TenantContext,
-    apply_tenant_context,
-    reset_tenant_context,
-    tenant_scope,
-)
+from __future__ import annotations
 
-__all__ = [
-    "ACCOUNT_OWNED_TABLES",
-    "APPEND_ONLY_TABLES",
-    "Base",
-    "IMMUTABLE_TABLES",
-    "MUTABLE_POINTER_TABLES",
-    "TenantContext",
-    "apply_tenant_context",
-    "ledger",
-    "reset_tenant_context",
-    "tenancy",
-    "tenant_scope",
-]
+from memdot_core.db.models import ledger, security, tenancy
+
+# Touch modules so Alembic/autogenerate and Base.metadata see all tables.
+_MODEL_MODULES = (ledger, security, tenancy)
+
+__all__ = ["ledger", "security", "tenancy"]

@@ -26,6 +26,8 @@ const settingsSchema = z
     MCP_OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(""),
     MCP_PROVIDER_API_KEY: z.string().default(""),
     MCP_CORE_BASE_URL: z.string().default("http://localhost:8000"),
+    MCP_CORE_SERVICE_SECRET: z.string().default("dev-mcp-service-secret-change-me-32b"),
+    MCP_JWT_HS256_KEY: z.string().default(""),
   })
   .superRefine((value, ctx) => {
     for (const origin of value.MCP_ALLOWED_ORIGINS.split(",")) {
@@ -75,6 +77,12 @@ const settingsSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "MCP_OIDC_AUDIENCE must not be blank",
+        });
+      }
+      if (value.MCP_CORE_SERVICE_SECRET.trim().length < 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "MCP_CORE_SERVICE_SECRET must contain at least 32 characters",
         });
       }
     }

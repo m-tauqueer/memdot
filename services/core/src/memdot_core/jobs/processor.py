@@ -7,13 +7,11 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from memdot_core.db.models.ledger import DurableJob
-from memdot_core.db.models.tenancy import Account
 from memdot_core.ingestion.orchestrator import run_ingestion_for_revision
+from memdot_core.jobs.auth_snapshot import validate_auth_snapshot
 from memdot_core.jobs.service import ack_outbox_event, claim_outbox_batch, payload_sha256
 from memdot_core.storage.s3 import MemoryObjectStorage
 from memdot_domain.ports.object_storage import ObjectStoragePort
-from memdot_domain.tenancy import RequestPurpose
-from memdot_domain.tenant_seal import TenantSealMaterial, sign_tenant_context
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -33,57 +31,86 @@ INGESTION_EVENT_TYPES = frozenset(
     }
 )
 
+DELETION_EVENT_TYPES = frozenset(
+    {
+        "deletion.tombstoned",
+        "deletion.workflow_advanced",
+    }
+)
 
-def validate_auth_snapshot(
+
+def _ack(
     db: Session,
     *,
     account_id: uuid.UUID,
-    snapshot: dict[str, object] | None,
-) -> bool:
-    """Reauthorize worker effect against current account/source existence."""
-    if snapshot is None:
-        return False
-    if str(snapshot.get("account_id")) != str(account_id):
-        return False
-    actor_raw = snapshot.get("actor_id")
-    if actor_raw is None:
-        return False
-    purpose = snapshot.get("purpose")
-    if purpose not in {RequestPurpose.FIRST_PARTY.value, RequestPurpose.WORKER.value}:
-        return False
-    account = db.execute(select(Account.id).where(Account.id == account_id)).scalar_one_or_none()
-    return account is not None
+    event: dict[str, Any],
+    job_id: uuid.UUID | None = None,
+) -> DispatchResult:
+    event_id = uuid.UUID(str(event["id"]))
+    token = event.get("claim_token")
+    if token is None:
+        return DispatchResult(event_id=event_id, acknowledged=False, job_id=job_id)
+    acked = ack_outbox_event(
+        db,
+        account_id=account_id,
+        event_id=event_id,
+        claim_token=uuid.UUID(str(token)),
+    )
+    return DispatchResult(event_id=event_id, acknowledged=acked, job_id=job_id)
 
 
-def seal_from_auth_snapshot(snapshot: dict[str, object]) -> TenantSealMaterial | None:
-    account_raw = snapshot.get("account_id")
-    actor_raw = snapshot.get("actor_id")
-    purpose_raw = snapshot.get("purpose")
-    if not isinstance(account_raw, str) or not isinstance(actor_raw, str):
-        return None
+def _process_deletion_event(
+    db: Session,
+    *,
+    account_id: uuid.UUID,
+    event: dict[str, Any],
+    payload: dict[str, Any],
+) -> DispatchResult:
+    """Advance deletion workflow checkpoints after tombstone-first acceptance."""
+    from datetime import UTC, datetime
+
+    from memdot_core.db.models.ledger import DeletionWorkflow
+    from memdot_core.db.tenant import TenantContext, tenant_scope
+    from memdot_domain.tenancy import RequestPurpose
+
+    workflow_raw = payload.get("workflow_id")
+    if workflow_raw is None:
+        return _ack(db, account_id=account_id, event=event)
     try:
-        purpose = RequestPurpose(str(purpose_raw))
-        account_id = uuid.UUID(account_raw)
-        actor_id = uuid.UUID(actor_raw)
+        workflow_id = uuid.UUID(str(workflow_raw))
     except ValueError:
-        return None
-    issued_at = 0
-    nonce = "worker"
-    signature = sign_tenant_context(
-        account_id=account_id,
-        actor_id=actor_id,
-        purpose=purpose,
-        issued_at=issued_at,
-        nonce=nonce,
-    )
-    return TenantSealMaterial(
-        account_id=account_id,
-        actor_id=actor_id,
-        purpose=purpose,
-        issued_at=issued_at,
-        nonce=nonce,
-        signature=signature,
-    )
+        return DispatchResult(event_id=uuid.UUID(str(event["id"])), acknowledged=False)
+
+    row = db.execute(
+        select(DeletionWorkflow).where(
+            DeletionWorkflow.account_id == account_id,
+            DeletionWorkflow.id == workflow_id,
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        return _ack(db, account_id=account_id, event=event)
+
+    progression = {
+        "tombstoned": "revoking_grants",
+        "revoking_grants": "purging_projections",
+        "purging_projections": "completed",
+    }
+    next_state = progression.get(row.state)
+    if next_state is not None:
+        actor_raw = payload.get("actor_id")
+        try:
+            actor_id = uuid.UUID(str(actor_raw)) if actor_raw else account_id
+        except ValueError:
+            actor_id = account_id
+        tenant = TenantContext(
+            account_id=account_id,
+            actor_id=actor_id,
+            purpose=RequestPurpose.WORKER,
+        )
+        with tenant_scope(db, tenant):
+            row.state = next_state
+            row.updated_at = datetime.now(UTC)
+    return _ack(db, account_id=account_id, event=event)
 
 
 def process_claimed_event(
@@ -99,43 +126,50 @@ def process_claimed_event(
     if not isinstance(payload_raw, dict):
         return DispatchResult(event_id=event_id, acknowledged=False)
     payload = cast(dict[str, Any], payload_raw)
+    if event_type in DELETION_EVENT_TYPES:
+        return _process_deletion_event(db, account_id=account_id, event=event, payload=payload)
     if event_type not in INGESTION_EVENT_TYPES:
-        token = event.get("claim_token")
-        if token is None:
-            return DispatchResult(event_id=event_id, acknowledged=False)
-        acked = ack_outbox_event(
-            db,
-            account_id=account_id,
-            event_id=event_id,
-            claim_token=uuid.UUID(str(token)),
-        )
-        return DispatchResult(event_id=event_id, acknowledged=acked)
+        # A worker must never silently discard an outbox fact it does not own.
+        return DispatchResult(event_id=event_id, acknowledged=False)
 
     source_id = uuid.UUID(str(payload["source_id"]))
     revision_id = uuid.UUID(str(payload["revision_id"]))
     shadow = bool(payload.get("shadow", False))
-    job = (
-        db.execute(
-            select(DurableJob)
-            .where(DurableJob.account_id == account_id)
-            .order_by(DurableJob.created_at.desc())
-        )
-        .scalars()
-        .first()
-    )
-    if job is not None and job.payload.get("source_id") != str(source_id):
-        job = None
-    if job is not None and job.payload.get("revision_id") != str(revision_id):
-        job = None
-    job_id = job.id if job is not None else None
-    if job is not None and not validate_auth_snapshot(
-        db, account_id=account_id, snapshot=job.auth_snapshot
-    ):
+    job_raw = payload.get("durable_job_id") or event.get("durable_job_id")
+    if job_raw is None:
+        return DispatchResult(event_id=event_id, acknowledged=False)
+    try:
+        job_id = uuid.UUID(str(job_raw))
+    except ValueError:
+        return DispatchResult(event_id=event_id, acknowledged=False)
+    job = db.execute(
+        select(DurableJob).where(DurableJob.account_id == account_id, DurableJob.id == job_id)
+    ).scalar_one_or_none()
+    # Never execute worker effects without a verified signed auth snapshot.
+    if job is None or not job.auth_snapshot:
         return DispatchResult(event_id=event_id, acknowledged=False, job_id=job_id)
+    if not validate_auth_snapshot(
+        db,
+        account_id=account_id,
+        snapshot=job.auth_snapshot,
+        expected_space_id=job.space_id,
+    ):
+        # Terminal re-authorization required — do not retry forever.
+        from datetime import UTC, datetime
 
-    actor_id = (
-        uuid.UUID(str(job.auth_snapshot["actor_id"])) if job and job.auth_snapshot else account_id
-    )
+        from memdot_core.jobs.service import mark_dead_letter
+        from memdot_domain.ingestion import JobStatus
+
+        job.error_code = "auth_snapshot_invalid"
+        job.error_detail_safe = (
+            "Authorization snapshot expired or revoked; re-authorization required."
+        )
+        job.updated_at = datetime.now(UTC)
+        job.status = JobStatus.DEAD_LETTER.value
+        mark_dead_letter(db, account_id=account_id, job_id=job_id)
+        return _ack(db, account_id=account_id, event=event, job_id=job_id)
+
+    actor_id = uuid.UUID(str(job.auth_snapshot["actor_id"]))
     run_ingestion_for_revision(
         db,
         storage,

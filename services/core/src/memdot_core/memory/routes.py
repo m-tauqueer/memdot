@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 
 from memdot_core.deps import get_db_session, get_request_context
 from memdot_core.errors import safe_not_found
+from memdot_core.memory import service as memory_service
 from memdot_core.policy import GLOBAL_RATE_LIMITER, rate_limited_response
 from memdot_core.request_context import RequestContext
-from memdot_core.memory import service as memory_service
 
 router = APIRouter(prefix="/api/v1/memory", tags=["memory"])
 
@@ -156,9 +156,7 @@ def get_memory_item(
     resolved = _require_ctx(ctx, request)
     if isinstance(resolved, Response):
         return resolved
-    payload = memory_service.get_memory_item(
-        db, resolved, memory_item_id=memory_item_id
-    )
+    payload = memory_service.get_memory_item(db, resolved, memory_item_id=memory_item_id)
     if payload is None:
         return safe_not_found(correlation_id=resolved.correlation_id)
     return {**payload, "correlationId": str(resolved.correlation_id)}

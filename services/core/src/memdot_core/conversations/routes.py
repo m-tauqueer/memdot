@@ -26,6 +26,10 @@ class CreateConversationBody(BaseModel):
 
 class AppendTurnBody(BaseModel):
     role: str = Field(min_length=1, max_length=32)
+    content: str | None = None
+    client_turn_id: str | None = Field(default=None, max_length=128)
+    parent_turn_id: uuid.UUID | None = None
+    context_receipt_id: uuid.UUID | None = None
     auto_native: bool = True
 
 
@@ -86,9 +90,7 @@ def get_conversation(
     resolved = _require_ctx(ctx, request)
     if isinstance(resolved, Response):
         return resolved
-    payload = conversation_service.get_conversation(
-        db, resolved, conversation_id=conversation_id
-    )
+    payload = conversation_service.get_conversation(db, resolved, conversation_id=conversation_id)
     if payload is None:
         return safe_not_found(correlation_id=resolved.correlation_id)
     return {**payload, "correlationId": str(resolved.correlation_id)}
@@ -111,6 +113,10 @@ def append_turn(
         resolved,
         conversation_id=conversation_id,
         role=body.role,
+        content=body.content,
+        client_turn_id=body.client_turn_id,
+        parent_turn_id=body.parent_turn_id,
+        context_receipt_id=body.context_receipt_id,
         auto_native=body.auto_native,
     )
     if result is None:

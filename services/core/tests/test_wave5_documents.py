@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
+from memdot_core.documents import service as document_service
 from memdot_domain.document import validate_document_payload
 from memdot_domain.ids import new_uuid7
-
-from memdot_core.documents import service as document_service
 
 
 def test_validate_or_raise_accepts_minimal_doc() -> None:

@@ -10,14 +10,16 @@ from sqlalchemy import (
     BigInteger,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKeyConstraint,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from memdot_core.db.base import Base
@@ -392,7 +394,23 @@ class ConversationTurn(Base):
             ["conversation.account_id", "conversation.space_id", "conversation.id"],
             name="fk_conversation_turn_conversation_space",
         ),
+        ForeignKeyConstraint(
+            ["account_id", "parent_turn_id"],
+            ["conversation_turn.account_id", "conversation_turn.id"],
+            name="fk_conversation_turn_parent",
+        ),
         UniqueConstraint("account_id", "id", name="uq_conversation_turn_1"),
+        UniqueConstraint(
+            "account_id",
+            "conversation_id",
+            "client_turn_id",
+            name="uq_conversation_turn_client",
+        ),
+        CheckConstraint(
+            "(payload_ciphertext IS NULL AND payload_nonce IS NULL) "
+            "OR (payload_ciphertext IS NOT NULL AND payload_nonce IS NOT NULL)",
+            name="ck_conversation_turn_encrypted",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
@@ -401,6 +419,15 @@ class ConversationTurn(Base):
     conversation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     role: Mapped[str] = mapped_column(String(32), nullable=False)
     turn_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    payload_ciphertext: Mapped[bytes | None] = mapped_column(LargeBinary)
+    payload_nonce: Mapped[bytes | None] = mapped_column(LargeBinary)
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    parent_turn_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    context_receipt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    client_turn_id: Mapped[str | None] = mapped_column(String(128))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -488,13 +515,21 @@ class CurrentDocumentRevision(Base):
 
 class OutboxEvent(Base):
     __tablename__ = "outbox_event"
-    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_outbox_event_1"),)
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_outbox_event_1"),
+        ForeignKeyConstraint(
+            ["account_id", "durable_job_id"],
+            ["durable_job.account_id", "durable_job.id"],
+            name="fk_outbox_durable_job",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     event_type: Mapped[str] = mapped_column(String(128), nullable=False)
     payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    durable_job_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     claim_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
@@ -790,7 +825,9 @@ class ContextReceipt(Base):
     purpose: Mapped[str] = mapped_column(String(64), nullable=False)
     policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
     eligible_spaces: Mapped[list[object]] = mapped_column(JSONB, nullable=False, default=list)
-    provider_versions: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    provider_versions: Mapped[dict[str, object]] = mapped_column(
+        JSONB, nullable=False, default=dict
+    )
     budget: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
     context_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     partial: Mapped[bool] = mapped_column(default=False)
@@ -905,7 +942,9 @@ class AssessmentRevision(Base):
 class CurrentAssessmentRevision(Base):
     __tablename__ = "current_assessment_revision"
     __table_args__ = (
-        UniqueConstraint("account_id", "assessment_item_id", name="uq_current_assessment_revision_1"),
+        UniqueConstraint(
+            "account_id", "assessment_item_id", name="uq_current_assessment_revision_1"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
@@ -935,7 +974,9 @@ class LearnerEvent(Base):
     client_event_id: Mapped[str | None] = mapped_column(String(128))
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     payload_schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
     eligibility: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -996,6 +1037,10 @@ class NotionConnection(Base):
     workspace_id: Mapped[str | None] = mapped_column(String(128))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
     oauth_stub: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    token_ciphertext: Mapped[bytes | None] = mapped_column(LargeBinary)
+    token_nonce: Mapped[bytes | None] = mapped_column(LargeBinary)
+    pagination_cursor: Mapped[str | None] = mapped_column(String(512))
+    rate_limited_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -1013,6 +1058,11 @@ class NotionPageBinding(Base):
             ["notion_connection.account_id", "notion_connection.id"],
             name="fk_notion_page_binding_connection",
         ),
+        ForeignKeyConstraint(
+            ["account_id", "source_id"],
+            ["source.account_id", "source.id"],
+            name="fk_notion_page_binding_source",
+        ),
         UniqueConstraint("account_id", "id", name="uq_notion_page_binding_1"),
         UniqueConstraint(
             "account_id",
@@ -1026,6 +1076,7 @@ class NotionPageBinding(Base):
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     notion_page_id: Mapped[str] = mapped_column(String(128), nullable=False)
     title: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     direction: Mapped[str] = mapped_column(String(32), nullable=False, default="inbound_only")
@@ -1074,6 +1125,111 @@ class ExportJob(Base):
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    workflow_state: Mapped[str] = mapped_column(String(32), nullable=False, default="accepted")
+    package_object_key: Mapped[str | None] = mapped_column(Text)
+    package_sha256: Mapped[str | None] = mapped_column(String(64))
     manifest_json: Mapped[dict[str, object] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SemanticProjection(Base):
+    """Rebuildable OSS semantic projection (float8[] until pgvector extension lands)."""
+
+    __tablename__ = "semantic_projection"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_semantic_projection_1"),
+        UniqueConstraint(
+            "account_id",
+            "profile_version",
+            "canonical_type",
+            "canonical_id",
+            "canonical_revision_id",
+            name="uq_semantic_projection_canonical",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'tombstoned', 'superseded')",
+            name="ck_semantic_projection_status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    profile_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    canonical_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    canonical_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    canonical_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(
+        ARRAY(Float, dimensions=1),  # type: ignore[arg-type]
+        nullable=False,
+    )
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    indexed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AssessmentAttempt(Base):
+    __tablename__ = "assessment_attempt"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_assessment_attempt_1"),
+        UniqueConstraint("account_id", "client_attempt_id", name="uq_assessment_attempt_client"),
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_assessment_attempt_space",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "assessment_item_id"],
+            ["assessment_item.account_id", "assessment_item.id"],
+            name="fk_assessment_attempt_item",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "user_id"],
+            ["user.account_id", "user.id"],
+            name="fk_assessment_attempt_user",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "course_id"],
+            ["course.account_id", "course.id"],
+            name="fk_assessment_attempt_course",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    response_json: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    confidence: Mapped[str | None] = mapped_column(String(32))
+    hint_revealed: Mapped[bool] = mapped_column(nullable=False, default=False)
+    answer_revealed: Mapped[bool] = mapped_column(nullable=False, default=False)
+    feedback_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="in_progress")
+    client_attempt_id: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DeletionWorkflow(Base):
+    __tablename__ = "deletion_workflow"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_deletion_workflow_1"),
+        ForeignKeyConstraint(
+            ["account_id", "tombstone_id"],
+            ["deletion_tombstone.account_id", "deletion_tombstone.id"],
+            name="fk_deletion_workflow_tombstone",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    state: Mapped[str] = mapped_column(String(32), nullable=False, default="accepted")
+    tombstone_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

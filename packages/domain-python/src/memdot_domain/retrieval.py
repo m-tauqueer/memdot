@@ -6,7 +6,6 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TypeVar
 
 from memdot_domain.tenancy import SpaceVisibility
 
@@ -57,9 +56,6 @@ class FusedCandidate:
     snippet: str | None = None
 
 
-_CandidateT = TypeVar("_CandidateT", FusedCandidate, RetrievalCandidate)
-
-
 def rrf_contribution(rank: int, *, weight: float, k: int = RRF_K) -> float:
     return weight / (k + rank)
 
@@ -105,16 +101,16 @@ def fuse_candidates(
     return ordered
 
 
-def exclude_private_spaces(
-    candidates: Sequence[_CandidateT],
+def exclude_private_spaces[CandidateT: (FusedCandidate, RetrievalCandidate)](
+    candidates: Sequence[CandidateT],
     *,
     space_visibility: dict[uuid.UUID, SpaceVisibility],
     purpose: str,
-) -> list[_CandidateT]:
+) -> list[CandidateT]:
     """Drop private-space candidates for external read purposes."""
     if purpose != "external_read":
         return list(candidates)
-    filtered: list[_CandidateT] = []
+    filtered: list[CandidateT] = []
     for candidate in candidates:
         visibility = space_visibility.get(candidate.space_id, SpaceVisibility.GENERAL)
         if visibility == SpaceVisibility.PRIVATE:

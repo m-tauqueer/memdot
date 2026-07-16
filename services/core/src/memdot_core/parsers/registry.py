@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from memdot_domain.ports.parser import ParserPort
 
-from memdot_core.parsers.docling_stub import DoclingParserStub
+from memdot_core.parsers.docling_adapter import DoclingParserAdapter
 from memdot_core.parsers.native_pdf import NativePdfParser
 from memdot_core.parsers.native_text import NativeTextParser
 from memdot_core.parsers.ocr_fallback import OcrFallbackParser
@@ -29,5 +29,5 @@ def select_parser(mime_type: str, *, ocr_fallback: bool = False) -> ParserPort:
     if lowered == "application/pdf":
         return NativePdfParser()
     if lowered in _OFFICE_MIMES:
-        return DoclingParserStub()
+        return DoclingParserAdapter()
     return NativeTextParser()

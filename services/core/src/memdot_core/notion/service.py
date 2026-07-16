@@ -1,4 +1,4 @@
-"""Notion connector stub service with fixture-driven inbound sync."""
+"""Notion connector service backed by provider adapter (not fixture-only success)."""
 
 from __future__ import annotations
 
@@ -18,35 +18,70 @@ from memdot_core.db.models.ledger import (
     SourceRevision,
 )
 from memdot_core.db.tenant import tenant_scope
+from memdot_core.notion.adapter import NotionAdapter, encrypt_token
 from memdot_core.request_context import RequestContext
 
-# Fixture pages for deterministic inbound sync tests (no live Notion OAuth).
-NOTION_FIXTURE_PAGES: list[dict[str, str]] = [
-    {"notion_page_id": "fixture-page-1", "title": "Getting Started"},
-    {"notion_page_id": "fixture-page-2", "title": "Project Notes"},
-]
+
+def _adapter_for_connection(connection: NotionConnection) -> NotionAdapter:
+    mode = "fixture"
+    stub = connection.oauth_stub or {}
+    if stub.get("mode") == "live":
+        mode = "live"
+    return NotionAdapter(
+        encrypted_token=connection.token_ciphertext,
+        token_nonce=connection.token_nonce,
+        mode=mode,
+    )
 
 
-def connect_stub(db: Session, ctx: RequestContext) -> dict[str, Any]:
+def connect(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    access_token: str | None = None,
+    workspace_id: str = "fixture-workspace",
+    mode: str = "fixture",
+) -> dict[str, Any]:
+    """Create a connection via adapter. Fixture mode still stores encrypted token envelope."""
+    if mode not in {"fixture", "live"}:
+        msg = "invalid_notion_mode"
+        raise ValueError(msg)
+    token = access_token or f"fixture-token:{workspace_id}"
+    ciphertext, nonce = encrypt_token(token)
     connection_id = new_uuid7()
     with tenant_scope(db, ctx.tenant()):
         db.add(
             NotionConnection(
                 id=connection_id,
                 account_id=ctx.account_id,
-                workspace_id="fixture-workspace",
+                workspace_id=workspace_id,
                 status="connected",
-                oauth_stub={"mode": "stub", "connected_at": datetime.now(UTC).isoformat()},
+                oauth_stub={
+                    "mode": mode,
+                    "connected_at": datetime.now(UTC).isoformat(),
+                    "adapter": "notion_adapter_v1",
+                },
+                token_ciphertext=ciphertext,
+                token_nonce=nonce,
+                pagination_cursor=None,
             )
         )
     return {
         "connectionId": str(connection_id),
         "status": "connected",
-        "workspaceId": "fixture-workspace",
+        "workspaceId": workspace_id,
+        "mode": mode,
     }
 
 
-def list_pages(db: Session, ctx: RequestContext, *, connection_id: uuid.UUID) -> list[dict[str, str]]:
+# Back-compat alias used by older routes/tests.
+def connect_stub(db: Session, ctx: RequestContext) -> dict[str, Any]:
+    return connect(db, ctx, mode="fixture")
+
+
+def list_pages(
+    db: Session, ctx: RequestContext, *, connection_id: uuid.UUID
+) -> list[dict[str, str]]:
     with tenant_scope(db, ctx.tenant()):
         connection = db.execute(
             select(NotionConnection).where(
@@ -56,7 +91,14 @@ def list_pages(db: Session, ctx: RequestContext, *, connection_id: uuid.UUID) ->
         ).scalar_one_or_none()
     if connection is None:
         return []
-    return [{"notionPageId": page["notion_page_id"], "title": page["title"]} for page in NOTION_FIXTURE_PAGES]
+    if connection.rate_limited_until and connection.rate_limited_until > datetime.now(UTC):
+        return []
+    adapter = _adapter_for_connection(connection)
+    pages, next_cursor = adapter.list_pages(cursor=connection.pagination_cursor)
+    with tenant_scope(db, ctx.tenant()):
+        connection.pagination_cursor = next_cursor
+        connection.updated_at = datetime.now(UTC)
+    return [{"notionPageId": page.notion_page_id, "title": page.title} for page in pages]
 
 
 def select_pages(
@@ -77,14 +119,16 @@ def select_pages(
     if connection is None:
         return []
 
+    adapter = _adapter_for_connection(connection)
     selected: list[dict[str, Any]] = []
     with tenant_scope(db, ctx.tenant()):
         for page_id in notion_page_ids:
-            fixture = next(
-                (page for page in NOTION_FIXTURE_PAGES if page["notion_page_id"] == page_id),
-                None,
-            )
-            title = fixture["title"] if fixture else page_id
+            try:
+                snapshot = adapter.fetch_page(page_id)
+                title = snapshot.title
+            except ValueError:
+                # A provider error is a visible failure, never a fabricated page.
+                raise
             existing = db.execute(
                 select(NotionPageBinding).where(
                     NotionPageBinding.account_id == ctx.account_id,
@@ -143,6 +187,14 @@ def sync_binding_snapshot(
         ).scalar_one_or_none()
         if binding is None:
             return None
+        connection = db.execute(
+            select(NotionConnection).where(
+                NotionConnection.account_id == ctx.account_id,
+                NotionConnection.id == binding.connection_id,
+            )
+        ).scalar_one_or_none()
+        if connection is None:
+            return None
 
         if binding.conflict_state == "unresolved":
             binding.sync_state = "paused"
@@ -153,8 +205,14 @@ def sync_binding_snapshot(
                 "message": "Sync paused until conflict resolved",
             }
 
-        content = fixture_content or f"Notion snapshot for {binding.notion_page_id}"
-        snapshot_sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        adapter = _adapter_for_connection(connection)
+        if fixture_content is not None:
+            content = fixture_content
+            snapshot_sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        else:
+            snapshot = adapter.fetch_page(binding.notion_page_id)
+            content = snapshot.content_text
+            snapshot_sha = snapshot.content_sha256
 
         if binding.last_snapshot_sha256 and binding.last_snapshot_sha256 != snapshot_sha:
             binding.conflict_state = "unresolved"
@@ -165,18 +223,29 @@ def sync_binding_snapshot(
                 "conflictState": "unresolved",
                 "message": "Concurrent change detected; sync paused",
             }
+        if binding.last_snapshot_sha256 == snapshot_sha and binding.source_id is not None:
+            return {
+                "bindingId": str(binding.id),
+                "sourceId": str(binding.source_id),
+                "snapshotSha256": snapshot_sha,
+                "syncState": binding.sync_state,
+                "conflictState": binding.conflict_state,
+                "idempotent": True,
+            }
 
-        source_id = new_uuid7()
+        source_id = binding.source_id or new_uuid7()
         revision_id = deterministic_uuid5(source_id, snapshot_sha)
-        db.add(
-            Source(
-                id=source_id,
-                account_id=ctx.account_id,
-                space_id=binding.space_id,
-                title=binding.title or binding.notion_page_id,
-                processing_status="succeeded",
+        if binding.source_id is None:
+            db.add(
+                Source(
+                    id=source_id,
+                    account_id=ctx.account_id,
+                    space_id=binding.space_id,
+                    title=binding.title or binding.notion_page_id,
+                    processing_status="succeeded",
+                )
             )
-        )
+            binding.source_id = source_id
         db.add(
             SourceRevision(
                 id=revision_id,

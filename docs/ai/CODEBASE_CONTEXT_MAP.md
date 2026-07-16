@@ -1,11 +1,13 @@
 # Codebase Context Map for AI Agents
 
-Version: **4.0 — Phase 3 accepted; 10-wave execution model**
-Date: **2026-07-16**
-Implementation status: **Technical Phases 1–3 are accepted at `e77b299`.
-Wave 4 Core runtime/ingestion is implemented on `main`; Waves 5–6 continue in
-the same owner-authorized run. Combined gates run at the end of Wave 6.
-Prompts and reports are chat-only.**
+Version: **4.1 — Correction Round 2 on develop (uncommitted)**
+Date: **2026-07-17**
+Implementation status: **Technical Phases 1–3 accepted on `main` (`cc570eb`).
+Waves 4–8 Correction Round 2 is in progress on `develop` @ `ada92dd` (dirty
+tree; no owner commit). Backend auth/MCP/jobs/learning/conversation seams are
+being corrected locally. Live provider and deployment proof belongs to the
+pre-frontend Alpha integration gate; it is not represented by fixture success.
+Frontend Waves 9–10 have not started. Prompts and reports are chat-only.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -24,8 +26,10 @@ Before any implementation change:
 6. Read the relevant ADRs.
 7. Read the System Architecture and owning TRD contracts.
 8. Read the security controls and evaluation gates for the affected subsystem.
-9. After code exists, inspect the actual implementation and tests; this map
-   never replaces repository truth.
+9. Before a credentialed provider, hosted environment, or real MCP-client
+   claim, read the [Alpha Integration Gate](../technical/ALPHA_INTEGRATION_GATE.md).
+10. After code exists, inspect the actual implementation and tests; this map
+    never replaces repository truth.
 
 ## 2. Monorepo shape
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request, Response
@@ -58,7 +58,6 @@ class CreateAssessmentBody(BaseModel):
 
 class AppendEventBody(BaseModel):
     course_id: uuid.UUID
-    user_id: uuid.UUID
     event_type: str
     occurred_at: datetime | None = None
     client_event_id: str | None = None
@@ -72,19 +71,32 @@ class AppendEventBody(BaseModel):
     response_before_feedback: bool = True
 
 
-class ReviewBody(BaseModel):
+class SubmitAttemptBody(BaseModel):
     course_id: uuid.UUID
-    user_id: uuid.UUID
     assessment_item_id: uuid.UUID
     assessment_revision_id: uuid.UUID
-    correct: bool
-    revealed: bool = False
-    substantive_hint: bool = False
+    response: dict[str, Any]
+    confidence: str = Field(min_length=1, max_length=32)
+    client_attempt_id: str = Field(min_length=1, max_length=128)
+    hint_revealed: bool = False
+    answer_revealed: bool = False
+
+
+class StartAttemptBody(BaseModel):
+    course_id: uuid.UUID
+    assessment_item_id: uuid.UUID
+    assessment_revision_id: uuid.UUID
+    client_attempt_id: str | None = None
+
+
+class RevealAttemptBody(BaseModel):
+    attempt_id: uuid.UUID
+    hint: bool = False
+    answer: bool = False
 
 
 class RebuildBody(BaseModel):
     course_id: uuid.UUID
-    user_id: uuid.UUID
 
 
 @router.post("/courses", response_model=None)
@@ -239,9 +251,9 @@ def get_attempt_view(
     return payload
 
 
-@router.post("/events", response_model=None)
-def append_event(
-    body: AppendEventBody,
+@router.post("/attempts/start", response_model=None)
+def start_attempt(
+    body: StartAttemptBody,
     request: Request,
     response: Response,
     db: Annotated[Session, Depends(get_db_session)],
@@ -251,27 +263,104 @@ def append_event(
     if isinstance(resolved, Response):
         return resolved
     try:
-        event_id = learning_service.append_learner_event(
+        result = learning_service.start_assessment_attempt(
             db,
             resolved,
             course_id=body.course_id,
-            user_id=body.user_id,
-            event_type=body.event_type,
-            occurred_at=body.occurred_at or datetime.now(UTC),
-            client_event_id=body.client_event_id,
-            concept_node_id=body.concept_node_id,
             assessment_item_id=body.assessment_item_id,
             assessment_revision_id=body.assessment_revision_id,
-            attempt_id=body.attempt_id,
-            payload=body.payload,
-            answer_revealed=body.answer_revealed,
-            substantive_hint=body.substantive_hint,
-            response_before_feedback=body.response_before_feedback,
+            client_attempt_id=body.client_attempt_id,
         )
     except Exception:
         return safe_not_found(correlation_id=resolved.correlation_id)
     response.status_code = 201
-    return {"eventId": str(event_id), "correlationId": str(resolved.correlation_id)}
+    result["correlationId"] = str(resolved.correlation_id)
+    return result
+
+
+@router.post("/attempts/reveal", response_model=None)
+def reveal_attempt(
+    body: RevealAttemptBody,
+    request: Request,
+    db: Annotated[Session, Depends(get_db_session)],
+    ctx: Annotated[RequestContext | None, Depends(get_request_context)],
+) -> dict[str, Any] | Response:
+    resolved = _require_ctx(ctx, request)
+    if isinstance(resolved, Response):
+        return resolved
+    result = learning_service.record_attempt_reveal(
+        db,
+        resolved,
+        attempt_id=body.attempt_id,
+        hint=body.hint,
+        answer=body.answer,
+    )
+    if result is None:
+        return safe_not_found(correlation_id=resolved.correlation_id)
+    result["correlationId"] = str(resolved.correlation_id)
+    return result
+
+
+@router.post("/attempts", response_model=None)
+def submit_attempt(
+    body: SubmitAttemptBody,
+    request: Request,
+    response: Response,
+    db: Annotated[Session, Depends(get_db_session)],
+    ctx: Annotated[RequestContext | None, Depends(get_request_context)],
+) -> dict[str, Any] | Response:
+    resolved = _require_ctx(ctx, request)
+    if isinstance(resolved, Response):
+        return resolved
+    try:
+        result = learning_service.submit_assessment_attempt(
+            db,
+            resolved,
+            course_id=body.course_id,
+            assessment_item_id=body.assessment_item_id,
+            assessment_revision_id=body.assessment_revision_id,
+            response=body.response,
+            confidence=body.confidence,
+            client_attempt_id=body.client_attempt_id,
+            hint_revealed=body.hint_revealed,
+            answer_revealed=body.answer_revealed,
+        )
+    except ValueError as exc:
+        return problem_response(
+            status=422,
+            code=ErrorCode.VALIDATION_ERROR,
+            detail=str(exc),
+            correlation_id=resolved.correlation_id,
+        )
+    except Exception:
+        return safe_not_found(correlation_id=resolved.correlation_id)
+    response.status_code = 201
+    result["correlationId"] = str(resolved.correlation_id)
+    return result
+
+
+@router.post("/events", response_model=None)
+def append_event(
+    body: AppendEventBody,
+    request: Request,
+    response: Response,
+    db: Annotated[Session, Depends(get_db_session)],
+    ctx: Annotated[RequestContext | None, Depends(get_request_context)],
+) -> dict[str, Any] | Response:
+    """Public arbitrary learner-event append is removed (Round 2).
+
+    Evidence must flow through the server-owned attempt lifecycle only.
+    """
+    del body, response, db
+    resolved = _require_ctx(ctx, request)
+    if isinstance(resolved, Response):
+        return resolved
+    return problem_response(
+        status=410,
+        code=ErrorCode.VALIDATION_ERROR,
+        detail="learner_event_append_removed_use_attempt_lifecycle",
+        correlation_id=resolved.correlation_id,
+    )
 
 
 @router.post("/evidence/rebuild", response_model=None)
@@ -286,7 +375,7 @@ def rebuild_evidence(
         return resolved
     try:
         projections = learning_service.rebuild_evidence_projections(
-            db, resolved, course_id=body.course_id, user_id=body.user_id
+            db, resolved, course_id=body.course_id
         )
     except Exception:
         return safe_not_found(correlation_id=resolved.correlation_id)
@@ -294,31 +383,3 @@ def rebuild_evidence(
         "projections": projections,
         "correlationId": str(resolved.correlation_id),
     }
-
-
-@router.post("/reviews", response_model=None)
-def review(
-    body: ReviewBody,
-    request: Request,
-    db: Annotated[Session, Depends(get_db_session)],
-    ctx: Annotated[RequestContext | None, Depends(get_request_context)],
-) -> dict[str, Any] | Response:
-    resolved = _require_ctx(ctx, request)
-    if isinstance(resolved, Response):
-        return resolved
-    try:
-        result = learning_service.apply_review_rating(
-            db,
-            resolved,
-            course_id=body.course_id,
-            user_id=body.user_id,
-            assessment_item_id=body.assessment_item_id,
-            assessment_revision_id=body.assessment_revision_id,
-            correct=body.correct,
-            revealed=body.revealed,
-            substantive_hint=body.substantive_hint,
-        )
-    except Exception:
-        return safe_not_found(correlation_id=resolved.correlation_id)
-    result["correlationId"] = str(resolved.correlation_id)
-    return result

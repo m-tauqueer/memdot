@@ -10,7 +10,13 @@ from datetime import UTC, datetime
 from typing import Any
 
 from memdot_domain.evidence_twin import LearnerEventRecord, replay_evidence
-from memdot_domain.fsrs import FsrsCard, initial_card, map_outcome_to_rating, schedule, scheduling_priority
+from memdot_domain.fsrs import (
+    FsrsCard,
+    initial_card,
+    map_outcome_to_rating,
+    schedule,
+    scheduling_priority,
+)
 from memdot_domain.ids import new_uuid7
 from memdot_domain.learning import (
     AssessmentItemType,
@@ -25,6 +31,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from memdot_core.db.models.ledger import (
+    AssessmentAttempt,
     AssessmentItem,
     AssessmentRevision,
     Course,
@@ -105,13 +112,17 @@ def add_prerequisite_edge(
         course = db.execute(
             select(Course).where(Course.account_id == ctx.account_id, Course.id == course_id)
         ).scalar_one()
-        existing = db.execute(
-            select(CurriculumEdge).where(
-                CurriculumEdge.account_id == ctx.account_id,
-                CurriculumEdge.course_id == course_id,
-                CurriculumEdge.confirmation == ConfirmationState.CONFIRMED.value,
+        existing = (
+            db.execute(
+                select(CurriculumEdge).where(
+                    CurriculumEdge.account_id == ctx.account_id,
+                    CurriculumEdge.course_id == course_id,
+                    CurriculumEdge.confirmation == ConfirmationState.CONFIRMED.value,
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         edge_pairs = [(str(e.from_node_id), str(e.to_node_id)) for e in existing]
         if confirmation == ConfirmationState.CONFIRMED.value and would_create_cycle(
             edge_pairs, new_from=str(from_node_id), new_to=str(to_node_id)
@@ -214,12 +225,150 @@ def get_assessment_for_attempt(
     }
 
 
+def start_assessment_attempt(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    course_id: uuid.UUID,
+    assessment_item_id: uuid.UUID,
+    assessment_revision_id: uuid.UUID,
+    client_attempt_id: str | None = None,
+) -> dict[str, Any]:
+    with tenant_scope(db, ctx.tenant()):
+        course = db.execute(
+            select(Course).where(Course.account_id == ctx.account_id, Course.id == course_id)
+        ).scalar_one()
+        item = db.execute(
+            select(AssessmentItem).where(
+                AssessmentItem.account_id == ctx.account_id,
+                AssessmentItem.id == assessment_item_id,
+                AssessmentItem.course_id == course_id,
+                AssessmentItem.space_id == course.space_id,
+            )
+        ).scalar_one()
+        db.execute(
+            select(AssessmentRevision).where(
+                AssessmentRevision.account_id == ctx.account_id,
+                AssessmentRevision.id == assessment_revision_id,
+                AssessmentRevision.assessment_item_id == item.id,
+                AssessmentRevision.space_id == course.space_id,
+            )
+        ).scalar_one()
+        if client_attempt_id:
+            existing = db.execute(
+                select(AssessmentAttempt).where(
+                    AssessmentAttempt.account_id == ctx.account_id,
+                    AssessmentAttempt.client_attempt_id == client_attempt_id,
+                )
+            ).scalar_one_or_none()
+            if existing is not None:
+                if (
+                    existing.user_id != ctx.user_id
+                    or existing.course_id != course_id
+                    or existing.assessment_item_id != assessment_item_id
+                    or existing.assessment_revision_id != assessment_revision_id
+                ):
+                    raise ValueError("idempotency_conflict")
+                return {
+                    "attemptId": str(existing.id),
+                    "status": existing.status,
+                    "idempotent": True,
+                }
+        attempt_id = new_uuid7()
+        db.add(
+            AssessmentAttempt(
+                id=attempt_id,
+                account_id=ctx.account_id,
+                space_id=course.space_id,
+                user_id=ctx.user_id,
+                course_id=course_id,
+                assessment_item_id=assessment_item_id,
+                assessment_revision_id=assessment_revision_id,
+                response_json={},
+                status="in_progress",
+                client_attempt_id=client_attempt_id,
+            )
+        )
+        db.add(
+            LearnerEvent(
+                id=new_uuid7(),
+                account_id=ctx.account_id,
+                space_id=course.space_id,
+                course_id=course_id,
+                user_id=ctx.user_id,
+                assessment_item_id=assessment_item_id,
+                assessment_revision_id=assessment_revision_id,
+                attempt_id=attempt_id,
+                client_event_id=f"attempt-started:{attempt_id}",
+                event_type=LearnerEventType.ATTEMPT_STARTED.value,
+                occurred_at=datetime.now(UTC),
+                payload={},
+                eligibility="ineligible",
+                exclusion_reason="attempt_started",
+            )
+        )
+    return {"attemptId": str(attempt_id), "status": "in_progress", "idempotent": False}
+
+
+def record_attempt_reveal(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    attempt_id: uuid.UUID,
+    hint: bool = False,
+    answer: bool = False,
+) -> dict[str, Any] | None:
+    """Server records hint/answer reveal — clients cannot forge this at submit."""
+    with tenant_scope(db, ctx.tenant()):
+        row = db.execute(
+            select(AssessmentAttempt).where(
+                AssessmentAttempt.account_id == ctx.account_id,
+                AssessmentAttempt.id == attempt_id,
+                AssessmentAttempt.user_id == ctx.user_id,
+            )
+        ).scalar_one_or_none()
+        if row is None or row.status != "in_progress":
+            return None
+        if hint:
+            row.hint_revealed = True
+            event_type = LearnerEventType.HINT_REVEALED.value
+        else:
+            event_type = LearnerEventType.ANSWER_REVEALED.value
+        if answer:
+            row.answer_revealed = True
+            event_type = LearnerEventType.ANSWER_REVEALED.value
+        if hint or answer:
+            db.add(
+                LearnerEvent(
+                    id=new_uuid7(),
+                    account_id=ctx.account_id,
+                    space_id=row.space_id,
+                    course_id=row.course_id,
+                    user_id=ctx.user_id,
+                    assessment_item_id=row.assessment_item_id,
+                    assessment_revision_id=row.assessment_revision_id,
+                    attempt_id=row.id,
+                    client_event_id=f"{event_type}:{row.id}",
+                    event_type=event_type,
+                    occurred_at=datetime.now(UTC),
+                    payload={},
+                    eligibility="ineligible",
+                    exclusion_reason=event_type,
+                )
+            )
+        return {
+            "attemptId": str(row.id),
+            "hintRevealed": row.hint_revealed,
+            "answerRevealed": row.answer_revealed,
+            "status": row.status,
+        }
+
+
 def append_learner_event(
     db: Session,
     ctx: RequestContext,
     *,
     course_id: uuid.UUID,
-    user_id: uuid.UUID,
     event_type: str,
     occurred_at: datetime,
     client_event_id: str | None = None,
@@ -232,7 +381,15 @@ def append_learner_event(
     substantive_hint: bool = False,
     response_before_feedback: bool = True,
 ) -> uuid.UUID:
+    """Append an event for the authenticated session user only (never client user_id)."""
+    user_id = ctx.user_id
     body = payload or {}
+    # Clients must not declare grade/correct/eligibility — strip adversarial keys.
+    body = {
+        key: value
+        for key, value in body.items()
+        if key not in {"correct", "grade", "eligibility", "eligible", "user_id"}
+    }
     eligibility, reason = classify_event_eligibility(
         event_type,
         answer_revealed=answer_revealed,
@@ -275,24 +432,158 @@ def append_learner_event(
     return event_id
 
 
+def submit_assessment_attempt(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    course_id: uuid.UUID,
+    assessment_item_id: uuid.UUID,
+    assessment_revision_id: uuid.UUID,
+    response: dict[str, Any],
+    confidence: str | None,
+    client_attempt_id: str | None = None,
+    hint_revealed: bool = False,
+    answer_revealed: bool = False,
+) -> dict[str, Any]:
+    """Server-grades from sealed answers; confidence must precede feedback."""
+    if confidence is None or not str(confidence).strip():
+        msg = "confidence_required_before_feedback"
+        raise ValueError(msg)
+    # Client reveal booleans are ignored; only server-recorded attempt state counts.
+    _ = (hint_revealed, answer_revealed)
+    if not client_attempt_id:
+        raise ValueError("attempt_start_required")
+    with tenant_scope(db, ctx.tenant()):
+        existing = db.execute(
+            select(AssessmentAttempt).where(
+                AssessmentAttempt.account_id == ctx.account_id,
+                AssessmentAttempt.user_id == ctx.user_id,
+                AssessmentAttempt.client_attempt_id == client_attempt_id,
+            )
+        ).scalar_one_or_none()
+        if existing is not None and existing.status == "graded":
+            if (
+                existing.course_id != course_id
+                or existing.assessment_item_id != assessment_item_id
+                or existing.assessment_revision_id != assessment_revision_id
+            ):
+                raise ValueError("idempotency_conflict")
+            return {"attemptId": str(existing.id), "status": existing.status, "idempotent": True}
+        course = db.execute(
+            select(Course).where(Course.account_id == ctx.account_id, Course.id == course_id)
+        ).scalar_one()
+        rev = db.execute(
+            select(AssessmentRevision).where(
+                AssessmentRevision.account_id == ctx.account_id,
+                AssessmentRevision.assessment_item_id == assessment_item_id,
+                AssessmentRevision.id == assessment_revision_id,
+            )
+        ).scalar_one()
+        sealed = dict(rev.sealed_answer or {})
+        correct, grade_reason = grade_mcq(sealed, response)
+        feedback_at = datetime.now(UTC)
+        server_hint = False
+        server_reveal = False
+        attempt_id = new_uuid7()
+        prior = db.execute(
+            select(AssessmentAttempt).where(
+                AssessmentAttempt.account_id == ctx.account_id,
+                AssessmentAttempt.user_id == ctx.user_id,
+                AssessmentAttempt.client_attempt_id == client_attempt_id,
+                AssessmentAttempt.status == "in_progress",
+            )
+        ).scalar_one_or_none()
+        if prior is not None:
+            if (
+                prior.course_id != course_id
+                or prior.assessment_item_id != assessment_item_id
+                or prior.assessment_revision_id != assessment_revision_id
+            ):
+                raise ValueError("attempt_target_mismatch")
+            server_hint = bool(prior.hint_revealed)
+            server_reveal = bool(prior.answer_revealed)
+            prior.response_json = response
+            prior.confidence = confidence
+            prior.feedback_at = feedback_at
+            prior.status = "graded"
+            attempt_id = prior.id
+        else:
+            msg = "attempt_not_started"
+            raise ValueError(msg)
+        event_type = LearnerEventType.GRADE_RECORDED.value
+        eligibility, reason = classify_event_eligibility(
+            event_type,
+            answer_revealed=server_reveal,
+            substantive_hint=server_hint,
+            response_before_feedback=True,
+        )
+        event_id = new_uuid7()
+        db.add(
+            LearnerEvent(
+                id=event_id,
+                account_id=ctx.account_id,
+                space_id=course.space_id,
+                course_id=course_id,
+                user_id=ctx.user_id,
+                assessment_item_id=assessment_item_id,
+                assessment_revision_id=assessment_revision_id,
+                attempt_id=attempt_id,
+                client_event_id=f"attempt:{attempt_id}",
+                event_type=event_type,
+                occurred_at=feedback_at,
+                payload={
+                    "correct": correct,
+                    "gradeReason": grade_reason,
+                    "confidence": confidence,
+                },
+                eligibility=eligibility.value,
+                exclusion_reason=reason,
+            )
+        )
+    # FSRS only from eligible review events.
+    if eligibility.value == "eligible":
+        apply_review_rating(
+            db,
+            ctx,
+            course_id=course_id,
+            assessment_item_id=assessment_item_id,
+            assessment_revision_id=assessment_revision_id,
+            correct=correct,
+            revealed=server_reveal,
+            substantive_hint=server_hint,
+        )
+    return {
+        "attemptId": str(attempt_id),
+        "eventId": str(event_id),
+        "correct": correct,
+        "status": "graded",
+        "eligibility": eligibility.value,
+        "idempotent": False,
+    }
+
+
 def rebuild_evidence_projections(
     db: Session,
     ctx: RequestContext,
     *,
     course_id: uuid.UUID,
-    user_id: uuid.UUID,
 ) -> dict[str, Any]:
+    user_id = ctx.user_id
     with tenant_scope(db, ctx.tenant()):
         course = db.execute(
             select(Course).where(Course.account_id == ctx.account_id, Course.id == course_id)
         ).scalar_one()
-        events = db.execute(
-            select(LearnerEvent).where(
-                LearnerEvent.account_id == ctx.account_id,
-                LearnerEvent.course_id == course_id,
-                LearnerEvent.user_id == user_id,
+        events = (
+            db.execute(
+                select(LearnerEvent).where(
+                    LearnerEvent.account_id == ctx.account_id,
+                    LearnerEvent.course_id == course_id,
+                    LearnerEvent.user_id == user_id,
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         records = [
             LearnerEventRecord(
                 event_id=e.id,
@@ -355,13 +646,14 @@ def apply_review_rating(
     ctx: RequestContext,
     *,
     course_id: uuid.UUID,
-    user_id: uuid.UUID,
     assessment_item_id: uuid.UUID,
     assessment_revision_id: uuid.UUID,
     correct: bool,
     revealed: bool = False,
     substantive_hint: bool = False,
 ) -> dict[str, Any]:
+    """Apply FSRS from server-derived outcomes for the session user only."""
+    user_id = ctx.user_id
     rating = map_outcome_to_rating(
         correct=correct, revealed=revealed, substantive_hint=substantive_hint
     )

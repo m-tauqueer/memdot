@@ -57,10 +57,13 @@ ACCOUNT_OWNED_TABLES: frozenset[str] = frozenset(
         "learner_event",
         "review_item",
         "learner_projection",
+        "assessment_attempt",
         "notion_connection",
         "notion_page_binding",
         "deletion_tombstone",
+        "deletion_workflow",
         "export_job",
+        "semantic_projection",
     }
 )
 

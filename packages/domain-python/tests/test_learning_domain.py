@@ -20,9 +20,7 @@ def test_hint_and_reveal_are_ineligible() -> None:
     elig, reason = classify_event_eligibility(LearnerEventType.HINT_REVEALED)
     assert elig == EvidenceEligibility.INELIGIBLE
     assert reason == "hint_revealed"
-    elig2, _ = classify_event_eligibility(
-        LearnerEventType.GRADE_RECORDED, answer_revealed=True
-    )
+    elig2, _ = classify_event_eligibility(LearnerEventType.GRADE_RECORDED, answer_revealed=True)
     assert elig2 == EvidenceEligibility.INELIGIBLE
 
 

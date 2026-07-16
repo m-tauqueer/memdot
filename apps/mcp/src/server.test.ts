@@ -103,7 +103,13 @@ describe("createMcpServer", () => {
     const body = (await response.json()) as { tools: Array<{ name: string }> };
     const names = body.tools.map((tool) => tool.name);
     expect(names).toEqual(
-      expect.arrayContaining(["search", "fetch", "prepare_context", "propose_memory", "record_interaction"]),
+      expect.arrayContaining([
+        "search",
+        "fetch",
+        "prepare_context",
+        "propose_memory",
+        "record_interaction",
+      ]),
     );
 
     await mcp.close();

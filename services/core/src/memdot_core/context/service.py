@@ -153,6 +153,16 @@ def _local_candidates(
     return candidates, corpus
 
 
+def local_candidates(
+    db: Session,
+    ctx: RequestContext,
+    *,
+    query: str,
+    eligible_space_ids: set[uuid.UUID],
+) -> tuple[list[RetrievalCandidate], dict[str, str]]:
+    return _local_candidates(db, ctx, query=query, eligible_space_ids=eligible_space_ids)
+
+
 def compile_context_for_request(
     db: Session,
     ctx: RequestContext,

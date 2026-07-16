@@ -25,6 +25,7 @@ const settingsSchema = z
     MCP_TELEMETRY_EXPORT: z.string().default("off"),
     MCP_OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(""),
     MCP_PROVIDER_API_KEY: z.string().default(""),
+    MCP_CORE_BASE_URL: z.string().default("http://localhost:8000"),
   })
   .superRefine((value, ctx) => {
     for (const origin of value.MCP_ALLOWED_ORIGINS.split(",")) {

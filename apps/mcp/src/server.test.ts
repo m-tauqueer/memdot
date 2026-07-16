@@ -54,6 +54,60 @@ describe("createMcpServer", () => {
 
     await mcp.close();
   });
+
+  it("serves OAuth protected-resource metadata", async () => {
+    const settings = loadSettings({
+      MCP_ENV: "test",
+      MCP_HOST: "127.0.0.1",
+      MCP_PORT: "38124",
+      MCP_OIDC_ISSUER: "https://issuer.example",
+      MCP_OIDC_AUDIENCE: "memdot-mcp",
+    });
+
+    const mcp = createMcpServer(settings);
+    await mcp.listen();
+
+    const address = mcp.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Expected server to bind to a TCP port");
+    }
+
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/.well-known/oauth-protected-resource`,
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { resource: string; scopes_supported: string[] };
+    expect(body.resource).toBe("memdot-mcp");
+    expect(body.scopes_supported).toContain("memdot.memory.read");
+
+    await mcp.close();
+  });
+
+  it("lists frozen MCP tools", async () => {
+    const settings = loadSettings({
+      MCP_ENV: "test",
+      MCP_HOST: "127.0.0.1",
+      MCP_PORT: "38125",
+    });
+
+    const mcp = createMcpServer(settings);
+    await mcp.listen();
+
+    const address = mcp.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Expected server to bind to a TCP port");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/mcp/tools`);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { tools: Array<{ name: string }> };
+    const names = body.tools.map((tool) => tool.name);
+    expect(names).toEqual(
+      expect.arrayContaining(["search", "fetch", "prepare_context", "propose_memory", "record_interaction"]),
+    );
+
+    await mcp.close();
+  });
 });
 
 describe("handleRequest", () => {

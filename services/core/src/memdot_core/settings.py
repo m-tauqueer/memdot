@@ -42,6 +42,7 @@ class CoreSettings(BaseSettings):
     oidc_client_id: str = "memdot-core"
     oidc_client_secret: str = ""
     oidc_redirect_uri: str = "http://localhost:8000/api/v1/auth/oidc/callback"
+    public_url: str = "http://localhost:3000"
 
     def is_hosted(self) -> bool:
         return normalize_mode(self.env) == "hosted"

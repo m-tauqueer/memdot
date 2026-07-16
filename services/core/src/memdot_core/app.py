@@ -35,9 +35,14 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
 
     from memdot_core.auth.routes import router as auth_router
     from memdot_core.context.routes import router as context_router
+    from memdot_core.conversations.routes import router as conversations_router
+    from memdot_core.deletion.routes import router as deletion_router
     from memdot_core.documents.routes import router as documents_router
+    from memdot_core.export.routes import router as export_router
     from memdot_core.learning.routes import router as learning_router
+    from memdot_core.mcp.routes import router as mcp_router
     from memdot_core.memory.routes import router as memory_router
+    from memdot_core.notion.routes import router as notion_router
     from memdot_core.sources.routes import router as sources_router  # noqa: PLC0415
 
     app.include_router(auth_router)
@@ -46,6 +51,11 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     app.include_router(memory_router)
     app.include_router(context_router)
     app.include_router(learning_router)
+    app.include_router(mcp_router)
+    app.include_router(conversations_router)
+    app.include_router(notion_router)
+    app.include_router(export_router)
+    app.include_router(deletion_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:
@@ -80,6 +90,12 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     @app.get("/api/v1/meta/error-codes", tags=["meta"])
     def error_codes() -> dict[str, list[str]]:
         return {"codes": [code.value for code in ErrorCode]}
+
+    @app.get("/api/v1/metrics", tags=["observability"])
+    def metrics() -> dict[str, object]:
+        from memdot_core.observability.metrics import snapshot
+
+        return {"counters": snapshot()}
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(

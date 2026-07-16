@@ -67,4 +67,4 @@ def test_clean_and_upgraded_converge(pg_engine: Engine) -> None:
         }
         ver = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
     assert ACCOUNT_OWNED_TABLES.issubset(tables)
-    assert ver == "20260716_0001"
+    assert ver == "20260720_0005"

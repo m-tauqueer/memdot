@@ -985,3 +985,95 @@ class LearnerProjection(Base):
     coverage: Mapped[float] = mapped_column(nullable=False, default=0)
     projection_json: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class NotionConnection(Base):
+    __tablename__ = "notion_connection"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_notion_connection_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[str | None] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    oauth_stub: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class NotionPageBinding(Base):
+    __tablename__ = "notion_page_binding"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_notion_page_binding_space",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "connection_id"],
+            ["notion_connection.account_id", "notion_connection.id"],
+            name="fk_notion_page_binding_connection",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_notion_page_binding_1"),
+        UniqueConstraint(
+            "account_id",
+            "connection_id",
+            "notion_page_id",
+            name="uq_notion_page_binding_page",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    notion_page_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    direction: Mapped[str] = mapped_column(String(32), nullable=False, default="inbound_only")
+    sync_state: Mapped[str] = mapped_column(String(32), nullable=False, default="idle")
+    conflict_state: Mapped[str | None] = mapped_column(String(32))
+    last_snapshot_sha256: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DeletionTombstone(Base):
+    __tablename__ = "deletion_tombstone"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_deletion_tombstone_1"),
+        UniqueConstraint(
+            "account_id",
+            "entity_type",
+            "entity_id",
+            name="uq_deletion_tombstone_entity",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    restore_key: Mapped[str | None] = mapped_column(String(128))
+    tombstoned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class ExportJob(Base):
+    __tablename__ = "export_job"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_export_job_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_export_job_1"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    manifest_json: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

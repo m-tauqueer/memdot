@@ -1,5 +1,11 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
+import {
+  MCP_TOOLS,
+  buildProtectedResourceMetadata,
+  invokeTool,
+  mcpToolResponse,
+} from "./tools.js";
 import type { McpSettings } from "./settings.js";
 
 export type HealthResponse = {
@@ -45,6 +51,75 @@ async function probeOidcDiscovery(issuer: string, timeoutMs = 2000): Promise<boo
   }
 }
 
+function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => {
+      const raw = Buffer.concat(chunks).toString("utf8").trim();
+      if (!raw) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw) as Record<string, unknown>);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function writeJson(res: ServerResponse, status: number, payload: unknown): void {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(payload));
+}
+
+async function handleMcpRoutes(
+  req: IncomingMessage,
+  res: ServerResponse,
+  settings: McpSettings,
+  url: string,
+): Promise<boolean> {
+  if (req.method === "GET" && url === "/.well-known/oauth-protected-resource") {
+    writeJson(res, 200, buildProtectedResourceMetadata(settings));
+    return true;
+  }
+
+  if (req.method === "GET" && url === "/mcp/tools") {
+    writeJson(res, 200, { tools: MCP_TOOLS });
+    return true;
+  }
+
+  if (req.method === "POST" && url === "/mcp/tools/call") {
+    const accountId = req.headers["x-memdot-account-id"];
+    const actorId = req.headers["x-memdot-actor-id"];
+    if (typeof accountId !== "string" || typeof actorId !== "string") {
+      writeJson(res, 404, { code: "not_found" });
+      return true;
+    }
+    try {
+      const body = await readJsonBody(req);
+      const name = String(body.name ?? "");
+      const args = (body.arguments ?? {}) as Record<string, unknown>;
+      const payload = await invokeTool({
+        name,
+        arguments: args,
+        accountId,
+        actorId,
+        coreBaseUrl: settings.MCP_CORE_BASE_URL,
+      });
+      writeJson(res, 200, mcpToolResponse(payload));
+    } catch {
+      writeJson(res, 404, { code: "not_found" });
+    }
+    return true;
+  }
+
+  return false;
+}
+
 export function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   void handleRequestAsync(req, res);
 }
@@ -59,7 +134,6 @@ async function handleRequestAsync(req: IncomingMessage, res: ServerResponse): Pr
   }
 
   if (req.method === "GET" && url === "/health/ready") {
-    // Fallback when server was created without settings injection.
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(createReadyHealthResponse()));
     return;
@@ -93,6 +167,9 @@ export function createMcpServer(settings: McpSettings): McpHttpServer {
         const code = payload.status === "ok" ? 200 : 503;
         res.writeHead(code, { "Content-Type": "application/json" });
         res.end(JSON.stringify(payload));
+        return;
+      }
+      if (await handleMcpRoutes(req, res, settings, url)) {
         return;
       }
       res.writeHead(404, { "Content-Type": "application/json" });

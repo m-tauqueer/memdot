@@ -208,7 +208,7 @@ def test_tombstoned_fetch_returns_not_found(db_session, migrated_engine) -> None
 
 
 def test_record_interaction_service_appends_turn(db_session, migrated_engine) -> None:
-    from memdot_core.external_context import _context_from_headers
+    from memdot_core.external_context import load_first_party_context_from_headers
     from memdot_core.mcp import service as mcp_service
     from memdot_domain.tenancy import RequestPurpose
     from starlette.requests import Request
@@ -221,7 +221,7 @@ def test_record_interaction_service_appends_turn(db_session, migrated_engine) ->
 
     scope = {"type": "http", "method": "POST", "path": "/api/v1/mcp/record-interaction", "headers": []}
     request = Request(scope)
-    ctx = _context_from_headers(
+    ctx = load_first_party_context_from_headers(
         request,
         account_id=bundle.account_id,
         actor_id=actor_id,

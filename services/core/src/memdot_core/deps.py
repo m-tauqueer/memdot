@@ -84,10 +84,10 @@ def get_request_context(
             actor_id = uuid.UUID(actor_raw.strip())
         except ValueError:
             return None
-        from memdot_core.external_context import _context_from_headers
+        from memdot_core.external_context import load_first_party_context_from_headers
         from memdot_domain.tenancy import RequestPurpose
 
-        return _context_from_headers(
+        return load_first_party_context_from_headers(
             request,
             account_id=account_id,
             actor_id=actor_id,

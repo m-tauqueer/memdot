@@ -25,7 +25,7 @@ def _parse_uuid_header(request: Request, name: str) -> uuid.UUID | None:
         return None
 
 
-def _context_from_headers(
+def load_first_party_context_from_headers(
     request: Request,
     *,
     account_id: uuid.UUID,
@@ -79,7 +79,7 @@ def load_external_context(request: Request, db: Session) -> RequestContext | Non
     }:
         return None
 
-    return _context_from_headers(
+    return load_first_party_context_from_headers(
         request,
         account_id=account_id,
         actor_id=actor_id,
@@ -110,7 +110,7 @@ def load_mcp_context(request: Request, db: Session) -> RequestContext | None:
                 RequestPurpose.EXTERNAL_PROPOSE,
                 RequestPurpose.EXTERNAL_INTERACTION,
             }:
-                return _context_from_headers(
+                return load_first_party_context_from_headers(
                     request,
                     account_id=account_id,
                     actor_id=actor_id,

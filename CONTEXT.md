@@ -320,26 +320,25 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
 
 ## 14. Current execution pointer
 
-- Active branch: `develop` (dirty tree; Correction Round 2 code complete for
-  self-audit; **no owner commit**). Starting/ending HEAD remain
-  `ada92dde39ffff948df2b66fb43dc9116bcff6cb` until Tauqueer commits.
+- Backend Correction Round 2 is on `develop` at `99ed500` (primary checkout
+  `/home/tauqueer/Desktop/memdot`, in sync with `origin/develop`).
 - Accepted on `main`: `cc570eb`. Merge-base with `main`: `cc570eb`.
-- Round 2 landed (uncommitted): grant-resolved MCP auth (no browser MCP fallback),
-  durable `service_auth_nonce` + `memdot_resolve_external_grant`, dedicated ≥32-byte
-  service-auth/job-snapshot/conversation keys, MCP SDK Streamable HTTP + SDK-client
-  protocol tests, job↔outbox `durable_job_id` binding, attempt start/reveal routes,
-  encrypted MCP `record_interaction`, Docling adapter fail-closed (dependency still
-  external), Notion injectable HTTP + emulator, schema head `20260722_0007`.
-- External integrations move to a dedicated pre-frontend **Alpha integration
-  gate**: live Google OIDC, a live authorized Notion test workspace, hosted KMS,
-  real MCP-client compatibility, and owner-authorized hosted deployment checks.
-  These require credentials/resources and must not be claimed from fixtures.
-- The Alpha gate is defined in `docs/technical/ALPHA_INTEGRATION_GATE.md`.
-  Current local code does **not** yet provide production Docling conversion,
-  pgvector/rebuild workers, full export packaging, full deletion purge, hosted
-  KMS envelope-key wiring, or live provider compatibility proof.
-- Detailed checklist: `IMPLEMENTATION_TRACKER.md` (external gates remain unchecked).
-- Do not run `make selfhost-smoke` until Codex logic re-audit + owner authorization.
+- Round 2 includes grant-resolved MCP auth, durable service-auth nonces,
+  MCP SDK Streamable HTTP, job↔outbox binding, attempt lifecycle, encrypted
+  conversation capture, Docling fail-closed adapter, Notion HTTP emulator,
+  schema head `20260722_0007`.
+- External integrations use the **Alpha integration gate**
+  (`docs/technical/ALPHA_INTEGRATION_GATE.md`): live Google OIDC, authorized
+  Notion workspace, hosted KMS, real MCP-client compatibility, hosted deploy.
+  Fixtures must not be claimed as live validation. Production Docling conversion,
+  pgvector/rebuild workers, full export packaging, full deletion purge, and
+  hosted KMS wiring remain external/incomplete where noted in the tracker.
+- Frontend Waves 9–10 continue on branch `frontend` in worktree
+  `/home/tauqueer/Desktop/memdot-frontend` (merged `develop` @ `99ed500`).
+  Scaffold: Tailwind tokens, `@memdot/ui`, Core session/CSRF + OIDC begin,
+  AppShell/FSD nav, thin Wave 10 stubs, PWA SW stub. Not owner-accepted.
+- Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
+- Merge `frontend` → `develop` only when UI milestone is ready and owner asks.
 
 ## 15. Context maintenance
 

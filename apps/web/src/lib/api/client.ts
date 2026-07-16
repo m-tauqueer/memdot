@@ -1,0 +1,245 @@
+/**
+ * First-party Core client. Browser calls same-origin `/api/v1/*` (rewritten to Core).
+ * Session cookie is HttpOnly; CSRF comes from readable `memdot_csrf` cookie.
+ */
+
+export const CSRF_COOKIE = "memdot_csrf";
+export const CSRF_HEADER = "X-CSRF-Token";
+
+export type ProblemDetail = {
+  type?: string;
+  title?: string;
+  status?: number;
+  code?: string;
+  detail?: string;
+  correlation_id?: string;
+};
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly correlationId: string | undefined;
+  readonly problem: ProblemDetail;
+
+  constructor(problem: ProblemDetail, status: number) {
+    super(problem.detail || problem.title || `Request failed (${status})`);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = problem.code || "unknown";
+    this.correlationId = problem.correlation_id;
+    this.problem = problem;
+  }
+}
+
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const parts = document.cookie.split(";").map((part) => part.trim());
+  for (const part of parts) {
+    if (part.startsWith(`${name}=`)) {
+      return decodeURIComponent(part.slice(name.length + 1));
+    }
+  }
+  return null;
+}
+
+function newCorrelationId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `web-${Date.now()}`;
+}
+
+export type ApiRequestOptions = {
+  method?: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+  /** Skip CSRF for GET-like safety; mutations always send when cookie present. */
+  csrf?: boolean;
+};
+
+export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "X-Correlation-Id": newCorrelationId(),
+    ...options.headers,
+  };
+
+  const needsCsrf = options.csrf ?? !["GET", "HEAD", "OPTIONS"].includes(method);
+  if (needsCsrf) {
+    const csrf = readCookie(CSRF_COOKIE);
+    if (csrf) {
+      headers[CSRF_HEADER] = csrf;
+    }
+  }
+
+  const init: RequestInit = {
+    method,
+    headers,
+    credentials: "include",
+  };
+  if (options.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(options.body);
+  }
+  if (options.signal) {
+    init.signal = options.signal;
+  }
+
+  const response = await fetch(path.startsWith("/") ? path : `/${path}`, init);
+
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson ? ((await response.json()) as unknown) : null;
+
+  if (!response.ok) {
+    const problem =
+      payload && typeof payload === "object"
+        ? (payload as ProblemDetail)
+        : { status: response.status, detail: response.statusText, code: "http_error" };
+    throw new ApiError(problem, response.status);
+  }
+
+  return payload as T;
+}
+
+export type SessionStatus = {
+  authenticated: boolean;
+  account_id?: string;
+  recent_auth?: boolean;
+};
+
+export function fetchSession(signal?: AbortSignal): Promise<SessionStatus> {
+  const options: ApiRequestOptions = { csrf: false };
+  if (signal) {
+    options.signal = signal;
+  }
+  return apiRequest<SessionStatus>("/api/v1/auth/session", options);
+}
+
+export function beginOidc(): Promise<{ authorization_url?: string; url?: string }> {
+  return apiRequest("/api/v1/auth/oidc/begin", { method: "POST", body: {} });
+}
+
+export function logout(): Promise<{ status: string }> {
+  return apiRequest("/api/v1/auth/logout", { method: "POST", body: {} });
+}
+
+export function attestAdult(confirmed: boolean): Promise<{ status: string }> {
+  return apiRequest("/api/v1/auth/attestation", {
+    method: "POST",
+    body: { confirmed },
+  });
+}
+
+export type CreatedSource = {
+  sourceId: string;
+  spaceId: string;
+  correlationId?: string;
+};
+
+export function createSource(body: { space_id: string; title: string }): Promise<CreatedSource> {
+  return apiRequest("/api/v1/sources", { method: "POST", body });
+}
+
+export function getSourceStatus(sourceId: string): Promise<Record<string, unknown>> {
+  return apiRequest(`/api/v1/sources/${sourceId}/status`);
+}
+
+export function listSourceVersions(sourceId: string): Promise<{ items?: unknown[] }> {
+  return apiRequest(`/api/v1/sources/${sourceId}/versions`);
+}
+
+export function cancelSource(sourceId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/sources/${sourceId}/cancel`, { method: "POST", body: {} });
+}
+
+export function retrySource(sourceId: string, revisionId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/sources/${sourceId}/retry`, {
+    method: "POST",
+    body: { revision_id: revisionId },
+  });
+}
+
+export function reprocessSource(
+  sourceId: string,
+  revisionId: string,
+  shadow = false,
+): Promise<unknown> {
+  return apiRequest(`/api/v1/sources/${sourceId}/reprocess`, {
+    method: "POST",
+    body: { revision_id: revisionId, shadow },
+  });
+}
+
+export function getMemoryItem(memoryItemId: string): Promise<Record<string, unknown>> {
+  return apiRequest(`/api/v1/memory/items/${memoryItemId}`);
+}
+
+export function approveProposal(proposalId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/memory/proposals/${proposalId}/approve`, {
+    method: "POST",
+    body: {},
+  });
+}
+
+export function rejectProposal(proposalId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/memory/proposals/${proposalId}/reject`, {
+    method: "POST",
+    body: {},
+  });
+}
+
+export type StartAttemptBody = {
+  course_id: string;
+  assessment_item_id: string;
+  assessment_revision_id: string;
+  client_attempt_id?: string;
+};
+
+export function startAttempt(
+  body: StartAttemptBody,
+): Promise<{ attemptId?: string; status?: string }> {
+  return apiRequest("/api/v1/learning/attempts/start", { method: "POST", body });
+}
+
+export function revealAttempt(body: {
+  attempt_id: string;
+  hint?: boolean;
+  answer?: boolean;
+}): Promise<unknown> {
+  return apiRequest("/api/v1/learning/attempts/reveal", { method: "POST", body });
+}
+
+export function submitAttempt(body: {
+  course_id: string;
+  assessment_item_id: string;
+  assessment_revision_id: string;
+  response: Record<string, unknown>;
+  confidence: string;
+  client_attempt_id: string;
+  hint_revealed?: boolean;
+  answer_revealed?: boolean;
+}): Promise<unknown> {
+  return apiRequest("/api/v1/learning/attempts", { method: "POST", body });
+}
+
+export function requestAccountExport(): Promise<unknown> {
+  return apiRequest("/api/v1/export/account", { method: "POST", body: {} });
+}
+
+export function compileContext(body: {
+  query: string;
+  purpose?: string | null;
+  max_items?: number;
+  max_tokens?: number;
+}): Promise<Record<string, unknown>> {
+  return apiRequest("/api/v1/context/compile", { method: "POST", body });
+}
+
+export function listConversations(): Promise<unknown> {
+  return apiRequest("/api/v1/conversations");
+}

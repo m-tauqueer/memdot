@@ -5,6 +5,7 @@ export type WebSettings = {
   WEB_ALLOWED_ORIGINS: string;
   WEB_OIDC_ISSUER: string;
   WEB_OIDC_AUDIENCE: string;
+  WEB_CORE_BASE_URL: string;
   WEB_TELEMETRY_EXPORT: string;
   WEB_OTEL_EXPORTER_OTLP_ENDPOINT: string;
 };
@@ -29,6 +30,7 @@ export function loadWebSettings(
     WEB_ALLOWED_ORIGINS: env.WEB_ALLOWED_ORIGINS ?? "http://localhost:3000",
     WEB_OIDC_ISSUER: env.WEB_OIDC_ISSUER ?? "",
     WEB_OIDC_AUDIENCE: env.WEB_OIDC_AUDIENCE ?? "memdot-web",
+    WEB_CORE_BASE_URL: env.WEB_CORE_BASE_URL ?? "http://127.0.0.1:8000",
     WEB_TELEMETRY_EXPORT: env.WEB_TELEMETRY_EXPORT ?? "off",
     WEB_OTEL_EXPORTER_OTLP_ENDPOINT: env.WEB_OTEL_EXPORTER_OTLP_ENDPOINT ?? "",
   };
@@ -51,6 +53,10 @@ export function loadWebSettings(
   );
   if (!exportOff && !settings.WEB_OTEL_EXPORTER_OTLP_ENDPOINT.trim()) {
     throw new Error("telemetry exporter enabled without explicit endpoint");
+  }
+
+  if (!settings.WEB_CORE_BASE_URL.startsWith("http://") && !settings.WEB_CORE_BASE_URL.startsWith("https://")) {
+    throw new Error("WEB_CORE_BASE_URL must be an absolute URL");
   }
 
   if (settings.WEB_ENV === "self_host" || settings.WEB_ENV === "hosted") {

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memdot-core
+  namespace: memdot-mumbai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: memdot-core
+  template:
+    metadata:
+      labels:
+        app: memdot-core
+    spec:
+      containers:
+        - name: core
+          image: memdot-core:hosted-stub
+          ports:
+            - containerPort: 8000

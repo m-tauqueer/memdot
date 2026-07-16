@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: memdot-delhi-backup
+  namespace: memdot-delhi-dr
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: memdot-backup:hosted-stub
+              command: ["echo", "encrypted-backup-stub"]
+          restartPolicy: OnFailure

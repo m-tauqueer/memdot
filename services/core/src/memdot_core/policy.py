@@ -86,3 +86,38 @@ def payload_too_large_response(*, correlation_id: uuid.UUID | None = None):
         detail="Request exceeds allowed size.",
         correlation_id=correlation_id,
     )
+
+
+def overload_reject_response(*, correlation_id: uuid.UUID | None = None):
+    """Reject before acceptance when overload breakers trip."""
+    return problem_response(
+        status=503,
+        code=ErrorCode.SERVICE_UNAVAILABLE,
+        detail="Service is temporarily overloaded. Retry later.",
+        correlation_id=correlation_id,
+    )
+
+
+class OverloadBreaker:
+    """Simple in-process overload gate for tests and single-node dev."""
+
+    def __init__(self, *, max_inflight: int = 256) -> None:
+        self._max = max_inflight
+        self._inflight = 0
+
+    @property
+    def inflight(self) -> int:
+        return self._inflight
+
+    def try_acquire(self) -> bool:
+        if self._inflight >= self._max:
+            return False
+        self._inflight += 1
+        return True
+
+    def release(self) -> None:
+        if self._inflight > 0:
+            self._inflight -= 1
+
+
+GLOBAL_OVERLOAD_BREAKER = OverloadBreaker()

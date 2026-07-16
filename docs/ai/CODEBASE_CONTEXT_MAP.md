@@ -34,7 +34,7 @@ Verified scaffold paths:
 ```text
 apps/
   web/                 Next.js shell (health only; frontend starts Wave 9)
-  mcp/                 MCP edge (health only; tools arrive Wave 7)
+  mcp/                 MCP edge (OAuth metadata, frozen tools, Core delegation)
 services/
   core/                FastAPI, auth, tenancy, ledger, sources API, documents/memory/
                        context APIs, jobs/outbox, ingestion orchestration, migrations
@@ -48,7 +48,7 @@ packages/
   ui/                  Accessible frontend primitives
 infra/
   compose/             Accepted Tex-disabled self-host Compose
-  hosted/              Placeholder (later hosted infra)
+  hosted/              India-first GCP Mumbai + Delhi DR skeleton (terraform/k8s stubs)
 docs/                  Product, technical, ADR, evaluation, AI context
 tests/
   benchmark/           Placeholder for frozen evaluation corpora
@@ -232,6 +232,13 @@ Verified Phase 4 (Wave 4) focused gate:
 
 ```bash
 make phase4-gates
+```
+
+Verified lifecycle and hardening gates (Waves 7–8):
+
+```bash
+make phase7-gates   # MCP, lifecycle, telemetry allowlist, benchmark runners
+make phase8-gates   # phase7 + typecheck + docs-validate + contracts
 ```
 
 Wave 4 Core paths (implemented on working tree):

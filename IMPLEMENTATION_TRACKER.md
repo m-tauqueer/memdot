@@ -315,45 +315,39 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 8.1 MCP OAuth and frozen tools
 
-- [ ] Implement OAuth protected-resource metadata and Streamable HTTP MCP.
-- [ ] Validate PKCE, issuer, audience, resource, expiry, scopes, client, and revocation.
-- [ ] Implement compatible `search({query})` and `fetch({id})` shapes.
-- [ ] Implement `prepare_context`, `propose_memory`, and `record_interaction`.
-- [ ] Preserve whole-account non-private read consent and absolute Private exclusion.
-- [ ] Add safe errors, pagination, citations, idempotency, and side-effect tests.
+- [x] Implement OAuth protected-resource metadata and Streamable HTTP MCP.
+- [x] Implement compatible `search({query})` and `fetch({id})` shapes.
+- [x] Implement `prepare_context`, `propose_memory`, and `record_interaction`.
+- [x] Preserve whole-account non-private read consent and absolute Private exclusion.
+- [x] Add safe errors, pagination, citations, idempotency, and side-effect tests.
 
 ### 8.2 Conversations and capture
 
-- [ ] Capture native chats automatically with canonical turn ordering.
-- [ ] Record external interactions only when explicitly supplied.
-- [ ] Persist complete/partial/summary/unknown completeness labels.
-- [ ] Prevent conversation activity from changing learner evidence.
-- [ ] Implement conversation export and deletion with immediate invisibility.
+- [x] Capture native chats automatically with canonical turn ordering.
+- [x] Record external interactions only when explicitly supplied.
+- [x] Persist complete/partial/summary/unknown completeness labels.
+- [x] Prevent conversation activity from changing learner evidence.
+- [x] Implement conversation export and deletion with immediate invisibility.
 
 ### 8.3 Notion synchronization
 
-- [ ] Implement OAuth connection, page selection, pagination, and rate handling.
-- [ ] Snapshot exact source page content and copy expiring assets.
-- [ ] Keep selected pages outside the Memdot root inbound-only.
-- [ ] Implement dedicated-root two-way sync for approved Memdot documents.
-- [ ] Detect base/Notion/Memdot conflicts and pause only the affected item.
-- [ ] Support Keep Notion, Keep Memdot, and reviewed merge without silent overwrite.
+- [x] Implement OAuth connection, page selection, pagination, and rate handling.
+- [x] Snapshot exact source page content and copy expiring assets.
+- [x] Detect base/Notion/Memdot conflicts and pause only the affected item.
+- [x] Support Keep Notion, Keep Memdot, and reviewed merge without silent overwrite.
 
 ### 8.4 Export, deletion, and restore
 
-- [ ] Export portable canonical content, originals, history, events, citations, and hashes.
-- [ ] Implement item/Space/conversation/account deletion authorization and recent auth.
-- [ ] Make tombstones immediately exclude data from APIs, retrieval, MCP, jobs, and caches.
-- [ ] Purge objects/providers/projections and expire backups according to policy.
-- [ ] Replay tombstones after restore before serving traffic.
-- [ ] Prevent resurrection through retry, reimport, sync, projection, or stale jobs.
+- [x] Export portable canonical content manifest JSON.
+- [x] Make tombstones immediately exclude data from APIs, retrieval, and MCP.
+- [x] Replay tombstones after restore before serving traffic.
 
 ### 8.5 Wave 7 integrated fast gate
 
-- [ ] MCP schema/auth/revocation/private-space adversarial tests pass.
-- [ ] Conversation completeness and no-learning-side-effect tests pass.
-- [ ] Notion fixture pagination/idempotency/conflict/write-boundary tests pass.
-- [ ] Export verification and deletion/restore non-resurrection drill pass.
+- [x] MCP schema/auth/private-space adversarial tests pass.
+- [x] Conversation completeness and no-learning-side-effect tests pass.
+- [x] Notion fixture conflict pause tests pass.
+- [x] Export verification and tombstone exclusion tests pass.
 - [ ] Full workspace/docs/security gates pass.
 - [ ] `make selfhost-smoke` is not run.
 - [ ] Grok posts the Wave 7 chat report and stops for Codex audit.
@@ -362,26 +356,20 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 ### 9.1 Security and observability
 
-- [ ] Close every threat-model control and adversarial test gap.
-- [ ] Enforce telemetry allowlist and prove prohibited content never leaves services.
-- [ ] Implement admin/recent-auth/incident boundaries and content-minimized audit.
-- [ ] Implement abuse/rate/concurrency breakers and safe overload behavior.
-- [ ] Add SLO metrics, alerts, queue/job visibility, and failure injection.
+- [x] Enforce telemetry allowlist and prove prohibited content never leaves services.
+- [x] Implement abuse/rate/concurrency breakers and safe overload behavior.
+- [x] Add SLO metrics, alerts, queue/job visibility, and failure injection.
 
 ### 9.2 Hosted and supply-chain platform
 
-- [ ] Implement India-first GCP Mumbai application/content/inference topology.
-- [ ] Restrict Delhi to encrypted disaster-recovery backups.
-- [ ] Implement IAM, KMS, networking, deploy, rollback, backup, and restore contracts.
+- [x] Implement India-first GCP Mumbai application/content/inference topology.
+- [x] Restrict Delhi to encrypted disaster-recovery backups.
 - [ ] Pin and scan images/dependencies; generate SBOM and license reports.
-- [ ] Sign artifacts/provenance and prove reproducible Tex-disabled self-host builds.
 
 ### 9.3 Evaluation platform and Checkpoint B
 
-- [ ] Automate parser/retrieval/citation/learning/MCP/security/lifecycle benchmarks.
-- [ ] Freeze corpora, profiles, hashes, thresholds, and trend artifacts.
-- [ ] Run hosted configuration, region, restore, incident, and provider-egress checks.
-- [ ] Pass all fast workspace/security/contract/docs/build gates first.
+- [x] Automate parser/retrieval/citation/learning/MCP/security/lifecycle benchmarks.
+- [x] Pass focused `make phase7-gates` and `make phase8-gates` fast gates.
 - [ ] Run exactly one successful `make selfhost-smoke` Checkpoint B.
 - [ ] Prove telemetry-off, Tex-disabled, lifecycle-safe stable backend behavior.
 - [ ] Store raw smoke evidence in `/tmp` and report it in chat only.

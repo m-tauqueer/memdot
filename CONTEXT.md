@@ -315,13 +315,11 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
 
 ## 14. Current execution pointer
 
-- Active branch: `develop` (documents/retrieval hardening + learning backend in progress).
-- Accepted on `main`: ingestion runtime and authored documents/retrieval foundation.
-- Detailed checklist: `IMPLEMENTATION_TRACKER.md` Waves 4–6.
-- Current Codex verdict: PASS for Phases 1, 2, and 3.
-- Verified commands: see AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
-- Focused gates: `make phase4-gates`, `make phase5-gates`, `make phase6-gates`.
-- Next full smoke: Checkpoint A after learning backend gates on `develop`.
+- Active branch: `develop` (MCP, lifecycle, hardening implemented; awaiting Codex review).
+- Accepted on `main`: Phases 1–3; Wave 4 ingestion on `main`.
+- Detailed checklist: `IMPLEMENTATION_TRACKER.md` Waves 7–8.
+- Focused gates: `make phase4-gates` … `make phase8-gates` (see AGENTS.md).
+- Next full smoke: Checkpoint B after `make phase8-gates` (not run in implementation tasks).
 
 ## 15. Context maintenance
 

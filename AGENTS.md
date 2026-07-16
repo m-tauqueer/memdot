@@ -96,6 +96,10 @@ make phase3-gates   # migrate-domain + check-rls + targeted pytest
 
 ```bash
 make phase4-gates   # Wave 4 focused gate (no full selfhost-smoke)
+make phase5-gates   # documents/memory/retrieval/context gate
+make phase6-gates   # learning domain gate
+make phase7-gates   # MCP, lifecycle, telemetry allowlist gate
+make phase8-gates   # phase7 + typecheck + docs-validate + contracts
 ```
 
 Operator docs: `infra/compose/README.md`. Image digests: `infra/compose/images.lock.yaml`.

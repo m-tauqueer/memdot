@@ -48,6 +48,15 @@ ACCOUNT_OWNED_TABLES: frozenset[str] = frozenset(
         "projection",
         "context_receipt",
         "context_receipt_item",
+        "course",
+        "curriculum_node",
+        "curriculum_edge",
+        "assessment_item",
+        "assessment_revision",
+        "current_assessment_revision",
+        "learner_event",
+        "review_item",
+        "learner_projection",
     }
 )
 
@@ -56,6 +65,8 @@ IMMUTABLE_TABLES: frozenset[str] = frozenset(
         "source_revision",
         "document_revision",
         "memory_revision",
+        "assessment_revision",
+        "learner_event",
         "audit_event",
         "conversation_turn",
         "job_attempt",
@@ -68,6 +79,7 @@ APPEND_ONLY_TABLES: frozenset[str] = frozenset(
         "conversation_turn",
         "outbox_event",
         "job_attempt",
+        "learner_event",
     }
 )
 
@@ -77,5 +89,6 @@ MUTABLE_POINTER_TABLES: frozenset[str] = frozenset(
         "current_document_revision",
         "current_memory_revision",
         "current_active_parse_run",
+        "current_assessment_revision",
     }
 )

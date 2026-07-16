@@ -36,6 +36,7 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     from memdot_core.auth.routes import router as auth_router
     from memdot_core.context.routes import router as context_router
     from memdot_core.documents.routes import router as documents_router
+    from memdot_core.learning.routes import router as learning_router
     from memdot_core.memory.routes import router as memory_router
     from memdot_core.sources.routes import router as sources_router  # noqa: PLC0415
 
@@ -44,6 +45,7 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     app.include_router(documents_router)
     app.include_router(memory_router)
     app.include_router(context_router)
+    app.include_router(learning_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

@@ -64,6 +64,15 @@ REGISTERED_ACCOUNT_OWNED_TABLES = frozenset(
         "projection",
         "context_receipt",
         "context_receipt_item",
+        "course",
+        "curriculum_node",
+        "curriculum_edge",
+        "assessment_item",
+        "assessment_revision",
+        "current_assessment_revision",
+        "learner_event",
+        "review_item",
+        "learner_projection",
     }
 )
 

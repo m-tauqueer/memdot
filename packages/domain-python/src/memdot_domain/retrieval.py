@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import TypeVar
 
 from memdot_domain.tenancy import SpaceVisibility
 
@@ -50,9 +52,12 @@ class FusedCandidate:
     revision_id: uuid.UUID
     space_id: uuid.UUID
     fused_score: float
-    lanes: list[CandidateLane] = field(default_factory=list)
+    lanes: list[CandidateLane] = field(default_factory=lambda: [])
     locator: str | None = None
     snippet: str | None = None
+
+
+_CandidateT = TypeVar("_CandidateT", FusedCandidate, RetrievalCandidate)
 
 
 def rrf_contribution(rank: int, *, weight: float, k: int = RRF_K) -> float:
@@ -101,15 +106,15 @@ def fuse_candidates(
 
 
 def exclude_private_spaces(
-    candidates: list[FusedCandidate | RetrievalCandidate],
+    candidates: Sequence[_CandidateT],
     *,
     space_visibility: dict[uuid.UUID, SpaceVisibility],
     purpose: str,
-) -> list[FusedCandidate | RetrievalCandidate]:
+) -> list[_CandidateT]:
     """Drop private-space candidates for external read purposes."""
     if purpose != "external_read":
-        return candidates
-    filtered: list[FusedCandidate | RetrievalCandidate] = []
+        return list(candidates)
+    filtered: list[_CandidateT] = []
     for candidate in candidates:
         visibility = space_visibility.get(candidate.space_id, SpaceVisibility.GENERAL)
         if visibility == SpaceVisibility.PRIVATE:

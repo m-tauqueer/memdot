@@ -315,13 +315,13 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
 
 ## 14. Current execution pointer
 
-- Active delivery: Waves 4–6 backend implementation in progress (owner-authorized).
+- Active branch: `develop` (documents/retrieval hardening + learning backend in progress).
+- Accepted on `main`: ingestion runtime and authored documents/retrieval foundation.
 - Detailed checklist: `IMPLEMENTATION_TRACKER.md` Waves 4–6.
 - Current Codex verdict: PASS for Phases 1, 2, and 3.
-- Current accepted implementation: technical Phase 3 at commit `e77b299`.
 - Verified commands: see AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
-- Wave 4 adds: `make phase4-gates` (focused; no full self-host smoke).
-- Next full smoke: Checkpoint A after technical Phase 8 / end of Wave 6.
+- Focused gates: `make phase4-gates`, `make phase5-gates`, `make phase6-gates`.
+- Next full smoke: Checkpoint A after learning backend gates on `develop`.
 
 ## 15. Context maintenance
 

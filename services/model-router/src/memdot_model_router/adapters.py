@@ -6,7 +6,6 @@ import json
 from dataclasses import dataclass
 
 from memdot_domain.ports.model import (
-    ModelBudget,
     StructuredCompletionRequest,
     StructuredCompletionResult,
 )

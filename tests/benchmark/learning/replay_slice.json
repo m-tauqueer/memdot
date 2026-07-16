@@ -1,0 +1,9 @@
+{
+  "name": "learning-replay-basic",
+  "description": "Eligible grades raise demonstration; reveals do not.",
+  "expectations": {
+    "ineligibleCannotRaiseMastery": true,
+    "duplicateEventsIgnored": true,
+    "delayedDemonstrationRequiresTwoEligibleCorrect": true
+  }
+}

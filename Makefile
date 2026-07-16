@@ -1,5 +1,5 @@
 .PHONY: bootstrap format format-check lint typecheck test contracts docs-validate build containers container-smoke check clean workspace-list \
-	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke migrate-domain check-rls phase3-gates phase4-gates phase5-gates
+	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke migrate-domain check-rls phase3-gates phase4-gates phase5-gates phase6-gates
 
 COMPOSE_DIR := infra/compose
 COMPOSE_ENV := $(COMPOSE_DIR)/.env
@@ -115,6 +115,18 @@ phase5-gates: migrate-domain check-rls
 		packages/domain-python/tests/test_context_compiler.py \
 		services/core/tests/test_wave5_documents.py \
 		services/model-router/tests/test_model_router_policy.py \
+		-q
+	uv run python scripts/generate_openapi.py
+	pnpm --filter @memdot/contracts run generate
+	uv run python scripts/validate_schemas.py
+	pnpm --filter @memdot/contracts run check
+
+phase6-gates: migrate-domain check-rls
+	uv run pytest \
+		packages/domain-python/tests/test_learning_domain.py \
+		packages/domain-python/tests/test_memdot_document.py \
+		packages/domain-python/tests/test_retrieval_fusion.py \
+		packages/domain-python/tests/test_context_compiler.py \
 		-q
 	uv run python scripts/generate_openapi.py
 	pnpm --filter @memdot/contracts run generate

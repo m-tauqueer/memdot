@@ -1,5 +1,11 @@
 """MemdotDocument v1 validation, extraction, and import/export adapters."""
 
+# JSON tree walkers intentionally use loosely typed dict nodes.
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownLambdaType=false
+
 from __future__ import annotations
 
 import hashlib
@@ -7,7 +13,7 @@ import json
 import re
 import uuid
 from enum import StrEnum
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -74,7 +80,7 @@ class MarkNode(BaseModel):
 class TextNode(BaseModel):
     type: str = "text"
     text: str = ""
-    marks: list[MarkNode] = Field(default_factory=list)
+    marks: list[MarkNode] = Field(default_factory=lambda: [])
 
 
 class BlockAttrs(BaseModel):
@@ -94,7 +100,7 @@ class BlockAttrs(BaseModel):
 class BlockNode(BaseModel):
     type: BlockType
     attrs: BlockAttrs
-    content: list[Any] = Field(default_factory=list)
+    content: list[Any] = Field(default_factory=lambda: [])
 
     @model_validator(mode="after")
     def validate_heading_level(self) -> BlockNode:
@@ -109,7 +115,7 @@ class BlockNode(BaseModel):
 
 class DocRoot(BaseModel):
     type: str = "doc"
-    content: list[BlockNode] = Field(default_factory=list)
+    content: list[BlockNode] = Field(default_factory=lambda: [])
 
 
 class MemdotDocument(BaseModel):
@@ -138,7 +144,6 @@ class MemdotDocument(BaseModel):
 
 
 def _collect_block_ids(node: dict[str, Any], seen: set[str]) -> None:
-    node_type = node.get("type")
     attrs = node.get("attrs") or {}
     block_id = attrs.get("blockId")
     if block_id:
@@ -215,7 +220,7 @@ def extract_plain_text(doc: MemdotDocument | dict[str, Any]) -> str:
     if isinstance(doc, MemdotDocument):
         root = doc.root.model_dump(mode="json")
     else:
-        root = (doc.get("root") or {}) if isinstance(doc, dict) else {}
+        root = doc.get("root") or {}
     lines: list[str] = []
     for block in root.get("content") or []:
         if isinstance(block, dict):
@@ -271,7 +276,7 @@ def document_to_html(doc: MemdotDocument | dict[str, Any]) -> str:
     if isinstance(doc, MemdotDocument):
         root = doc.root.model_dump(mode="json")
     else:
-        root = (doc.get("root") or {}) if isinstance(doc, dict) else {}
+        root = doc.get("root") or {}
 
     def render_inline(node: dict[str, Any]) -> str:
         text = html.escape(str(node.get("text") or ""))
@@ -292,13 +297,18 @@ def document_to_html(doc: MemdotDocument | dict[str, Any]) -> str:
 
     def render_block(node: dict[str, Any]) -> str:
         ntype = node.get("type")
+        children = [
+            cast(dict[str, Any], child)
+            for child in cast(list[Any], node.get("content") or [])
+            if isinstance(child, dict)
+        ]
         inner = "".join(
-            render_inline(c) if c.get("type") == "text" else render_block(c)
-            for c in (node.get("content") or [])
-            if isinstance(c, dict)
+            render_inline(child) if child.get("type") == "text" else render_block(child)
+            for child in children
         )
         if ntype == "heading":
-            level = int((node.get("attrs") or {}).get("level") or 1)
+            attrs = cast(dict[str, Any], node.get("attrs") or {})
+            level = int(cast(Any, attrs.get("level") or 1))
             return f"<h{level}>{inner}</h{level}>"
         if ntype == "paragraph":
             return f"<p>{inner}</p>"
@@ -309,16 +319,22 @@ def document_to_html(doc: MemdotDocument | dict[str, Any]) -> str:
         if ntype == "horizontalRule":
             return "<hr/>"
         if ntype == "image":
-            src = html.escape(str((node.get("attrs") or {}).get("src") or ""))
-            alt = html.escape(str((node.get("attrs") or {}).get("alt") or ""))
+            attrs = cast(dict[str, Any], node.get("attrs") or {})
+            src = html.escape(str(attrs.get("src") or ""))
+            alt = html.escape(str(attrs.get("alt") or ""))
             return f'<img src="{src}" alt="{alt}"/>'
         if ntype in {"bulletList", "orderedList"}:
             tag = "ul" if ntype == "bulletList" else "ol"
-            items = "".join(render_block(c) for c in (node.get("content") or []) if isinstance(c, dict))
+            items = "".join(render_block(child) for child in children)
             return f"<{tag}>{items}</{tag}>"
         if ntype == "listItem":
             return f"<li>{inner}</li>"
         return f"<div data-unsupported>{inner}</div>"
 
-    body = "".join(render_block(b) for b in (root.get("content") or []) if isinstance(b, dict))
+    root_blocks = [
+        cast(dict[str, Any], block)
+        for block in cast(list[Any], root.get("content") or [])
+        if isinstance(block, dict)
+    ]
+    body = "".join(render_block(block) for block in root_blocks)
     return f"<!DOCTYPE html><html><body>{body}</body></html>"

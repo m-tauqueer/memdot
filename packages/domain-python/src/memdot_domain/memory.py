@@ -32,13 +32,11 @@ EXCLUDED_PROPOSAL_STATUSES = frozenset(
 
 
 def is_retrievable_proposal_status(status: ProposalStatus | str) -> bool:
-    value = ProposalStatus(status) if isinstance(status, str) else status
-    return value in RETRIEVABLE_PROPOSAL_STATUSES
+    return ProposalStatus(status) in RETRIEVABLE_PROPOSAL_STATUSES
 
 
 def is_excluded_proposal_status(status: ProposalStatus | str) -> bool:
-    value = ProposalStatus(status) if isinstance(status, str) else status
-    return value in EXCLUDED_PROPOSAL_STATUSES
+    return ProposalStatus(status) in EXCLUDED_PROPOSAL_STATUSES
 
 
 def memory_truth_class_for_proposal(*, approved: bool) -> TruthClass:
@@ -46,10 +44,8 @@ def memory_truth_class_for_proposal(*, approved: bool) -> TruthClass:
 
 
 def is_active_memory_status(status: MemoryRevisionStatus | str) -> bool:
-    value = MemoryRevisionStatus(status) if isinstance(status, str) else status
-    return value == MemoryRevisionStatus.ACTIVE
+    return MemoryRevisionStatus(status) == MemoryRevisionStatus.ACTIVE
 
 
 def is_retracted_memory_status(status: MemoryRevisionStatus | str) -> bool:
-    value = MemoryRevisionStatus(status) if isinstance(status, str) else status
-    return value == MemoryRevisionStatus.RETRACTED
+    return MemoryRevisionStatus(status) == MemoryRevisionStatus.RETRACTED

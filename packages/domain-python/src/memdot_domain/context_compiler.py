@@ -53,7 +53,7 @@ class ContextReceipt:
     budget: ContextBudget
     context_hash: str
     partial: bool
-    items: list[EvidenceItem] = field(default_factory=list)
+    items: list[EvidenceItem] = field(default_factory=lambda: [])
 
 
 def query_hash(query: str, *, purpose: str, policy_version: str) -> str:

@@ -1,6 +1,179 @@
 {
   "components": {
     "schemas": {
+      "AddEdgeBody": {
+        "properties": {
+          "confirmation": {
+            "default": "confirmed",
+            "title": "Confirmation",
+            "type": "string"
+          },
+          "from_node_id": {
+            "format": "uuid",
+            "title": "From Node Id",
+            "type": "string"
+          },
+          "to_node_id": {
+            "format": "uuid",
+            "title": "To Node Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_node_id",
+          "to_node_id"
+        ],
+        "title": "AddEdgeBody",
+        "type": "object"
+      },
+      "AddNodeBody": {
+        "properties": {
+          "confirmation": {
+            "default": "suggested",
+            "title": "Confirmation",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title"
+        ],
+        "title": "AddNodeBody",
+        "type": "object"
+      },
+      "AppendEventBody": {
+        "properties": {
+          "answer_revealed": {
+            "default": false,
+            "title": "Answer Revealed",
+            "type": "boolean"
+          },
+          "assessment_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Item Id"
+          },
+          "assessment_revision_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Revision Id"
+          },
+          "attempt_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "client_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Event Id"
+          },
+          "concept_node_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concept Node Id"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "response_before_feedback": {
+            "default": true,
+            "title": "Response Before Feedback",
+            "type": "boolean"
+          },
+          "substantive_hint": {
+            "default": false,
+            "title": "Substantive Hint",
+            "type": "boolean"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "user_id",
+          "event_type"
+        ],
+        "title": "AppendEventBody",
+        "type": "object"
+      },
       "AttestationBody": {
         "properties": {
           "confirmed": {
@@ -12,6 +185,46 @@
           "confirmed"
         ],
         "title": "AttestationBody",
+        "type": "object"
+      },
+      "CompileContextBody": {
+        "properties": {
+          "max_items": {
+            "default": 32,
+            "maximum": 128.0,
+            "minimum": 1.0,
+            "title": "Max Items",
+            "type": "integer"
+          },
+          "max_tokens": {
+            "default": 4096,
+            "maximum": 32768.0,
+            "minimum": 256.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          },
+          "query": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "CompileContextBody",
         "type": "object"
       },
       "CompleteUploadBody": {
@@ -26,6 +239,205 @@
           "upload_id"
         ],
         "title": "CompleteUploadBody",
+        "type": "object"
+      },
+      "CreateAssessmentBody": {
+        "properties": {
+          "concept_node_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concept Node Id"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "item_type": {
+            "title": "Item Type",
+            "type": "string"
+          },
+          "prompt": {
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "sealed_answer": {
+            "additionalProperties": true,
+            "title": "Sealed Answer",
+            "type": "object"
+          },
+          "sealed_rubric": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sealed Rubric"
+          },
+          "source_locators": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Locators"
+          },
+          "title": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "title",
+          "item_type",
+          "prompt",
+          "sealed_answer"
+        ],
+        "title": "CreateAssessmentBody",
+        "type": "object"
+      },
+      "CreateCourseBody": {
+        "properties": {
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "title"
+        ],
+        "title": "CreateCourseBody",
+        "type": "object"
+      },
+      "CreateDocumentBody": {
+        "properties": {
+          "document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "title"
+        ],
+        "title": "CreateDocumentBody",
+        "type": "object"
+      },
+      "CreateMemoryItemBody": {
+        "properties": {
+          "assertion_text": {
+            "minLength": 1,
+            "title": "Assertion Text",
+            "type": "string"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "title",
+          "assertion_text"
+        ],
+        "title": "CreateMemoryItemBody",
+        "type": "object"
+      },
+      "CreateProposalBody": {
+        "properties": {
+          "base_revision_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Revision Id"
+          },
+          "patch_json": {
+            "additionalProperties": true,
+            "title": "Patch Json",
+            "type": "object"
+          },
+          "space_id": {
+            "format": "uuid",
+            "title": "Space Id",
+            "type": "string"
+          },
+          "target_id": {
+            "format": "uuid",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Target Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "space_id",
+          "target_type",
+          "target_id"
+        ],
+        "title": "CreateProposalBody",
         "type": "object"
       },
       "CreateSourceBody": {
@@ -62,6 +474,26 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "RebuildBody": {
+        "properties": {
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "user_id"
+        ],
+        "title": "RebuildBody",
+        "type": "object"
+      },
       "ReprocessBody": {
         "properties": {
           "revision_id": {
@@ -79,6 +511,79 @@
           "revision_id"
         ],
         "title": "ReprocessBody",
+        "type": "object"
+      },
+      "ReviewBody": {
+        "properties": {
+          "assessment_item_id": {
+            "format": "uuid",
+            "title": "Assessment Item Id",
+            "type": "string"
+          },
+          "assessment_revision_id": {
+            "format": "uuid",
+            "title": "Assessment Revision Id",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "revealed": {
+            "default": false,
+            "title": "Revealed",
+            "type": "boolean"
+          },
+          "substantive_hint": {
+            "default": false,
+            "title": "Substantive Hint",
+            "type": "boolean"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "user_id",
+          "assessment_item_id",
+          "assessment_revision_id",
+          "correct"
+        ],
+        "title": "ReviewBody",
+        "type": "object"
+      },
+      "SaveRevisionBody": {
+        "properties": {
+          "base_revision_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Revision Id"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "SaveRevisionBody",
         "type": "object"
       },
       "UploadIntentBody": {
@@ -159,7 +664,7 @@
     }
   },
   "info": {
-    "description": "Canonical domain API. Wave 4 adds sources, jobs, and ingestion routes.",
+    "description": "Canonical domain API. Adds documents, memory, context, sources, jobs, and ingestion routes.",
     "title": "Memdot Core API",
     "version": "0.1.0"
   },
@@ -335,6 +840,815 @@
         "summary": "Rotate Session",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/context/compile": {
+      "post": {
+        "operationId": "compile_context_api_v1_context_compile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompileContextBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compile Context",
+        "tags": [
+          "context"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "operationId": "create_document_api_v1_documents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}": {
+      "get": {
+        "operationId": "get_document_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/revisions": {
+      "get": {
+        "operationId": "list_revisions_api_v1_documents__document_id__revisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Revisions",
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "operationId": "save_revision_api_v1_documents__document_id__revisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRevisionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Revision",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/revisions/{revision_id}": {
+      "get": {
+        "operationId": "get_revision_api_v1_documents__document_id__revisions__revision_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revision_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Revision Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Revision",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/learning/assessments": {
+      "post": {
+        "operationId": "create_assessment_api_v1_learning_assessments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Assessment",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/assessments/{assessment_item_id}/revisions/{revision_id}/attempt": {
+      "get": {
+        "operationId": "get_attempt_view_api_v1_learning_assessments__assessment_item_id__revisions__revision_id__attempt_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assessment_item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assessment Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revision_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Revision Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Attempt View",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/courses": {
+      "post": {
+        "operationId": "create_course_api_v1_learning_courses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Course",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/courses/{course_id}/edges": {
+      "post": {
+        "operationId": "add_edge_api_v1_learning_courses__course_id__edges_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddEdgeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Edge",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/courses/{course_id}/nodes": {
+      "post": {
+        "operationId": "add_node_api_v1_learning_courses__course_id__nodes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNodeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Node",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/events": {
+      "post": {
+        "operationId": "append_event_api_v1_learning_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppendEventBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Append Event",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/evidence/rebuild": {
+      "post": {
+        "operationId": "rebuild_evidence_api_v1_learning_evidence_rebuild_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RebuildBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rebuild Evidence",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/learning/reviews": {
+      "post": {
+        "operationId": "review_api_v1_learning_reviews_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review",
+        "tags": [
+          "learning"
+        ]
+      }
+    },
+    "/api/v1/memory/items": {
+      "post": {
+        "operationId": "create_memory_item_api_v1_memory_items_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryItemBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Memory Item",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/items/{memory_item_id}": {
+      "get": {
+        "operationId": "get_memory_item_api_v1_memory_items__memory_item_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "memory_item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Memory Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Memory Item",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/proposals": {
+      "post": {
+        "operationId": "create_proposal_api_v1_memory_proposals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProposalBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Proposal",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/proposals/{proposal_id}/approve": {
+      "post": {
+        "operationId": "approve_proposal_api_v1_memory_proposals__proposal_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Proposal",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/proposals/{proposal_id}/reject": {
+      "post": {
+        "operationId": "reject_proposal_api_v1_memory_proposals__proposal_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Proposal",
+        "tags": [
+          "memory"
         ]
       }
     },

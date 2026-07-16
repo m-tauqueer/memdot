@@ -819,3 +819,169 @@ class ContextReceiptItem(Base):
     locator: Mapped[str | None] = mapped_column(Text)
     selected: Mapped[bool] = mapped_column(default=True)
     omit_reason: Mapped[str | None] = mapped_column(String(64))
+
+
+class Course(Base):
+    __tablename__ = "course"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "space_id"],
+            ["space.account_id", "space.id"],
+            name="fk_course_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_course_1"),
+        UniqueConstraint("account_id", "space_id", "id", name="uq_course_space_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CurriculumNode(Base):
+    __tablename__ = "curriculum_node"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_curriculum_node_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    confirmation: Mapped[str] = mapped_column(String(32), nullable=False, default="suggested")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CurriculumEdge(Base):
+    __tablename__ = "curriculum_edge"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_curriculum_edge_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    from_node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    to_node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    edge_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="prerequisite")
+    confirmation: Mapped[str] = mapped_column(String(32), nullable=False, default="suggested")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AssessmentItem(Base):
+    __tablename__ = "assessment_item"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_assessment_item_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    concept_node_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AssessmentRevision(Base):
+    __tablename__ = "assessment_revision"
+    __table_args__ = (UniqueConstraint("account_id", "id", name="uq_assessment_revision_1"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    item_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    sealed_answer: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    sealed_rubric: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    source_locators: Mapped[list[object]] = mapped_column(JSONB, nullable=False, default=list)
+    difficulty: Mapped[float | None] = mapped_column()
+    guessing_chance: Mapped[float | None] = mapped_column()
+    state: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CurrentAssessmentRevision(Base):
+    __tablename__ = "current_assessment_revision"
+    __table_args__ = (
+        UniqueConstraint("account_id", "assessment_item_id", name="uq_current_assessment_revision_1"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LearnerEvent(Base):
+    __tablename__ = "learner_event"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_learner_event_1"),
+        UniqueConstraint("account_id", "client_event_id", name="uq_learner_event_client"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    concept_node_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    assessment_item_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    assessment_revision_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    attempt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    client_event_id: Mapped[str | None] = mapped_column(String(128))
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    payload_schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    eligibility: Mapped[str] = mapped_column(String(32), nullable=False)
+    exclusion_reason: Mapped[str | None] = mapped_column(String(128))
+
+
+class ReviewItem(Base):
+    __tablename__ = "review_item"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_review_item_1"),
+        UniqueConstraint(
+            "account_id", "user_id", "assessment_item_id", name="uq_review_item_user_item"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    fsrs_state: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LearnerProjection(Base):
+    __tablename__ = "learner_projection"
+    __table_args__ = (
+        UniqueConstraint("account_id", "id", name="uq_learner_projection_1"),
+        UniqueConstraint(
+            "account_id", "user_id", "concept_node_id", name="uq_learner_projection_user_concept"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    concept_node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    evidence_state: Mapped[str] = mapped_column(String(32), nullable=False, default="unassessed")
+    recall_state: Mapped[str] = mapped_column(String(32), nullable=False, default="current")
+    confidence: Mapped[str | None] = mapped_column(String(32))
+    coverage: Mapped[float] = mapped_column(nullable=False, default=0)
+    projection_json: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

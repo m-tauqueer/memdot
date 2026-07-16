@@ -122,7 +122,13 @@ with engine.connect() as conn:
                 """
             )
         ).one()
-        if table in {"current_source_revision", "current_document_revision"}:
+        if table in {
+            "current_source_revision",
+            "current_document_revision",
+            "current_memory_revision",
+            "current_active_parse_run",
+            "current_assessment_revision",
+        }:
             if grants[0] is not True or any(grants[1:4]):
                 errors.append(f"pointer_direct_mutation_grant:{table}:{grants}")
         elif not all(grants[:4]):

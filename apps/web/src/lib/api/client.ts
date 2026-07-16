@@ -22,7 +22,7 @@ import type {
   SubmitAttemptBody,
   UploadIntentBody,
 } from "./types";
-import { sha256File } from "@/src/lib/crypto/sha256";
+import { sha256File } from "../crypto/sha256";
 
 export const CSRF_COOKIE = "memdot_csrf";
 export const CSRF_HEADER = "X-CSRF-Token";
@@ -34,12 +34,16 @@ export type ProblemDetail = {
   code?: string;
   detail?: string;
   correlation_id?: string;
+  correlationId?: string;
+  currentRevisionId?: string | null;
+  current_revision_id?: string | null;
 };
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly correlationId: string | undefined;
+  readonly currentRevisionId: string | undefined;
   readonly problem: ProblemDetail;
   readonly retryAfterSeconds: number | undefined;
 
@@ -48,7 +52,9 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
     this.code = problem.code || "unknown";
-    this.correlationId = problem.correlation_id;
+    this.correlationId = problem.correlation_id || problem.correlationId;
+    this.currentRevisionId =
+      problem.currentRevisionId || problem.current_revision_id || undefined;
     this.problem = problem;
     this.retryAfterSeconds = retryAfterSeconds;
   }
@@ -59,6 +65,10 @@ export class ApiError extends Error {
 
   get isRateLimited(): boolean {
     return this.status === 429 || this.code === "rate_limited";
+  }
+
+  get isConflict(): boolean {
+    return this.status === 409 || this.code === "conflict";
   }
 
   get needsRecentAuth(): boolean {
@@ -137,7 +147,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       payload && typeof payload === "object"
         ? (payload as ProblemDetail)
         : { status: response.status, detail: response.statusText, code: "http_error" };
-    if (!problem.correlation_id) {
+    if (!problem.correlation_id && !problem.correlationId) {
       problem.correlation_id = correlationId;
     }
     const retryAfterHeader = response.headers.get("Retry-After");
@@ -299,8 +309,9 @@ export function compileContext(
   });
 }
 
-export function listConversations(): Promise<unknown> {
-  return apiRequest("/api/v1/conversations");
+export function listConversations(spaceId?: string): Promise<{ items?: unknown[] }> {
+  const query = spaceId ? `?space_id=${encodeURIComponent(spaceId)}` : "";
+  return apiRequest(`/api/v1/conversations${query}`);
 }
 
 export type UploadIntent = {
@@ -390,7 +401,7 @@ export function saveDocumentRevision(
 
 export function createConversation(
   body: CreateConversationBody,
-): Promise<{ conversationId?: string; id?: string }> {
+): Promise<{ conversationId?: string; id?: string; conversation_id?: string }> {
   return apiRequest("/api/v1/conversations", { method: "POST", body });
 }
 

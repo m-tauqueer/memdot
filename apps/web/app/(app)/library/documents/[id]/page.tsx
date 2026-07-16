@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { Banner } from "@memdot/ui";
+import { Banner, Button } from "@memdot/ui";
 
 import { DocumentEditor } from "@/src/components/editor/DocumentEditor";
 import { PageHeader } from "@/src/components/shell/PageHeader";
@@ -18,9 +18,10 @@ import {
 import { emptyMemdotDocument, type MemdotDocument } from "@/src/lib/document/memdot";
 
 function asMemdot(documentId: string, payload: Record<string, unknown> | undefined): MemdotDocument {
-  const body = payload?.document ?? payload?.body ?? payload;
+  const body = payload?.document;
   if (body && typeof body === "object" && "root" in (body as object)) {
-    return body as MemdotDocument;
+    const doc = body as MemdotDocument;
+    return { ...doc, documentId, schema: "memdot-document", schemaVersion: 1 };
   }
   return emptyMemdotDocument(documentId);
 }
@@ -42,6 +43,7 @@ export default function DocumentDetailPage() {
   const params = useParams<{ id: string }>();
   const documentId = params.id;
   const [savedRevisionId, setSavedRevisionId] = useState<string | null>(null);
+  const [editorEpoch, setEditorEpoch] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,7 +72,7 @@ export default function DocumentDetailPage() {
     try {
       const saved = await saveDocumentRevision(documentId, {
         base_revision_id: baseRevisionId,
-        document: doc,
+        document: { ...doc, documentId, schema: "memdot-document", schemaVersion: 1 },
       });
       if (saved.revisionId) {
         setSavedRevisionId(saved.revisionId);
@@ -79,9 +81,16 @@ export default function DocumentDetailPage() {
       void revisionsQuery.refetch();
       void docQuery.refetch();
     } catch (err) {
-      if (err instanceof ApiError && (err.status === 409 || /stale|conflict/i.test(err.message))) {
+      if (err instanceof ApiError && err.isConflict) {
         setConflict(true);
-        setMessage("Stale base revision — reload history and resolve before saving again.");
+        if (err.currentRevisionId) {
+          setSavedRevisionId(err.currentRevisionId);
+        }
+        setMessage(
+          err.currentRevisionId
+            ? `Stale base — rebased to ${err.currentRevisionId}. Review content, then save again.`
+            : "Stale base revision — reload and resolve before saving again.",
+        );
       } else {
         setMessage(err instanceof ApiError ? err.message : "Save failed");
       }
@@ -101,7 +110,20 @@ export default function DocumentDetailPage() {
         <Banner
           tone="warning"
           title="Revision conflict"
-          description="Another revision landed first. Review history, then save again with the latest base."
+          description="Another revision landed first. Base pointer was updated when Core returned currentRevisionId."
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              label="Reload editor"
+              onClick={() => {
+                setConflict(false);
+                setEditorEpoch((value) => value + 1);
+                void docQuery.refetch();
+                void revisionsQuery.refetch();
+              }}
+            />
+          }
         />
       ) : null}
       {docQuery.isLoading ? <SurfaceState kind="loading" /> : null}
@@ -115,6 +137,7 @@ export default function DocumentDetailPage() {
         <DocumentEditor
           documentId={documentId}
           initial={initial}
+          contentKey={`${documentId}:${baseRevisionId ?? "new"}:${editorEpoch}`}
           busy={busy}
           onSave={(doc) => void onSave(doc)}
         />

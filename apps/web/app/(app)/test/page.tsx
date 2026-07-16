@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { Badge, Button, Input } from "@memdot/ui";
 
@@ -17,12 +17,15 @@ import {
   startAttempt,
   submitAttempt,
 } from "@/src/lib/api/client";
+import { useSpaceParam } from "@/src/lib/hooks/useSpaceParam";
 import { rememberSpace, upsertRegistry } from "@/src/lib/workspace/registry";
 
-export default function TestPage() {
+function TestPageInner() {
   const session = useSession();
   const accountId = session.session?.account_id;
-  const [spaceId, setSpaceId] = useState("");
+  const spaceFromUrl = useSpaceParam();
+  const [spaceDraft, setSpaceDraft] = useState<string | null>(null);
+  const spaceId = spaceDraft ?? spaceFromUrl;
   const [courseTitle, setCourseTitle] = useState("Course");
   const [courseId, setCourseId] = useState("");
   const [itemId, setItemId] = useState("");
@@ -186,7 +189,7 @@ export default function TestPage() {
         description="Create course + concept + assessment against Core, or paste existing UUIDs."
       />
       <div className="mt-4 grid max-w-xl gap-3">
-        <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} />
+        <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceDraft(e.target.value)} />
         <Input label="Course title" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} />
         <Button
           label={busy ? "Working…" : "Create course + sample item"}
@@ -224,5 +227,13 @@ export default function TestPage() {
         ) : null}
       </div>
     </>
+  );
+}
+
+export default function TestPage() {
+  return (
+    <Suspense fallback={<SurfaceState kind="loading" />}>
+      <TestPageInner />
+    </Suspense>
   );
 }

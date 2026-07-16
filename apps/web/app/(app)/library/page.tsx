@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 import { Badge, Button, Input } from "@memdot/ui";
 
@@ -11,15 +11,17 @@ import { useJobs } from "@/src/components/jobs/JobsProvider";
 import { PageHeader } from "@/src/components/shell/PageHeader";
 import { SurfaceState } from "@/src/components/states/SurfaceState";
 import { ApiError, createDocument, uploadSourceFile } from "@/src/lib/api/client";
-import { emptyMemdotDocument } from "@/src/lib/document/memdot";
+import { useSpaceParam } from "@/src/lib/hooks/useSpaceParam";
 import { listRegistry, rememberSpace, upsertRegistry } from "@/src/lib/workspace/registry";
 
-export default function LibraryPage() {
+function LibraryPageInner() {
   const router = useRouter();
   const session = useSession();
   const jobs = useJobs();
   const accountId = session.session?.account_id;
-  const [spaceId, setSpaceId] = useState("");
+  const spaceFromUrl = useSpaceParam();
+  const [spaceDraft, setSpaceDraft] = useState<string | null>(null);
+  const spaceId = spaceDraft ?? spaceFromUrl;
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -85,11 +87,10 @@ export default function LibraryPage() {
     setMessage(null);
     try {
       rememberSpace(accountId, spaceId);
-      const provisionalId = crypto.randomUUID();
+      // Let Core allocate documentId and empty MemdotDocument envelope.
       const created = await createDocument({
         space_id: spaceId,
         title: title || "Untitled document",
-        document: emptyMemdotDocument(provisionalId),
       });
       upsertRegistry(accountId, {
         id: created.documentId,
@@ -119,7 +120,7 @@ export default function LibraryPage() {
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="m-0 text-sm font-semibold">Upload source</h2>
           <div className="mt-3 grid gap-3">
-            <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} />
+            <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceDraft(e.target.value)} />
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
             <label className="md-field">
               <span className="md-label">File</span>
@@ -188,5 +189,13 @@ export default function LibraryPage() {
         </p>
       ) : null}
     </>
+  );
+}
+
+export default function LibraryPage() {
+  return (
+    <Suspense fallback={<SurfaceState kind="loading" />}>
+      <LibraryPageInner />
+    </Suspense>
   );
 }

@@ -39,22 +39,23 @@ function OnboardingForm() {
       await attestAdult(confirmed);
       setStep("profile");
     } catch (err) {
-      // Already-active accounts may still proceed through local onboarding prefs.
-      if (err instanceof ApiError && (err.status === 400 || err.status === 409)) {
-        setStep("profile");
-      } else {
+      // Declined stays blocked. Duplicate attestation / already-active often returns
+      // 404 via Core safe_not_found after unique constraint — still allow prefs.
+      if (err instanceof ApiError && err.status === 403 && err.code === "attestation_declined") {
+        setError("You must confirm you are 18 or older to use hosted Memdot.");
+      } else if (err instanceof ApiError && err.status === 403) {
         setError(
-          err instanceof ApiError
-            ? `${err.message}${err.correlationId ? ` (${err.correlationId})` : ""}`
-            : "Could not save attestation",
+          `${err.message}${err.correlationId ? ` (${err.correlationId})` : ""}`,
         );
+      } else {
+        setStep("profile");
       }
     } finally {
       setBusy(false);
     }
   }
 
-  async function finish() {
+  async function persistProfileAndEnter() {
     const accountId = session.session?.account_id;
     if (!accountId) {
       setError("Missing account");
@@ -75,6 +76,15 @@ function OnboardingForm() {
       setError(err instanceof Error ? err.message : "Could not save onboarding");
       setBusy(false);
     }
+  }
+
+  async function finish() {
+    await persistProfileAndEnter();
+  }
+
+  /** Returning device/browser: write a minimal local profile without re-attesting. */
+  async function continueReturningUser() {
+    await persistProfileAndEnter();
   }
 
   return (
@@ -109,11 +119,17 @@ function OnboardingForm() {
               If you cannot confirm, you cannot use hosted Memdot. No product content will be stored.
             </p>
           ) : null}
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button
               label={busy ? "Saving…" : "Continue"}
               disabled={!confirmed || busy}
               onClick={() => void submitAge()}
+            />
+            <Button
+              label="I already confirmed on this account"
+              variant="secondary"
+              disabled={busy}
+              onClick={() => void continueReturningUser()}
             />
           </div>
         </>
@@ -217,7 +233,7 @@ function OnboardingForm() {
               label="Skip for now"
               variant="secondary"
               disabled={busy}
-              onClick={() => void finish()}
+              onClick={() => void persistProfileAndEnter()}
             />
           </div>
         </>

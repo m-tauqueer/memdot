@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { Badge, Button, Input } from "@memdot/ui";
 
@@ -16,12 +16,25 @@ import {
   getConversation,
   listConversations,
 } from "@/src/lib/api/client";
+import { useSpaceParam } from "@/src/lib/hooks/useSpaceParam";
 import { upsertRegistry } from "@/src/lib/workspace/registry";
 
-export default function AskPage() {
+function conversationIdFrom(payload: Record<string, unknown>): string | null {
+  for (const key of ["conversationId", "id", "conversation_id"]) {
+    const value = payload[key];
+    if (typeof value === "string" && value) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function AskPageInner() {
   const session = useSession();
   const accountId = session.session?.account_id;
-  const [spaceId, setSpaceId] = useState("");
+  const spaceFromUrl = useSpaceParam();
+  const [spaceDraft, setSpaceDraft] = useState<string | null>(null);
+  const spaceId = spaceDraft ?? spaceFromUrl;
   const [conversationId, setConversationId] = useState("");
   const [query, setQuery] = useState("");
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -29,8 +42,8 @@ export default function AskPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const listQuery = useQuery({
-    queryKey: ["conversations"],
-    queryFn: () => listConversations(),
+    queryKey: ["conversations", spaceId || "all"],
+    queryFn: () => listConversations(spaceId || undefined),
   });
   const detailQuery = useQuery({
     queryKey: ["conversation", conversationId],
@@ -47,7 +60,7 @@ export default function AskPage() {
       source_client: "native",
       completeness: "complete",
     });
-    const id = created.conversationId || created.id;
+    const id = conversationIdFrom(created as Record<string, unknown>);
     if (!id) {
       throw new Error("Conversation create returned no id");
     }
@@ -71,17 +84,18 @@ export default function AskPage() {
       const compiled = await compileContext({ query, purpose: "ask" });
       setReceipt(JSON.stringify(compiled, null, 2));
       const id = await ensureConversation();
+      const receiptId =
+        typeof compiled.receiptId === "string"
+          ? compiled.receiptId
+          : typeof compiled.contextReceiptId === "string"
+            ? compiled.contextReceiptId
+            : null;
       await appendConversationTurn(id, {
         role: "user",
         content: query,
         auto_native: true,
         client_turn_id: crypto.randomUUID(),
-        context_receipt_id:
-          typeof compiled.receiptId === "string"
-            ? compiled.receiptId
-            : typeof compiled.contextReceiptId === "string"
-              ? compiled.contextReceiptId
-              : null,
+        context_receipt_id: receiptId,
       });
       setMessage("Turn appended with context receipt when available.");
       void detailQuery.refetch();
@@ -92,6 +106,12 @@ export default function AskPage() {
       setBusy(false);
     }
   }
+
+  const conversationItems = Array.isArray(listQuery.data?.items)
+    ? listQuery.data.items
+    : Array.isArray(listQuery.data)
+      ? listQuery.data
+      : [];
 
   return (
     <>
@@ -106,7 +126,7 @@ export default function AskPage() {
         description="Answers from a model router are not streamed here yet; receipts and conversation capture are wired."
       />
       <div className="mt-4 grid max-w-3xl gap-3">
-        <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} />
+        <Input label="Space ID" value={spaceId} onChange={(e) => setSpaceDraft(e.target.value)} />
         <Input
           label="Conversation ID (optional)"
           value={conversationId}
@@ -144,12 +164,38 @@ export default function AskPage() {
         {listQuery.isSuccess ? (
           <section className="rounded-2xl border border-border bg-card p-4">
             <h2 className="m-0 text-sm font-semibold">Conversations</h2>
-            <pre className="mt-3 overflow-auto text-xs">
-              {JSON.stringify(listQuery.data, null, 2)}
-            </pre>
+            {conversationItems.length === 0 ? (
+              <p className="text-meta mt-2">No conversations yet.</p>
+            ) : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {conversationItems.map((row) => {
+                  const record = row as Record<string, unknown>;
+                  const id = conversationIdFrom(record) || "unknown";
+                  return (
+                    <li key={id}>
+                      <button
+                        type="button"
+                        className="text-primary underline-offset-2 hover:underline"
+                        onClick={() => setConversationId(id)}
+                      >
+                        {id}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
         ) : null}
       </div>
     </>
+  );
+}
+
+export default function AskPage() {
+  return (
+    <Suspense fallback={<SurfaceState kind="loading" />}>
+      <AskPageInner />
+    </Suspense>
   );
 }

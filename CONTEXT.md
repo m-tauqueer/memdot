@@ -339,10 +339,11 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
   recent-auth, hosted Google + self-host OIDC presentation, 18+ multi-step
   onboarding, accessible shell/nav/jobs/banners/dialog, account-partitioned
   offline store + ADR-0013 SW policy, route/cache/job tests, production build.
-  Wave 10 product UI is implemented (upload, TipTap/MemdotDocument, Ask
-  conversations, learning Test/Review, Notion/MCP surfaces, deletion/offline).
-  Owner directed a **combined Wave 9 + Wave 10** Codex audit. Release-acceptance
-  matrices (browsers, live Alpha gate, founder QA) remain open.
+  Waves 9–10 frontend product UI is on `frontend` (logic-gap hardening included)
+  and merges to `develop` for combined Codex audit. Remaining honesty gaps:
+  Core lacks account-wide source/space/proposal list GETs (browser registry
+  stopgap); Ask does not stream model answers; release-acceptance / Alpha live
+  gate / founder QA remain open.
 - Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
 - Merge `frontend` → `develop` only when UI milestone is ready and owner asks.
 

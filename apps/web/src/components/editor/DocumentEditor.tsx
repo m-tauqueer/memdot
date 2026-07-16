@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 import { Button } from "@memdot/ui";
 
+import { HeadingWithBlockId, ParagraphWithBlockId } from "@/src/components/editor/blockId";
 import {
   memdotToTipTap,
   tipTapToMemdot,
@@ -16,18 +17,26 @@ import {
 export function DocumentEditor({
   documentId,
   initial,
+  contentKey,
   onSave,
   busy,
 }: {
   documentId: string;
   initial: MemdotDocument;
+  /** Change to remount/reset editor content (e.g. after conflict reload). */
+  contentKey: string;
   onSave: (doc: MemdotDocument) => void;
   busy?: boolean;
 }) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        paragraph: false,
+        heading: false,
+      }),
+      ParagraphWithBlockId,
+      HeadingWithBlockId,
       Placeholder.configure({ placeholder: "Write with provenance in mind…" }),
     ],
     content: memdotToTipTap(initial) as JSONContent,
@@ -44,7 +53,8 @@ export function DocumentEditor({
       return;
     }
     editor.commands.setContent(memdotToTipTap(initial) as JSONContent);
-  }, [documentId, editor]); // eslint-disable-line react-hooks/exhaustive-deps -- reload only on document change
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when contentKey/document changes
+  }, [documentId, contentKey, editor]);
 
   return (
     <div className="space-y-3">
@@ -85,7 +95,11 @@ export function DocumentEditor({
             if (!editor) {
               return;
             }
-            onSave(tipTapToMemdot(documentId, editor.getJSON()));
+            const json = editor.getJSON();
+            const doc = tipTapToMemdot(documentId, json);
+            // Keep envelope id aligned with the route resource.
+            doc.documentId = documentId;
+            onSave(doc);
           }}
         />
       </div>

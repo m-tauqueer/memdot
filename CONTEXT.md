@@ -339,7 +339,9 @@ inventories, and raw logs remain in chat or `/tmp`, not repository docs.
   recent-auth, hosted Google + self-host OIDC presentation, 18+ multi-step
   onboarding, accessible shell/nav/jobs/banners/dialog, account-partitioned
   offline store + ADR-0013 SW policy, route/cache/job tests, production build.
-  Thin Wave 10 stubs remain. Not owner-accepted; Wave 9 Codex audit pending.
+  Thin Wave 10 stubs remain. Owner directed a **combined Wave 9 + Wave 10**
+  Codex audit after Wave 10 completes (no separate Wave 9 Codex gate).
+  Tip: `d6945b8` on `frontend`.
 - Checkpoint A/B `make selfhost-smoke` remains owner-authorized only.
 - Merge `frontend` → `develop` only when UI milestone is ready and owner asks.
 

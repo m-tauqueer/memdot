@@ -401,7 +401,8 @@ citation, Tex/OSS, and model-egress evaluation gates.
 - [x] Test keyboard, focus, screen-reader landmarks, touch, zoom, reduced motion,
       responsive viewports, cache isolation, route smoke, and production build.
 - [x] Do not run full self-host smoke unless a smoke-owned backend seam changed.
-- [x] Grok posts the Wave 9 chat report and stops for Codex audit.
+- [x] Grok posts the Wave 9 chat report. Codex audit deferred to a combined
+      Wave 9 + Wave 10 audit (owner direction).
 
 ## 11. Wave 10 / Technical Phases 13–15 — Complete product and release
 
@@ -442,8 +443,9 @@ citation, Tex/OSS, and model-egress evaluation gates.
 
 - [x] Accepted on `main` at `cc570eb` (Phases 1–3 + Wave 4 baseline); merge-base with `develop` is `cc570eb`.
 - [x] Backend Correction Round 2 tip on `develop` / merged into `frontend`: `99ed500`.
-- [ ] Active frontend branch: `frontend` (worktree `/home/tauqueer/Desktop/memdot-frontend`).
-      Wave 9 foundation implemented; awaiting Wave 9 Codex audit / owner accept.
+- [ ] Active frontend branch: `frontend` @ `d6945b8` (worktree
+      `/home/tauqueer/Desktop/memdot-frontend`). Wave 9 foundation committed;
+      Wave 10 product UI still open. Owner directed a **combined Wave 9 + 10**
+      Codex audit after Wave 10 lands (no separate Wave 9 Codex stop).
 - [ ] Merge `develop` → `main` and `frontend` → `develop` remain owner-controlled.
 - [ ] Checkpoint A/B full `make selfhost-smoke` **not** run; do not claim smoke passed.
-- [ ] Wave 10 product UI remains open after Wave 9 Codex PASS.

@@ -1,7 +1,7 @@
 # Memdot documentation
 
-Status: **Phases 1–2 accepted; Phase 3 owner-authorized and active**
-Baseline date: **2026-07-15**
+Status: **Technical Phases 1–3 accepted; Waves 4–6 backend implementation in progress**
+Baseline date: **2026-07-16**
 
 This directory is the source of truth for Memdot v1. It describes a general,
 portable memory platform whose first deeply developed product mode is Learning.
@@ -29,7 +29,6 @@ scaffold paths and commands only — not product behavior.
 7. [Technical Requirements Document](technical/TRD.md)
 8. [Security, Privacy, and Threat Model](technical/SECURITY_PRIVACY_THREAT_MODEL.md)
 9. [Evaluation and Release Gates](technical/EVALUATION_RELEASE_GATES.md)
-10. [Execution prompts and report template](execution/README.md)
 
 ### AI agent orientation
 
@@ -43,20 +42,19 @@ scaffold paths and commands only — not product behavior.
 
 ## Document map
 
-| Document               | Owns                                                                                | Must not own                                                 |
-| ---------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| PRD                    | Problem, users, product outcomes, scope, success                                    | Component-level implementation                               |
-| FSD                    | Routes, user flows, states, rules, acceptance behaviour                             | Infrastructure topology                                      |
-| TRD                    | Contracts, schemas, algorithms, SLOs, failure behaviour                             | Product positioning                                          |
-| System Architecture    | Boundaries, ownership, trust zones, data and deployment flows                       | Screen-level copy                                            |
-| ADRs                   | One durable architectural decision per record                                       | Repeated full specifications                                 |
-| Security/Privacy       | Threats, controls, data lifecycle, incident gates                                   | Feature prioritisation                                       |
-| Evaluation             | Corpora, metrics, hard gates, release process                                       | Product implementation                                       |
-| Codebase Context Map   | Target repository shape and safe AI-agent routing                                   | Unverified current-state claims                              |
-| Implementation Tracker | Ordered macro-phases, Grok micro-phases, audit gates, and progress                  | Product or technical requirements that belong in PRD/FSD/TRD |
-| Implementation Plan    | Phase order, phase documentation map, deliverables, validation, and review boundary | Detailed product or technical requirements                   |
-| Execution Context      | Verified current state, locked invariants, active phase, and durable agent context  | Aspirational implementation claims                           |
-| Execution documents    | Phase prompts and consolidated phase-report format                                  | Product scope or architectural decisions                     |
+| Document               | Owns                                                                               | Must not own                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| PRD                    | Problem, users, product outcomes, scope, success                                   | Component-level implementation                               |
+| FSD                    | Routes, user flows, states, rules, acceptance behaviour                            | Infrastructure topology                                      |
+| TRD                    | Contracts, schemas, algorithms, SLOs, failure behaviour                            | Product positioning                                          |
+| System Architecture    | Boundaries, ownership, trust zones, data and deployment flows                      | Screen-level copy                                            |
+| ADRs                   | One durable architectural decision per record                                      | Repeated full specifications                                 |
+| Security/Privacy       | Threats, controls, data lifecycle, incident gates                                  | Feature prioritisation                                       |
+| Evaluation             | Corpora, metrics, hard gates, release process                                      | Product implementation                                       |
+| Codebase Context Map   | Target repository shape and safe AI-agent routing                                  | Unverified current-state claims                              |
+| Implementation Tracker | Delivery waves, micro-phases, validation gates, and progress                       | Product or technical requirements that belong in PRD/FSD/TRD |
+| Implementation Plan    | Wave/phase map, smoke schedule, reporting policy, and review boundary              | Transient prompts, reports, logs, or patches                 |
+| Execution Context      | Verified current state, locked invariants, active phase, and durable agent context | Aspirational implementation claims                           |
 
 ## Locked product contract
 

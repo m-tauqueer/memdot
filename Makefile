@@ -1,5 +1,5 @@
 .PHONY: bootstrap format format-check lint typecheck test contracts docs-validate build containers container-smoke check clean workspace-list \
-	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke migrate-domain check-rls phase3-gates
+	compose-config compose-up compose-down compose-ps compose-logs selfhost-smoke migrate-domain check-rls phase3-gates phase4-gates
 
 COMPOSE_DIR := infra/compose
 COMPOSE_ENV := $(COMPOSE_DIR)/.env
@@ -98,6 +98,15 @@ check-rls:
 
 phase3-gates: migrate-domain check-rls
 	uv run pytest services/core/tests tests/security -q
+
+phase4-gates: migrate-domain check-rls
+	uv run pytest services/core/tests services/workers/tests tests/security tests/contracts -q
+	uv run python scripts/generate_openapi.py
+	pnpm --filter @memdot/contracts run generate
+	uv run python scripts/generate_openapi.py
+	pnpm --filter @memdot/contracts run generate
+	uv run python scripts/validate_schemas.py
+	pnpm --filter @memdot/contracts run check
 
 check: format-check lint typecheck test contracts docs-validate build
 	./scripts/check_focused_tests.sh

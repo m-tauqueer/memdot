@@ -4,9 +4,9 @@
 
 - **Tauqueer** owns product decisions, commits, pushes, merges, deploys,
   credentials, paid resources, and phase transitions.
-- **Grok** implements one owner-approved macro-phase, self-validates every
-  micro-phase, and submits one consolidated phase report.
-- **Codex** audits the complete phase diff and evidence, then returns PASS,
+- **Grok** implements one owner-approved delivery wave, self-validates every
+  micro-phase, and submits one consolidated chat report.
+- **Codex** audits the complete wave diff and evidence, then returns PASS,
   FAIL — CORRECTIONS REQUIRED, or BLOCKED — OWNER DECISION REQUIRED.
 
 Do not commit, push, merge, or deploy without Tauqueer's explicit authorization,
@@ -14,7 +14,7 @@ even after tests pass.
 
 ## Branch and change rules
 
-1. Work only in the active owner-approved macro-phase.
+1. Work only in the active owner-approved delivery wave.
 2. Keep diffs scoped to the micro-phase. Do not sneak in later-phase product
    behavior.
 3. Preserve founding documentation unless the phase explicitly requires updates.
@@ -33,14 +33,16 @@ even after tests pass.
 - Failures on focused tests, unexplained skips, stale generated files, or
   dependency-boundary violations are blockers.
 
-## Phase workflow
+## Delivery-wave workflow
 
-1. Tauqueer starts a macro-phase.
+1. Tauqueer starts a delivery wave.
 2. Grok completes every micro-phase in order, self-checking between them.
-3. Grok runs the phase exit gate and produces one report from
-   `docs/execution/PHASE_REPORT_TEMPLATE.md`.
-4. Codex audits the complete phase.
-5. Only a Codex PASS makes the phase eligible for an owner-authorized commit.
+3. Grok runs the wave exit gate and posts one consolidated report in chat.
+4. Codex audits the complete wave and provides any correction prompt in chat.
+5. Only a Codex PASS makes the wave eligible for an owner-authorized commit.
+
+Prompts, reports, logs, patches, stats, and inventories belong in chat or
+`/tmp`, not repository documentation.
 
 ## Tooling
 

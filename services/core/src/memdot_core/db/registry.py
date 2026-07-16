@@ -40,6 +40,8 @@ ACCOUNT_OWNED_TABLES: frozenset[str] = frozenset(
         "durable_job",
         "job_attempt",
         "projection_state",
+        "upload_intent",
+        "current_active_parse_run",
     }
 )
 
@@ -66,5 +68,6 @@ MUTABLE_POINTER_TABLES: frozenset[str] = frozenset(
     {
         "current_source_revision",
         "current_document_revision",
+        "current_active_parse_run",
     }
 )

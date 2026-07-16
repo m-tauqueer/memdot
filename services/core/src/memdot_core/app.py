@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from memdot_domain.health_probes import (
     probe_openbao_transit,
@@ -11,7 +12,13 @@ from memdot_domain.health_probes import (
 )
 from memdot_domain.types import HealthStatus
 
-from memdot_core.errors import ErrorCode
+from memdot_core.errors import (
+    ErrorCode,
+    FieldError,
+    correlation_id_from_request,
+    problem_response,
+    validation_problem,
+)
 from memdot_core.settings import CoreSettings
 
 
@@ -22,13 +29,15 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     app = FastAPI(
         title="Memdot Core API",
         version="0.1.0",
-        description="Canonical domain API. Phase 3 adds tenancy, ledger schema, and auth routes.",
+        description="Canonical domain API. Wave 4 adds sources, jobs, and ingestion routes.",
     )
     app.state.settings = resolved
 
     from memdot_core.auth.routes import router as auth_router
+    from memdot_core.sources.routes import router as sources_router  # noqa: PLC0415
 
     app.include_router(auth_router)
+    app.include_router(sources_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:
@@ -64,17 +73,29 @@ def create_app(settings: CoreSettings | None = None) -> FastAPI:
     def error_codes() -> dict[str, list[str]]:
         return {"codes": [code.value for code in ErrorCode]}
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        errors = [
+            FieldError(
+                pointer="/" + "/".join(str(part) for part in err.get("loc", ()) if part != "body"),
+                code=ErrorCode.VALIDATION_ERROR,
+                detail=str(err.get("msg", "invalid")),
+            )
+            for err in exc.errors()
+        ]
+        return validation_problem(
+            correlation_id=correlation_id_from_request(request),
+            errors=errors,
+        )
+
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(_request: object, _exc: Exception) -> JSONResponse:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "type": "about:blank",
-                "title": "Internal Server Error",
-                "status": 500,
-                "code": ErrorCode.INTERNAL_ERROR.value,
-            },
-            media_type="application/problem+json",
+    async def unhandled_exception_handler(request: object, _exc: Exception) -> JSONResponse:
+        return problem_response(
+            status=500,
+            code=ErrorCode.INTERNAL_ERROR,
+            detail="An unexpected error occurred.",
         )
 
     return app

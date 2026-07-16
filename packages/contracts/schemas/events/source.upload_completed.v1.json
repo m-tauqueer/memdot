@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/events/source.upload_completed.v1.json",
+  "title": "source.upload_completed",
+  "type": "object",
+  "required": ["source_id", "revision_id", "space_id"],
+  "properties": {
+    "source_id": { "type": "string", "format": "uuid" },
+    "revision_id": { "type": "string", "format": "uuid" },
+    "space_id": { "type": "string", "format": "uuid" }
+  },
+  "additionalProperties": false
+}

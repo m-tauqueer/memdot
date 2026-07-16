@@ -134,6 +134,8 @@ def seed_account_owned_graph(
             "durable_job",
             "job_attempt",
             "projection_state",
+            "upload_intent",
+            "current_active_parse_run",
         )
     }
     ids["source_revision"] = deterministic_uuid5(ids["source"], "a" * 64)
@@ -162,7 +164,7 @@ def seed_account_owned_graph(
           VALUES (:external_client_grant,:account_id,:actor_external,'seed-client','memdot.memory.read');
         INSERT INTO operator_bootstrap(id,account_id,issuer,subject,singleton_key)
           VALUES (:operator_bootstrap,:account_id,'https://seed.example','operator',1);
-        INSERT INTO source(id,account_id,space_id,title) VALUES (:source,:account_id,:space_id,'seed');
+        INSERT INTO source(id,account_id,space_id,title,processing_status) VALUES (:source,:account_id,:space_id,'seed','succeeded');
         INSERT INTO source_revision(id,account_id,space_id,source_id,snapshot_sha256,captured_at)
           VALUES (:source_revision,:account_id,:space_id,:source,repeat('a',64),now());
         INSERT INTO source_blob(id,account_id,space_id,source_revision_id,blob_kind,object_key,sha256,byte_count)
@@ -207,6 +209,12 @@ def seed_account_owned_graph(
         SELECT set_config('app.pointer_outbox_ok','',true);
         INSERT INTO outbox_event(id,account_id,event_type,payload_sha256,payload)
           VALUES (:outbox_event,:account_id,'seed.source',repeat('e',64),'{}');
+        INSERT INTO upload_intent(id,account_id,space_id,source_id,object_key,expected_sha256,expected_byte_count,content_type,expires_at)
+          VALUES (:upload_intent,:account_id,:space_id,:source,'seed/upload',repeat('f',64),1,'text/plain',now()+interval '1 hour');
+        SELECT set_config('app.pointer_outbox_ok','1',true);
+        INSERT INTO current_active_parse_run(id,account_id,space_id,source_id,source_revision_id,parse_run_id)
+          VALUES (:current_active_parse_run,:account_id,:space_id,:source,:source_revision,:parse_run);
+        SELECT set_config('app.pointer_outbox_ok','',true);
     """
     for statement in statements.split(";"):
         if statement.strip():

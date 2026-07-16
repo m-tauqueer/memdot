@@ -9,6 +9,7 @@ dependencies = [
   "uvicorn[standard]>=0.35.0",
   "pydantic-settings>=2.10.0",
   "memdot-domain",
+  "memdot-provider-adapters",
   "hatchet-sdk>=0.47.1,<1",
   "psycopg[binary]>=3.2.0",
 ]
@@ -25,3 +26,4 @@ packages = ["src/memdot_workers"]
 
 [tool.uv.sources]
 memdot-domain = { workspace = true }
+memdot-provider-adapters = { workspace = true }

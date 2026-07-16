@@ -35,12 +35,12 @@ Purpose: Durable starting context for Grok, Codex, and future implementation ses
 - Tauqueer is the product owner and final decision maker.
 - Grok is the implementation builder inside Cursor.
 - Codex is the senior technical architect and phase-level code reviewer.
-- Tauqueer starts a macro-phase.
+- Tauqueer starts one delivery wave.
 - Grok completes every micro-phase in order, self-checking and fixing its logic
   between micro-phases.
-- Grok sends one consolidated report only at the macro-phase boundary.
+- Grok sends one consolidated chat report only at the delivery-wave boundary.
 - Codex audits the complete diff and evidence against the documentation map.
-- A Codex PASS makes the phase eligible for an owner-authorized commit.
+- A Codex PASS makes the wave eligible for an owner-authorized commit.
 - FAIL keeps the same phase open for corrections.
 - Commit, push, merge, deploy, credentials, paid resources, production data, and
   phase transitions remain owner-controlled.
@@ -291,40 +291,36 @@ Operational targets:
 - RPO at most 15 minutes and RTO at most four hours.
 - Zero unauthorized or Private-Space candidate output.
 
-## 13. Phase order
+## 13. Delivery-wave order
 
-1. Repository foundation.
-2. Self-host/local platform.
-3. Canonical ledger, identity, and authorization.
-4. Core API, durable work, and object storage.
-5. Ingestion and parsing.
-6. Documents, memory, conflicts, and proposals.
-7. Retrieval, context, model routing, and Tex fallback.
-8. Learning backend.
-9. MCP, external AI, and conversations.
-10. Notion, export, deletion, and restore.
-11. Security, observability, deployment, and evaluation.
-12. Frontend foundation.
-13. General Memory frontend.
-14. Learning and integrations frontend.
-15. Release candidate and beta readiness.
+Technical Phase IDs remain stable, but implementation and Codex review use ten
+larger waves:
 
-Backend, database, security, infrastructure, integrations, lifecycle, and
-evaluation foundations are completed before product frontend implementation
-begins in Phase 12.
+1. Phase 1 — repository foundation (accepted).
+2. Phase 2 — self-host/local platform (accepted).
+3. Phase 3 — canonical ledger, identity, and authorization (accepted).
+4. Phases 4–5 — Core API, durable work, object storage, ingestion, and parsing.
+5. Phases 6–7 — documents, memory, retrieval, context, models, and Tex fallback.
+6. Phase 8 — learning backend, followed by full-smoke Checkpoint A.
+7. Phases 9–10 — MCP, conversations, Notion, export, deletion, and restore.
+8. Phase 11 — security, hosted deployment, and evaluation, followed by
+   full-smoke Checkpoint B.
+9. Phase 12 — frontend foundation.
+10. Phases 13–15 — complete product frontend and beta readiness.
+
+Frontend begins only in Wave 9 after backend, security, lifecycle, and
+Checkpoint B are accepted. Prompts, correction prompts, reports, patches,
+inventories, and raw logs remain in chat or `/tmp`, not repository docs.
 
 ## 14. Current execution pointer
 
-- Active phase: none — Phase 3 accepted; Phase 4 awaits owner authorization.
-- Builder prompt: none active.
-- Detailed checklist: IMPLEMENTATION_TRACKER.md Phase 3.
-- Current phase report: `docs/execution/PHASE_03_CODEX_CORRECTION_REPORT.md`.
+- Active delivery: Waves 4–6 backend implementation in progress (owner-authorized).
+- Detailed checklist: `IMPLEMENTATION_TRACKER.md` Waves 4–6.
 - Current Codex verdict: PASS for Phases 1, 2, and 3.
-- Current accepted implementation: Phase 3 in the commit containing this context update.
-- Phase 3 baseline was `2c96aa7`; Phase 3 is now locally committed.
+- Current accepted implementation: technical Phase 3 at commit `e77b299`.
 - Verified commands: see AGENTS.md and docs/ai/CODEBASE_CONTEXT_MAP.md.
-- Phase 3 adds: `make migrate-domain`, `make check-rls`, `make phase3-gates`.
-- Phase 4 remains unauthorized.
+- Wave 4 adds: `make phase4-gates` (focused; no full self-host smoke).
+- Next full smoke: Checkpoint A after technical Phase 8 / end of Wave 6.
 
 ## 15. Context maintenance
 
@@ -335,6 +331,6 @@ Update this file in the same accepted phase whenever:
 - a component, database table, contract, event, or provider changes ownership;
 - a public interface or deployment topology changes;
 - a new invariant or approved ADR changes execution;
-- a phase report or Codex verdict changes current state.
+- a delivery wave or Codex verdict changes current state.
 
 Never erase historical requirements to make current code appear compliant.

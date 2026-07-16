@@ -1,8 +1,11 @@
 # Codebase Context Map for AI Agents
 
-Version: **3.2 — Phase 3 accepted**
+Version: **4.0 — Phase 3 accepted; 10-wave execution model**
 Date: **2026-07-16**
-Implementation status: **Phases 1–3 are accepted. Phase 3 provides the canonical ledger, Core-signed protected RLS context, atomic pointer/outbox writes, and server-side OIDC code + PKCE auth. Phase 4 remains unauthorized.**
+Implementation status: **Technical Phases 1–3 are accepted at `e77b299`.
+Wave 4 Core runtime/ingestion is implemented on `main`; Waves 5–6 continue in
+the same owner-authorized run. Combined gates run at the end of Wave 6.
+Prompts and reports are chat-only.**
 
 This map tells an AI agent where Memdot responsibilities live and which
 invariants constrain work. Target-only entries remain labelled. Verified paths
@@ -30,11 +33,12 @@ Verified scaffold paths:
 
 ```text
 apps/
-  web/                 Next.js PWA shell (health only)
-  mcp/                 TypeScript MCP edge skeleton (health only)
+  web/                 Next.js shell (health only; frontend starts Wave 9)
+  mcp/                 MCP edge (health only; tools arrive Wave 7)
 services/
-  core/                FastAPI Core skeleton + OpenAPI owner
-  workers/             Workers health skeleton
+  core/                FastAPI, auth, tenancy, ledger, sources API, jobs/outbox,
+                       ingestion orchestration, object-storage adapter, migrations
+  workers/             Workers health skeleton; Hatchet canary workflows
   model-router/        Model-router health skeleton
 packages/
   contracts/           Generated OpenAPI/JSON Schema/event schemas
@@ -42,12 +46,12 @@ packages/
   provider-adapters/   Concrete adapters depending inward on ports
   ui/                  Accessible frontend primitives
 infra/
-  compose/             Tex-disabled self-host Compose (Phase 2 candidate)
+  compose/             Accepted Tex-disabled self-host Compose
   hosted/              Placeholder (later hosted infra)
 docs/                  Product, technical, ADR, evaluation, AI context
 tests/
   benchmark/           Placeholder for frozen evaluation corpora
-  security/            Placeholder for adversarial suites
+  security/            Live cross-account/Private-Space adversarial suites
   boundaries/          Dependency-boundary tests
   contracts/           Schema/OpenAPI compatibility tests
 scripts/               Verified repository automation
@@ -92,31 +96,34 @@ Forbidden dependencies:
 
 ## 4. Ownership map
 
-| Domain                          | Owner             | Canonical records/contracts                                      |
-| ------------------------------- | ----------------- | ---------------------------------------------------------------- |
-| Identity and account membership | Core              | accounts, users, sessions, external grants _(later)_             |
-| Spaces and privacy              | Core              | spaces, private policy, memberships _(later)_                    |
-| Sources and revisions           | Core              | sources, source_revisions, blobs metadata _(later)_              |
-| Authored documents              | Core              | documents, document_revisions, MemdotDocument schema _(Phase 6)_ |
-| Ingestion execution             | Workers           | jobs/stage attempts _(later)_                                    |
-| Normalised content              | Core + workers    | parse_runs, elements _(later)_                                   |
-| Approved/proposed memory        | Core              | memory_records, proposals _(later)_                              |
-| Conversations                   | Core              | conversations, turns _(later)_                                   |
-| Learning                        | Core/domain       | curriculum, events _(later)_                                     |
-| Retrieval/context               | Domain            | intent, routes, receipts _(later)_                               |
-| External projections            | Workers/providers | rebuildable _(later)_                                            |
-| Model egress                    | Model router      | provider policies _(later)_                                      |
-| MCP                             | MCP app           | protocol mapping; health only in Phase 1                         |
-| Public REST                     | Core              | OpenAPI owned by Core; generated into `packages/contracts`       |
+| Domain                          | Owner             | Canonical records/contracts                                  |
+| ------------------------------- | ----------------- | ------------------------------------------------------------ |
+| Identity and account membership | Core              | accounts, users, sessions, identities, external grants       |
+| Spaces and privacy              | Core              | spaces, memberships, visibility, FORCE RLS                   |
+| Sources and revisions           | Core              | source/revision/blob/upload_intent APIs and lifecycle        |
+| Ingestion execution             | Core + workers    | durable jobs, outbox, parser orchestration in Core           |
+| Normalised content              | Core              | parse_runs, document_element, active parse pointer promotion |
+| Approved/proposed memory        | Core              | memory_records, proposals _(later)_                          |
+| Conversations                   | Core              | foundations now; capture behavior arrives Wave 7             |
+| Learning                        | Core/domain       | curriculum, events _(later)_                                 |
+| Retrieval/context               | Domain            | intent, routes, receipts _(later)_                           |
+| External projections            | Workers/providers | rebuildable _(later)_                                        |
+| Model egress                    | Model router      | provider policies _(later)_                                  |
+| MCP                             | MCP app           | protocol mapping; health only in Phase 1                     |
+| Public REST                     | Core              | auth/health now; Wave 4 expands generated OpenAPI            |
 
 ## 5. Provider interfaces
 
-Interfaces are narrow and replaceable. Phase 1 defines the
-`MemoryProviderPort` scaffold only. Full adapters arrive in later phases.
+Interfaces are narrow and replaceable. Provider adapters depend inward on
+domain ports and never own canonical IDs, authorization, revisions, or deletion.
 
 ## 6. Canonical transaction and event rules
 
-Unchanged target rules from founding docs. No ledger implementation yet.
+Phase 3 implements frozen Alembic migrations, separate migrate/runtime roles,
+FORCE RLS, signed tenant context, immutable/append-only ledger constraints, and
+atomic current-pointer plus outbox functions. Wave 4 must extend these seams; it
+must not introduce runtime DDL, direct pointer mutation, unsigned tenant GUCs,
+or non-transactional canonical/outbox writes.
 
 ## 7. Public interface ownership
 
@@ -133,7 +140,7 @@ are generated into `packages/contracts/generated/openapi/`.
 
 Versioned event schema layout exists under
 `packages/contracts/schemas/events/` with additive-field compatibility policy.
-Production domain events are not invented in Phase 1.
+Production job/domain events are frozen in Wave 4 before consumers depend on them.
 
 ## 8. Invariants an AI agent must never break
 
@@ -209,12 +216,45 @@ make compose-down
 make selfhost-smoke
 ```
 
+`make selfhost-smoke` is a scheduled checkpoint command, not a routine per-wave
+gate. The next runs are after technical Phase 8 and technical Phase 11 only,
+subject to the smoke-owned-seam exception in `AGENTS.md`.
+
 Verified Phase 3 commands:
 
 ```bash
 make migrate-domain
 make check-rls
 make phase3-gates
+```
+
+Verified Phase 4 (Wave 4) focused gate:
+
+```bash
+make phase4-gates
+```
+
+Wave 4 Core paths (implemented on working tree):
+
+```text
+services/core/src/memdot_core/
+  request_context.py   Authenticated request context
+  errors.py            application/problem+json registry
+  pagination.py        Signed opaque cursors
+  idempotency.py       Idempotency-key replay/conflict
+  policy.py            Rate/concurrency/size policy hooks
+  sources/             Source upload/version/status API
+  jobs/                Outbox claim/ack and job lifecycle
+  storage/             S3 and in-memory object storage
+  ingestion/           Parse orchestration and promotion
+  parsers/             Native text/PDF/OCR stub adapters
+services/core/alembic/versions/20260717_0002_phase4_runtime.sql
+packages/domain-python/src/memdot_domain/
+  ingestion.py         Processing statuses and element kinds
+  object_keys.py       Immutable object key construction
+  ports/object_storage.py
+  ports/parser.py
+packages/contracts/schemas/events/source.*.v1.json
 ```
 
 Operator entrypoints live under `infra/compose/` (`README.md`, `images.lock.yaml`,

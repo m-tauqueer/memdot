@@ -1,482 +1,462 @@
-# Memdot Implementation Plan
+# Memdot implementation plan
 
-Version: 1.0
-Baseline date: 2026-07-15
-Current status: Phases 1–2 accepted; Phase 3 owner-authorized and active
-Execution model: Tauqueer owns decisions, Grok implements a complete phase, Codex audits at the phase boundary
+Version: 2.0
+Approved: 2026-07-16
+Execution model: 10 delivery waves, backend first, frontend last
 
 ## 1. Purpose
 
-This is the authoritative execution sequence for turning the founding Memdot
-specification into a production-ready implementation. It defines phase order,
-documentation inputs, ownership boundaries, phase deliverables, validation, and
-the Grok-to-Codex handoff.
+This plan converts the accepted PRD, FSD, TRD, architecture, ADR, security, and
+evaluation documents into an execution sequence for Grok, Codex, and Tauqueer.
+It deliberately minimizes slow handoffs while preserving the product's security,
+canonical-data, self-hosting, and learning-integrity guarantees.
 
-The detailed task checklist remains in
-[IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md). Current repository state
-and durable invariants are summarized in [CONTEXT.md](CONTEXT.md).
+The original technical Phase IDs remain stable because requirements, tests, and
+the two approved smoke checkpoints refer to them. Implementation is accelerated
+by grouping those phases into ten larger delivery waves:
 
-## 2. Source-of-truth hierarchy
+| Wave | Technical phases | Delivery boundary | State |
+|---|---:|---|---|
+| 1 | 1 | Repository and monorepo foundation | Accepted |
+| 2 | 2 | Self-host platform and local operations | Accepted |
+| 3 | 3 | Canonical PostgreSQL, tenancy, identity, and RLS | Accepted |
+| 4 | 4–5 | Core runtime, durable workflows, object storage, and ingestion | Next |
+| 5 | 6–7 | Documents, memory, retrieval, Context Compiler, models, and Tex | Pending |
+| 6 | 8 | Learning backend and first full-system checkpoint | Pending |
+| 7 | 9–10 | MCP, conversations, Notion, export, and deletion | Pending |
+| 8 | 11 | Security, hosted deployment, evaluation, and pre-frontend checkpoint | Pending |
+| 9 | 12 | Frontend foundation, authentication, shell, and PWA | Pending |
+| 10 | 13–15 | Complete product frontend, acceptance, and beta readiness | Pending |
 
-1. [PRD](docs/product/PRD.md) owns product intent, scope, promises, and outcomes.
-2. [FSD](docs/product/FSD.md) owns routes, visible behavior, states, and
-   acceptance scenarios.
-3. [ADRs](docs/adr/README.md) own accepted architectural decisions.
-4. [TRD](docs/technical/TRD.md) owns technical contracts, schemas, interfaces,
-   SLOs, and failure behavior.
-5. [System Architecture](docs/technical/SYSTEM_ARCHITECTURE.md) owns component,
-   trust, data-flow, and deployment boundaries.
-6. [Security and Privacy Threat Model](docs/technical/SECURITY_PRIVACY_THREAT_MODEL.md)
-   owns adversarial controls and launch blockers.
-7. [Evaluation and Release Gates](docs/technical/EVALUATION_RELEASE_GATES.md)
-   owns quality thresholds and promotion gates.
-8. [Codebase Context Map](docs/ai/CODEBASE_CONTEXT_MAP.md) owns intended and,
-   after scaffolding, verified code ownership and dependency direction.
-9. This plan owns execution order and phase boundaries.
-10. [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md) owns the detailed
-    checklist inside each phase.
+One delivery wave is one Grok implementation run, one consolidated chat report,
+one Codex audit, and one owner-controlled commit decision.
 
-No execution document may weaken a higher-level product, security, technical,
-or evaluation contract.
+## 2. Authority and handoff loop
 
-## 3. Phase-level working loop
+1. Tauqueer explicitly authorizes one delivery wave.
+2. Codex provides the full implementation prompt in chat. Prompts are not stored
+   as repository documents.
+3. Grok completes every micro-phase in the wave, self-checks each micro-phase,
+   fixes its own failures, and continues without waiting for Codex.
+4. Grok runs the wave's fast exit gate and posts one consolidated report in chat.
+   Reports, raw logs, patches, and inventories are not committed under `docs/`.
+5. Codex inspects the actual repository, diff, contracts, migrations, and test
+   evidence and returns `PASS`, `FAIL — CORRECTIONS REQUIRED`, or
+   `BLOCKED — OWNER DECISION REQUIRED`.
+6. On the first failure, Codex provides one detailed correction prompt in chat.
+7. Grok applies that correction prompt and returns one revised chat report.
+8. If material logic gaps remain after that correction round, Tauqueer may ask
+   Codex to correct the repository directly. Codex does not silently take over.
+9. A passing review makes the wave eligible for Tauqueer's commit authorization.
+   It never authorizes push, merge, deploy, credentials, paid resources,
+   production mutation, or the next wave automatically.
 
-1. Tauqueer explicitly starts one macro-phase.
-2. Grok reads the phase documentation map and the complete phase checklist.
-3. Grok executes every micro-phase in order.
-4. At each micro-phase boundary, Grok runs the assigned self-checks, fixes any
-   failures, records evidence in working notes, and continues without waiting
-   for Codex.
-5. Grok stops early only for a genuine owner decision, architecture
-   contradiction, unavailable required credential/resource, unsafe external
-   mutation, or blocker it cannot safely resolve.
-6. After all micro-phases, Grok runs the complete phase exit gate.
-7. Grok sends one consolidated phase report using
-   [PHASE_REPORT_TEMPLATE.md](docs/execution/PHASE_REPORT_TEMPLATE.md), including
-   the full diff and raw validation evidence.
-8. Codex audits the entire phase against the documentation map and returns PASS,
-   FAIL — CORRECTIONS REQUIRED, or BLOCKED — OWNER DECISION REQUIRED.
-9. On FAIL, Grok fixes the same phase, reruns affected micro-checks and the
-   complete phase gate, then resubmits.
-10. Only a Codex PASS allows Tauqueer to authorize the commit and start the next
-    phase.
+## 3. Repository documentation policy
 
-## 4. Universal implementation rules
+Repository documentation contains only durable source of truth:
 
-- PostgreSQL is canonical for authorization, revisions, evidence, events,
-  proposals, receipts, deletion truth, and learner state.
-- Immutable object storage is canonical for originals and parser artifacts.
-- Tex, pgvector indexes, caches, projections, and model outputs are derived or
-  proposed and must be rebuildable.
-- Web and MCP never query PostgreSQL, object storage, Tex, or model vendors
-  directly.
-- Core owns canonical writes and product authorization.
-- Workers own durable execution, never unsnapshotted session authorization.
-- Provider outputs are candidates and are rejoined to canonical PostgreSQL data
-  under RLS before use.
-- Private Spaces never reach external AI through results, candidates, receipts,
-  errors, caches, proposals, or captured interactions.
-- AI writes and edits remain proposals until first-party approval.
-- Conversation activity never automatically raises learning evidence.
-- Every public item and citation resolves to an immutable canonical revision and
-  a reauthorized first-party locator.
-- Self-hosted Memdot must remain functional with Tex disabled, telemetry export
-  off, and no paid model API.
-- Accepted work is durable. Overload may queue, degrade, or reject before
-  acceptance, but may not lose work or fabricate success.
-- No commit, push, merge, deploy, credential rotation, paid resource creation,
-  or production mutation occurs without Tauqueer's explicit authorization.
+- product and functional requirements;
+- technical contracts and architecture;
+- accepted ADRs;
+- security/privacy and evaluation gates;
+- current implementation context and codebase map;
+- this plan and the implementation tracker;
+- operator and subsystem documentation that engineers need after implementation.
 
-## 5. Documentation map by phase
+The following are chat or `/tmp` artifacts and must not be committed:
 
-| Phase | Primary documentation | Requirement families | Decisions | Verification owner |
-|---|---|---|---|---|
-| 1. Repository foundation | Context Map sections 2, 3, 11, 12; TRD sections 2 and 12; AGENTS | TRD-SYS-001..010, TRD-DEP-006..008 | ADR-0011 | Tracker Phase 1; documentation and scaffold CI |
-| 2. Local/self-host platform | TRD sections 11..13; Architecture section 7; Threat Model sections 3, 8, 10 | TRD-DEP-004..008, TRD-SEC-005..007, TRD-OPS-009..013 | ADR-0010, ADR-0011 | Evaluation sections 11 and 12 |
-| 3. Canonical ledger and identity | TRD section 3 and section 11; Architecture sections 5 and 16; FSD sections 4 and 7 | TRD-DATA-001..012, TRD-SEC-001, TRD-SEC-013, FSD-AUTH-*, FSD-ONB-* | ADR-0002, ADR-0007 | Threat Model sections 4 and 5; cross-account suite |
-| 4. Core API and durable work | TRD sections 2.2, 3.2, 10, 13; Architecture sections 4 and 5 | TRD-API-001..008, TRD-OPS-004, TRD-OPS-009..010 | ADR-0002 | Evaluation sections 9 and 11 |
-| 5. Ingestion and parsing | TRD section 5; Architecture section 8; FSD sections 6 and 9 | TRD-ING-001..018, TRD-DATA-007..012, FSD-ING-*, FSD-SRC-* | ADR-0004 | EVAL-ING-001..012 |
-| 6. Documents and memory | TRD sections 3.2 and 4; Architecture section 11; FSD sections 8 and 14 | TRD-DOC-001..012, TRD-DATA-009..012, FSD-DOC-*, FSD-MEM-* | ADR-0008, ADR-0009 | Evaluation sections 5 and 10 |
-| 7. Retrieval and context | TRD section 6; Architecture sections 9 and 15; FSD section 11 | TRD-RET-001..018, FSD-ASK-* | ADR-0003, ADR-0005, ADR-0006, ADR-0010 | Evaluation sections 4, 5, 7, 8, 11 |
-| 8. Learning backend | PRD sections 4.2, 4.3, 6.2; TRD section 7; Architecture section 12; FSD sections 12 and 13 | PRD-LEARN-001..007, TRD-LRN-001..014, FSD-TST-*, FSD-REV-* | ADR-0012 | EVAL-LRN-001..008 |
-| 9. MCP and conversations | TRD sections 9 and 10; Architecture sections 10 and 16; FSD sections 14 and 15 | TRD-MCP-001..012, TRD-API-001..005, FSD-INT-*, FSD-MEM-008..009 | ADR-0007, ADR-0008 | Evaluation section 9; Threat Model sections 4, 6, 7 |
-| 10. Notion and lifecycle | TRD sections 8 and 11; Architecture sections 13 and 14; FSD sections 10 and 17 | TRD-NOT-001..012, TRD-SEC-008..011, FSD-NOT-*, FSD-EXP-* | ADR-0002, ADR-0003, ADR-0014 | Evaluation sections 10 and 11; Threat Model section 9 |
-| 11. Hardening and deployment | TRD sections 11..14; Architecture sections 6, 7, 17, 18; complete Threat Model | TRD-SEC-001..014, TRD-DEP-001..008, TRD-OPS-001..013 | ADR-0010, ADR-0011 | Complete Evaluation and Release Gates |
-| 12. Frontend foundation | FSD sections 2..5, 18, 19; TRD sections 2 and 11; Architecture section 7 | FSD-NAV-*, FSD-AUTH-*, FSD-ONB-*, FSD-ERR-*, FSD-A11Y-* | ADR-0013 | Evaluation section 10 |
-| 13. General Memory frontend | FSD sections 5..11 and 14; corresponding TRD data, document, ingestion, retrieval contracts | FSD-TOD-*, FSD-LIB-*, FSD-SRC-*, FSD-SPC-*, FSD-DOC-*, FSD-ING-*, FSD-ASK-*, FSD-MEM-* | ADR-0001, ADR-0004, ADR-0006, ADR-0009 | Evaluation sections 3, 5, 7, 10 |
-| 14. Learning and integrations frontend | FSD sections 12..20; corresponding TRD learning, MCP, Notion, security contracts | FSD-TST-*, FSD-REV-*, FSD-INT-*, FSD-SET-*, FSD-EXP-*, FSD-OFF-*, FSD-A11Y-* | ADR-0007, ADR-0008, ADR-0012, ADR-0013, ADR-0014 | Evaluation sections 6, 9, 10, 11 |
-| 15. Release candidate | PRD section 14; FSD section 21; TRD section 14; Architecture section 19; Threat Model section 12 | FSD-AC-001..024 and all implemented requirements | All accepted ADRs | Complete Evaluation and Release Gates |
+- Grok prompts and correction prompts;
+- phase/wave reports;
+- candidate patches and patch statistics;
+- changed-file inventories;
+- copied terminal output and transient test logs;
+- Codex audit narratives that do not change durable architecture or operation.
 
-## 6. Implementation phases
+Durable behavior or architecture discovered during a review must update the
+owning PRD/FSD/TRD/ADR, operator document, context, or codebase map directly.
 
-### Phase 1 — Repository foundation and production-grade monorepo
+## 4. Fast-mode and multitask rules
 
-Goal: Convert the documentation-only workspace into a deterministic,
-production-grade monorepo without implementing product behavior.
+Grok may use multitask/parallel mode inside an authorized wave.
 
-Micro-phases:
+Safe parallel work includes:
 
-1. Repository and workspace scaffold.
-2. Service and package skeletons.
-3. Contract and schema generation toolchain.
-4. CI, repository hygiene, documentation synchronization, and verified commands.
+- independent service or package implementation;
+- fixtures, benchmark corpora, and independent test suites;
+- provider adapters behind already frozen ports;
+- documentation validation and generated-contract freshness;
+- read-only research and codebase inspection.
 
-Required result:
+The following have one writer at a time:
 
-- Intended ownership boundaries exist as real paths.
-- TypeScript and Python toolchains are pinned and reproducible.
-- Web, MCP, Core, workers, model router, contracts, domain, and UI packages
-  build as minimal skeletons.
-- Dependency direction is automatically enforced.
-- OpenAPI, JSON Schema, event schemas, and generated TypeScript contracts have a
-  single deterministic owner.
-- Containers are non-root, minimal, and health-checkable.
-- CI-equivalent validation and documentation validation pass.
-- AGENTS and Codebase Context Map contain verified paths and commands.
+- Alembic migration chain and canonical schema;
+- RLS policies, authentication, grants, deletion, and restore truth;
+- OpenAPI and public MCP contracts;
+- event versions and idempotency semantics;
+- shared Compose, secrets, networking, and CI configuration;
+- MemdotDocument schema and canonical revision protocol;
+- learner-event eligibility and Evidence Twin projection rules.
 
-Phase 1 starts with
-[PHASE_01_GROK_PROMPT.md](docs/execution/PHASE_01_GROK_PROMPT.md).
+Every parallel task receives exact file ownership, inputs, outputs, invariants,
+and tests. Grok must reconcile all results in the main task, inspect the combined
+diff, regenerate contracts once, and run one integrated fast exit gate.
 
-### Phase 2 — Self-host infrastructure and local developer platform
+Parallel tasks may not commit, create competing migrations, modify the same
+contract independently, or declare the wave complete individually.
 
-Goal: Establish the complete production-like, Tex-disabled local platform before
-domain implementation.
+## 5. Validation and smoke policy
 
-Micro-phases:
+### 5.1 Per-micro-phase self-check
 
-1. Compose topology and isolated networks.
-2. Typed configuration, local TLS, OIDC, and secret encryption.
-3. Persistence, backup/restore, restart, health, and operational smoke tests.
+Each micro-phase ends with the smallest relevant checks: focused unit tests,
+typing, schema validation, migration convergence, contract generation,
+authorization probes, fixture benchmarks, or component builds. Grok fixes these
+before starting the next micro-phase.
 
-Required result:
+### 5.2 Per-wave fast exit gate
 
-- Caddy, web, API, MCP, workers, model router, Hatchet, PostgreSQL and pgvector,
-  SeaweedFS, Keycloak, OpenBao, and observability start from documented commands.
-- Tex is disabled by default.
-- Secrets are referenced or encrypted and never logged.
-- Internal stores are not exposed publicly.
-- Restart, persistence, backup, restore, and telemetry-off self-host smoke pass.
+Every wave must finish with:
 
-Phase 2 starts with
-[PHASE_02_GROK_PROMPT.md](docs/execution/PHASE_02_GROK_PROMPT.md).
+- formatting, lint, dependency boundaries, and type checks;
+- all affected unit, integration, contract, migration, and adversarial tests;
+- generated OpenAPI/schema/event freshness and compatibility checks;
+- docs links, Mermaid, whitespace, secret scan, and `git diff --check`;
+- build/import checks for affected workspaces;
+- no skipped/focused tests unless the tracker explicitly permits them;
+- one clean diff against the wave baseline.
 
-### Phase 3 — Canonical PostgreSQL ledger, tenancy, identity, and authorization
+These gates may use a temporary PostgreSQL container, local object-storage test
+double, or bounded service component. They must not start the complete self-host
+stack unless the wave explicitly owns a full smoke checkpoint.
 
-Goal: Make PostgreSQL the enforceable ownership and evidence boundary.
+### 5.3 Full self-host smoke schedule
 
-Micro-phases:
+Only two future full `make selfhost-smoke` runs are scheduled before frontend:
 
-1. Alembic and tenancy schema.
-2. Evidence-ledger foundations and immutable records.
-3. Google-only hosted authentication, self-host OIDC, 18+ activation, sessions,
-   CSRF, and recent authentication.
-4. RLS and cross-account adversarial suite.
+1. **Checkpoint A — after technical Phase 8, at the end of Wave 6.** It proves
+   the complete backend through learning: Core API, durable jobs, object storage,
+   ingestion, documents, memory, retrieval, Tex-disabled fallback, model routing,
+   and learner-event replay.
+2. **Checkpoint B — after technical Phase 11, at the end of Wave 8.** It proves
+   MCP/lifecycle additions, security hardening, observability, hosted/self-host
+   configuration, deletion/restore safety, and the stable backend contract before
+   frontend implementation starts.
 
-Required result:
+No full smoke runs occur in Waves 4, 5, or 7. Those waves use focused component
+and integration gates. A correction round does not repeat a successful full
+smoke unless the correction changes a smoke-owned seam.
 
-- Every account-owned table carries correct ownership and FORCE RLS.
-- Cross-account attachment, read, write, pagination, and error inference fail.
-- Product authorization remains outside the identity broker.
-- Hosted Google authentication and adult activation work without collecting date
-  of birth or identity documents.
-- Immutable revisions, append-only events, conflicts, outbox, idempotency, and
-  canonical pointers are structurally enforced.
+Smoke-owned seams are Compose topology, service startup/readiness, networking,
+TLS, OIDC discovery, secrets, runtime database-role wiring, migration job,
+Hatchet durability/restart, object-store persistence, backup/restore, deletion
+tombstone replay, telemetry-off boot, or Tex-disabled system fallback.
 
-### Phase 4 — Core API, durable transactions, workflows, and object storage
+An exception smoke requires a concrete Codex finding that focused tests cannot
+prove. Resource pressure, an unrelated project, or an unchanged external state
+is not a reason to loop the smoke. Capture one successful log in `/tmp`, report
+the command and result in chat, then stop.
 
-Goal: Establish the canonical write path and crash-safe long-running work.
+## 6. Delivery-wave implementation map
 
-Micro-phases:
+### Wave 1 — Technical Phase 1: repository foundation
 
-1. FastAPI policy, request context, errors, cursors, and backpressure.
-2. Idempotency, transactional outbox, Hatchet workflows, retries, and dead-letter
-   behavior.
-3. Immutable object-storage port and presigned upload.
-4. Generated service clients, event integration, and crash-recovery tests.
+State: accepted.
 
-Required result:
+Delivered the deterministic pnpm/uv monorepo, service/package skeletons,
+dependency boundaries, generated contract toolchain, non-root images, CI, and
+verified repository commands.
 
-- Public errors, pagination, authorization, idempotency, and durable 202 jobs
-  match TRD contracts.
-- Canonical mutations and committed-fact events are atomic.
-- Worker replay converges without duplicate canonical effects.
-- Uploads are direct, immutable, hash-verified, account-bound, and retryable.
-- Dependency failure cannot fabricate acceptance or widen access.
+### Wave 2 — Technical Phase 2: self-host platform
 
-### Phase 5 — Source ingestion, parsing, OCR, normalization, and reprocessing
+State: accepted.
 
-Goal: Produce deterministic, provenance-complete source revisions from every
-supported v1 input.
+Delivered Tex-disabled Compose, local TLS/OIDC, OpenBao, PostgreSQL/object
+storage/Hatchet foundations, readiness, persistence, backup/restore, and
+operational safeguards.
+
+### Wave 3 — Technical Phase 3: canonical data and authorization
+
+State: accepted at commit `e77b299`.
+
+Delivered frozen Alembic schema, separate database roles, FORCE RLS, signed
+tenant context, canonical tenancy/ledger foundations, atomic pointer/outbox
+writes, server-side OIDC code + PKCE, sessions/CSRF/18+, and seeded adversarial
+authorization tests.
+
+### Wave 4 — Technical Phases 4–5: Core runtime and ingestion
+
+Goal: create the reusable backend execution plane and deterministic source
+pipeline before documents, retrieval, learning, or external tools depend on it.
+
+Documentation map:
+
+- PRD: Core, portability, privacy, operations, ingestion requirements.
+- FSD: authentication errors, source upload/status/reprocess/version states,
+  global jobs, partial/degraded/rate-safe behavior.
+- TRD: `TRD-API-*`, `TRD-SYS-*`, `TRD-OPS-*`, `TRD-DATA-*`, `TRD-ING-*`.
+- ADRs: 0002, 0004, 0010, 0011.
+- Security: tenant context, file handling, prompt/content isolation, secrets,
+  abuse/backpressure, provider egress.
+- Evaluation: API, workflow durability, parser corpus, OCR, provenance, SLOs.
 
 Micro-phases:
 
-1. Ingestion intent, upload, source, revision, and durable status.
-2. Parser-neutral normalization and deterministic structural IDs.
-3. Confidence, English/Hindi/Hinglish OCR, and gated fallback.
-4. Shadow reprocessing, atomic promotion, projection events, and parser
-   evaluation.
+1. Core transaction/request policy: authenticated context, correlation IDs,
+   problem+json, signed pagination, idempotency keys, request limits, and safe
+   non-enumerating errors.
+2. Durable mutations: transactional outbox, leases, retries, jitter, dead-letter
+   state, job/attempt APIs, cancellation, accepted-work durability, and replay.
+3. Object storage: immutable original/snapshot/artifact keys, presigned transfer,
+   checksum verification, quarantine, lifecycle, and provider-neutral port.
+4. Source API: create/complete/status/reprocess/version/fetch flows with
+   deterministic revisions, citations, authorization, and visible failure states.
+5. Ingestion workflows: MIME sniffing, limits, malware seam, native extraction,
+   Docling, gated OCR fallback, Hindi/Hinglish hints, stage checkpoints, retry,
+   and content-minimized errors.
+6. Canonical normalization: parser-neutral elements, locators, assets, tables,
+   formulas, provenance, shadow parser runs, quality gate, and atomic promotion.
+7. Integrated fast gate: API contracts, migration drift, outbox/job durability,
+   object-store fixtures, parser golden corpus, RLS, failure injection, and
+   documentation synchronization. No full self-host smoke.
 
-Required result:
+Exit result:
 
-- Originals, immutable source revisions, normalized structures, locators,
-  warnings, and statuses are honest and durable.
-- Same input and profile produce identical revision, element, and chunk IDs.
-- No missing page is reported successful.
-- EVAL-ING-001..012 pass for blocking corpus slices.
-- Reprocessing never replaces a valid active run before shadow validation.
+- accepted jobs cannot disappear or report false success;
+- identical source snapshots produce deterministic immutable revisions;
+- every element has source revision and locator provenance;
+- reprocessing preserves history and promotes only validated output;
+- Core remains canonical and self-host works without paid parsing/model APIs.
 
-### Phase 6 — Rich documents, canonical memory, conflicts, and proposed writes
+### Wave 5 — Technical Phases 6–7: documents, memory, and context
 
-Goal: Establish Memdot-owned rich-document and memory truth without silent
-overwrites or model commits.
+Goal: implement canonical authored knowledge and the policy-aware retrieval stack
+that will serve native UI, learning, and external AI.
 
-Micro-phases:
+Documentation map:
 
-1. MemdotDocument v1 schema, serialization, sanitization, and migrations.
-2. Immutable document revisions and stale-base conflict handling.
-3. Memory ontology, provenance, relations, and conflict sets.
-4. Memory and AI document-patch proposal state machines.
-
-Required result:
-
-- MemdotDocument round-trips exactly and preserves unknown nodes.
-- Saves are revisioned, idempotent, and conflict-safe.
-- Truth class, provenance, current/history, and conflicts stay explicit.
-- AI and external-agent writes remain pending until first-party approval.
-- Pending/rejected proposals never enter normal retrieval or learning evidence.
-
-### Phase 7 — Retrieval, Context Compiler, model routing, Tex, and OSS fallback
-
-Goal: Compile authorized, version-correct, conflict-aware evidence independently
-of any single semantic provider.
-
-Micro-phases:
-
-1. Exact, temporal, graph, and local semantic provider lanes.
-2. Query planning, fusion, reranking, and canonical post-filter.
-3. Context Compiler, citations, conflict detection, budget packing, and receipts.
-4. Model router, Tex adapter, outage fallback, rebuild, and frozen benchmarks.
-
-Required result:
-
-- Retrieval and context meet EVAL-RET and context thresholds.
-- Every provider candidate is reauthorized and version-checked in PostgreSQL.
-- External knowledge is labelled and cannot become source truth.
-- Context receipts identify evidence, versions, conflicts, omissions, and routes.
-- Tex outage preserves exact, graph, temporal, pgvector, and local-rerank
-  functionality with identical security and citation behavior.
-
-### Phase 8 — Learning backend, Evidence Twin, assessment, and FSRS
-
-Goal: Build source-grounded deliberate learning whose state can be replayed from
-eligible append-only events.
+- PRD: General Memory Core, source-first answers, proposed writes, portability.
+- FSD: document authoring/history/conflicts, Ask, Memory, proposals, citations,
+  historical versions, source conflicts, degraded retrieval.
+- TRD: `TRD-DOC-*`, `TRD-MEM-*`, `TRD-RET-*`, `TRD-MOD-*`, context receipts.
+- ADRs: 0003, 0004, 0005, 0006, 0008, 0009, 0010.
+- Security/Evaluation: injection resistance, canonical rejoin, retrieval corpus,
+  citation quality, Tex/OSS parity, model egress.
 
 Micro-phases:
 
-1. Course, syllabus, concept, prerequisite, and source-coverage graph.
-2. Versioned MCQ, short-answer, written assessment, confidence, and sealed
-   grading.
-3. Learner event ledger, evidence eligibility, Evidence Twin, and FSRS.
-4. Learning benchmarks and delayed-success measurement.
+1. Freeze `MemdotDocument v1`: block/inline/assets/marks schema, stable IDs,
+   validation, migrations, JSON round-trip, HTML/Markdown import/export adapters,
+   and XSS-safe rendering contract.
+2. Authored-document protocol: immutable revisions, base revision, atomic pointer
+   and outbox update, idempotent save, history, stale-base conflict, and recovery.
+3. Canonical memory: assertions, provenance, supersession, retraction, conflicts,
+   proposals, approval/rejection/edit audit, and retrieval exclusion until approval.
+4. Retrieval projections: exact/lexical, temporal, graph, pgvector/local semantic,
+   rebuild cursors, version/deletion filtering, and deterministic projection IDs.
+5. Model-router and provider adapters: direct adapters, policy routing, structured
+   output validation, timeouts/budgets, BYOK boundary, injection-safe payloads,
+   and content-minimized logs.
+6. Tex adapter: replaceable projection only, integration gate, outage/circuit
+   breaker, reconciliation, rebuild, and fully functional Tex-disabled fallback.
+7. Context Compiler: intent, scope, lanes, fusion, reranking, canonical RLS
+   rejoin, conflicts, temporal/as-of mode, budget packing, citations, omissions,
+   and receipt persistence without chain-of-thought.
+8. Integrated fast gate: document fixtures, proposal invariants, retrieval slices,
+   citation correctness, zero private/cross-account leakage, Tex/local parity,
+   outage fallback, and model-policy tests. No full self-host smoke.
 
-Required result:
+Exit result:
 
-- Confirmed prerequisite graph has zero cycles and complete provenance.
-- Answers and rubrics never leak before submission.
-- Event replay is deterministic under duplicates and reordering.
-- Hinted, revealed, post-feedback, ungradable, or conversation-derived events
-  never establish demonstrated learning.
-- EVAL-LRN-001..008 pass.
+- rich JSON and immutable revisions are canonical;
+- AI changes remain proposals;
+- every retrieved item is reauthorized and source/revision grounded;
+- Tex improves recall but never owns truth, authorization, or availability.
 
-### Phase 9 — MCP, OAuth, external AI, conversations, and capture
+### Wave 6 — Technical Phase 8: learning backend and Checkpoint A
 
-Goal: Expose portable whole-account non-private memory without weakening private,
-proposal, conversation, or learner boundaries.
+Goal: build replayable, source-grounded learning on the accepted memory/context
+core, then run the first full backend smoke.
 
-Micro-phases:
+Documentation map:
 
-1. OAuth-protected Streamable HTTP MCP edge.
-2. OpenAI-compatible search and fetch.
-3. prepare_context, propose_memory, and record_interaction.
-4. Native/external conversation ledger and completeness.
-
-Required result:
-
-- All five frozen MCP tools pass schemas, authorization, errors, idempotency, and
-  side-effect tests.
-- search and fetch use stable canonical IDs and absolute reauthorized URLs.
-- memdot.memory.read covers all current/future non-private Spaces but never
-  Private Spaces, pending proposals, incomplete attempts, or sealed answers.
-- External capture remains explicitly best-effort.
-- Interaction capture never changes learner evidence.
-
-### Phase 10 — Notion synchronization, export, deletion, and restore safety
-
-Goal: Implement bounded external synchronization and a complete user-controlled
-data lifecycle.
-
-Micro-phases:
-
-1. Notion connection and selected-page inbound sync.
-2. Dedicated Memdot-root two-way sync and three-way conflict handling.
-3. Portable item, conversation, Space, and account export.
-4. Immediate tombstone, durable purge, backup expiry, and restore replay.
-
-Required result:
-
-- Selected pages outside the Memdot root are never modified remotely.
-- Approved Memdot-authored documents under the root sync idempotently.
-- Concurrent changes never use silent last-write-wins.
-- Export contains portable canonical data, originals, history, events, citations,
-  completeness, hashes, and warnings.
-- Deleted data becomes immediately unavailable and cannot resurrect after
-  restore, reimport, retry, or reprojection.
-
-### Phase 11 — Security hardening, observability, deployment, and evaluation
-
-Goal: Make the backend/platform release-capable before frontend product work.
+- PRD Learning mode and delayed-success metric.
+- FSD course setup, syllabus, Ask/Test/Review, confidence, results, Evidence Twin.
+- TRD learning graph, assessment, event ledger, projections, and FSRS.
+- ADRs: 0001, 0012, 0013.
+- Security/Evaluation: sealed answers, evidence eligibility, replay, offline events,
+  learning benchmark and delayed novel-item success.
 
 Micro-phases:
 
-1. Threat controls, telemetry allowlist, admin controls, and incident runbooks.
-2. Circuit breakers, backpressure, SLOs, metrics, alerts, and failure injection.
-3. India-first hosted GCP infrastructure.
-4. Supply-chain integrity, self-host parity, and benchmark automation.
+1. Course/curriculum graph, objectives, concepts, prerequisite confirmation,
+   source coverage, syllabus mapping, provenance, and cycle prevention.
+2. Versioned assessment items/rubrics for MCQ, short answer, and written response;
+   sealed answers; confidence-before-feedback; deterministic grading seams.
+3. Append-only learner events with idempotent attempt/submission/reveal/hint/
+   grading/review semantics and explicit eligibility classification.
+4. Evidence Twin replay: demonstrated evidence, coverage, recall, confidence,
+   provisional state, explanations, and projection rebuild.
+5. FSRS scheduling with deterministic due state, bounded offline review packs,
+   duplicate/reordered event handling, and no chat-derived mastery.
+6. Learning benchmark: leakage, hints/reveals, replay properties, scheduling,
+   Hindi/Hinglish content, and delayed source-grounded novel-item success.
+7. Fast gates first, then exactly one successful `make selfhost-smoke` Checkpoint A.
 
-Required result:
+Exit result:
 
-- Telemetry contains no prompts, responses, source text, filenames, answers,
-  cookies, credentials, or authorization headers.
-- Overload and provider failures queue, degrade, or reject safely.
-- Hosted content and managed inference remain in Mumbai; Delhi holds encrypted
-  disaster-recovery backups only.
-- Images/dependencies are pinned, scanned, SBOM-generated, signed, and
-  reproducible.
-- Tex-disabled, telemetry-off self-host acceptance passes.
-- Benchmarks produce reproducible artifacts and hashes.
+- learner state rebuilds from eligible events;
+- sealed material never leaks before submission/reveal;
+- ineligible activity cannot increase demonstrated learning;
+- the complete backend through learning survives the full system smoke.
 
-### Phase 12 — Frontend foundation, authentication, responsive shell, and PWA
+### Wave 7 — Technical Phases 9–10: external access and lifecycle
 
-Goal: Begin frontend work only after backend contracts and operational behavior
-are real and verified.
+Goal: expose eligible memory safely to external AI, synchronize bounded Notion
+content, and implement export/deletion without weakening canonical truth.
 
-Micro-phases:
+Documentation map:
 
-1. Next.js architecture and generated Core client.
-2. Authentication, adult confirmation, onboarding, sessions, and recent auth.
-3. Accessible design system, route shells, global states, and responsive
-   navigation.
-4. Installable PWA and encrypted offline foundation.
-
-Required result:
-
-- Frontend consumes generated contracts and contains no provider or
-  authorization shortcuts.
-- Hosted Google auth, 18+, onboarding, logout, session failure, and recent-auth
-  flows pass.
-- Every v1 route has an accessible responsive shell and explicit states.
-- Offline cache is opt-in, encrypted, account-partitioned, and cleared on logout.
-
-### Phase 13 — General Memory frontend, editor, ingestion, Ask, and Memory
-
-Goal: Deliver complete first-party General Memory workflows over verified backend
-contracts.
+- PRD portability, integrations, privacy, self-hosting, and lifecycle.
+- FSD Integrations, consent, context receipts, capture completeness, Notion,
+  export, deletion, recovery, and all failure states.
+- TRD MCP/OAuth, REST, conversations, sync, export, deletion, and restore.
+- ADRs: 0007, 0008, 0014.
+- Security/Evaluation: whole-account grants, private exclusion, OAuth attacks,
+  prompt injection, deletion non-resurrection, connector compatibility.
 
 Micro-phases:
 
-1. Today, Library, Spaces, Private Spaces, and source detail.
-2. Upload, processing, failure, reprocess, and global jobs.
-3. Tiptap/MemdotDocument editor, history, stale-base conflicts, and AI patches.
-4. Ask, search, citations, context receipts, Memory, proposals, and activity.
+1. OAuth-protected Streamable HTTP MCP with metadata, PKCE, scopes, issuer/
+   audience/resource validation, rotation, revocation, and safe errors.
+2. Frozen `search` and `fetch` company-knowledge shapes with canonical IDs,
+   absolute reauthorized URLs, pagination, citations, and compatibility tests.
+3. `prepare_context`, `propose_memory`, and `record_interaction` with validation,
+   idempotency, receipts, proposal-only writes, completeness labels, and no
+   learner-evidence side effect.
+4. Native/external conversation ledger, retention, deletion, partial/summary/
+   unknown capture, and explicit MCP isolation limitations.
+5. Notion connection, selected-page inbound import, deterministic snapshots,
+   pagination/rate handling, asset capture, and dedicated-root ownership rules.
+6. Dedicated-root two-way sync with base versions, outbound idempotency,
+   three-way conflicts, per-item pause, and no silent last-write-wins.
+7. Portable export and deletion: originals, history, events, citations, hashes,
+   tombstones, immediate invisibility, provider purge, backup expiry, restore
+   replay, and protection from reimport/retry/reprojection resurrection.
+8. Integrated fast gate: tool schemas, external/private adversarial matrix,
+   Notion fixtures, revocation, export verification, deletion/restore drill, and
+   conversation completeness. No full self-host smoke.
 
-Required result:
+### Wave 8 — Technical Phase 11: release backend and Checkpoint B
 
-- All related FSD routes, states, and acceptance behaviors pass.
-- History and conflicts stay visible.
-- AI changes remain reviewable proposals.
-- Source-first answers cite immutable evidence and label External knowledge.
-- Editor round-trip, XSS, concurrency, recovery, citation, accessibility, and
-  responsive suites pass.
+Goal: harden and prove the complete backend/platform before any product frontend
+is built.
 
-### Phase 14 — Learning, integrations, settings, offline, and accessibility
+Documentation map:
 
-Goal: Complete the Learning flagship and all consent, lifecycle, offline, and
-accessibility surfaces.
-
-Micro-phases:
-
-1. Learning setup, syllabus map, concepts, prerequisites, and coverage.
-2. Test, results, Review, Evidence Twin, confidence, and due reasons.
-3. MCP, Notion, provider, BYOK, privacy, and settings surfaces.
-4. Export, deletion, global status, pinned reading, offline review, and complete
-   accessibility/browser matrix.
-
-Required result:
-
-- Learning UI preserves sealed answers and evidence eligibility.
-- Whole-account MCP consent and Private-Space exclusion are explicit.
-- Notion write boundary and conflicts are visible.
-- Offline is limited to pinned reading and seven-day review packs.
-- Supported browsers, installed PWA, keyboard, screen reader, touch, zoom,
-  responsive, and WCAG-oriented gates pass.
-
-### Phase 15 — Release candidate and beta launch readiness
-
-Goal: Prove the complete product against every founding acceptance, security,
-quality, operational, legal, and portability promise.
+- PRD operational, privacy, OSS, self-host, hosted beta, and launch risks.
+- FSD degraded/rate-safe/incident/account lifecycle behavior.
+- TRD security, deployment, telemetry, SLO, backup, regional inference, and
+  incident contracts.
+- ADRs: 0010, 0011 and every operational consequence from 0002–0014.
+- Full Security/Privacy Threat Model and Evaluation/Release Gates.
 
 Micro-phases:
 
-1. FSD-AC-001..024 and cross-document end-to-end acceptance.
-2. Frozen benchmarks, performance, and adversarial security.
-3. Live MCP/Notion/provider compatibility, restore, deployment, and incident
-   rehearsal.
-4. Documentation, licensing, legal review, founder QA, and release decision.
+1. Complete threat controls, telemetry allowlist, audit minimization, secret
+   rotation, admin boundaries, rate/abuse protections, and incident runbooks.
+2. Backpressure, circuit breakers, overload behavior, SLO metrics, alerts,
+   failure injection, queue/job visibility, and safe degradation.
+3. India-first hosted GCP topology, Mumbai content/inference, Delhi encrypted DR,
+   IAM/KMS/networking, Google auth, deployment rollback, backup, and restore.
+4. Supply chain: pinned dependencies/images, SBOM, license policy, scanning,
+   signing, provenance, reproducible builds, and Apache 2.0 self-host parity.
+5. Automated parser/retrieval/citation/learning/MCP/security/lifecycle benchmarks
+   with frozen fixtures, hashes, trend reporting, and hard release thresholds.
+6. Complete fast gate, hosted configuration validation, deletion/restore drill,
+   then exactly one successful `make selfhost-smoke` Checkpoint B with Tex and
+   telemetry disabled.
 
-Required result:
+Exit result:
 
-- Every hard release gate passes its absolute threshold.
-- At least 10,000 adversarial cross-account/Private-Space calls produce zero
-  leakage.
-- Search, fetch, context, tool success, ingestion, projection, revoke, RPO, and
-  RTO targets pass.
-- ChatGPT, Claude remote MCP, Gemini CLI, and authorized Notion test-workspace
-  gates pass before those compatibility claims are made.
-- Restore replay proves deleted data cannot resurrect.
-- No critical security, privacy, data-integrity, citation, learning-integrity,
-  deletion, accessibility, or self-host blocker remains.
-- Codex returns final PASS and Tauqueer makes the explicit launch decision.
+- backend contracts and failure behavior are frozen for frontend consumption;
+- hosted and self-host deployments preserve the same product invariants;
+- the second full smoke is green and frontend work may be proposed to Tauqueer.
 
-## 7. Phase report and audit evidence
+### Wave 9 — Technical Phase 12: frontend foundation
 
-Every phase report must contain:
+Goal: build the typed, accessible, responsive product shell over verified backend
+contracts only.
 
-- phase number, branch, base commit, and repository state;
-- implemented scope and explicit non-goals;
-- requirement and ADR traceability;
-- micro-phase self-check results;
-- complete changed-file inventory;
-- migrations, public contracts, generated files, events, and compatibility
-  effects;
-- commands and unedited terminal output;
-- test counts, skipped tests, coverage, benchmark/profile hashes, and performance
-  evidence;
-- security/privacy and failure-mode impact;
-- documentation changes;
-- git status, diff stat, diff check, and complete reviewable diff;
-- known limitations and blockers;
-- confirmation that no unauthorized commit, push, merge, deploy, credential
-  rotation, paid resource, or production mutation occurred.
+Documentation map: complete FSD global/auth/onboarding/navigation/state/PWA
+requirements, frontend TRD contracts, ADR-0013, security cache/session rules, and
+accessibility/browser evaluation gates.
 
-Codex audits the complete phase, not Grok's summary alone.
+Micro-phases:
+
+1. Next.js architecture, generated API client, request/error wrapper, session/
+   CSRF handling, correlation IDs, cache policy, and test harness.
+2. Hosted Google and self-host OIDC presentation, 18+ confirmation, onboarding,
+   logout, expiry, recent auth, unauthorized and recovery flows.
+3. Accessible design tokens/components, responsive shell, keyboard/focus model,
+   screen-reader landmarks, navigation, global jobs, banners, and error states.
+4. PWA manifest/service worker, encrypted account-partitioned offline storage,
+   opt-in pinning, logout clearing, update/recovery, and constrained offline seam.
+5. Fast frontend gate: generated-contract freshness, component/a11y tests,
+   route smoke, responsive viewports, cache isolation, build, and docs. No full
+   self-host smoke unless frontend changes a smoke-owned service seam.
+
+### Wave 10 — Technical Phases 13–15: complete UI and beta readiness
+
+Goal: deliver General Memory, Learning, integrations, lifecycle, offline, and
+release acceptance as one final product wave.
+
+Micro-phases:
+
+1. Today, Library, Spaces, Private Spaces, sources, uploads, processing,
+   reprocess, history, citations, and global jobs.
+2. Tiptap editor, MemdotDocument, autosave, revision history, stale-base
+   conflict, recovery, AI patch review, and proposal approval.
+3. Ask/search/context receipts, source conflicts, historical mode, Memory,
+   proposals, activity, external-knowledge labels, and degraded retrieval.
+4. Learning setup, syllabus, concepts, coverage, Test, results, confidence,
+   Review, Evidence Twin, due reasons, sealed answers, and offline replay.
+5. MCP consent/revocation, Notion sync/conflicts, providers/BYOK, settings,
+   export, deletion, account recovery, and privacy surfaces.
+6. Accessibility/responsive/browser/PWA completion across every route and state.
+7. End-to-end FSD acceptance, adversarial security, benchmarks, live authorized
+   integration compatibility, restore/incident rehearsal, legal/license docs,
+   founder QA, and explicit launch decision.
+
+Exit result:
+
+- every required route/state and `FSD-AC-*` scenario has evidence;
+- zero private/cross-account leakage and no deletion resurrection;
+- release thresholds, accessibility, self-host parity, and founder QA pass;
+- Tauqueer alone decides beta launch.
+
+## 7. Chat report contract
+
+Grok's end-of-wave chat report must be concise but auditable:
+
+1. wave/technical phases, branch, baseline commit, HEAD, and initial/final status;
+2. micro-phase completion table and explicit non-goals;
+3. requirements/ADRs implemented;
+4. changed files grouped by ownership;
+5. migrations, contracts, events, compatibility, and data effects;
+6. validation table with exact commands, exit results, counts, and skipped tests;
+7. security/privacy/failure-mode impact;
+8. known limitations and blockers;
+9. `git status --short`, `git diff --stat`, `git diff --check` result;
+10. confirmation of no unauthorized commit/push/deploy/external mutation.
+
+Raw logs, patches, and inventories should be placed in `/tmp` only when Codex
+needs them. Codex normally inspects the working tree directly.
 
 ## 8. Current execution pointer
 
-- Active phase: Phase 3 — accepted and authorized for local commit; Phase 4 is not authorized.
-- Phase prompt: supplied by Codex in the Phase 3 owner handoff.
-- Current implementation: Phase 1 scaffold, Phase 2 self-host platform, and Phase 3 canonical tenancy, ledger, identity, and authorization are accepted.
-- Current code commands: verified in AGENTS.md / Codebase Context Map.
-- Current phase report: `docs/execution/PHASE_03_CODEX_CORRECTION_REPORT.md`.
-- Current Codex verdict: PASS for Phases 1, 2, and 3.
-- Previous correction history: Phase 3 required Grok round 1 and direct Codex security corrections.
-- Current accepted implementation: Phase 3 in the commit containing this pointer update.
+- Accepted waves: 1, 2, and 3.
+- Next eligible wave: Wave 4 covering technical Phases 4–5.
+- Active wave: none until Tauqueer authorizes the Wave 4 prompt.
+- Full smoke checkpoints: Wave 6 after Phase 8, and Wave 8 after Phase 11.
+- Frontend begins only in Wave 9 after Checkpoint B and owner authorization.
+- Phase prompts, correction prompts, and reports are delivered in chat only.

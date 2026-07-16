@@ -170,3 +170,36 @@ def set_current_document_revision(
             "payload_json": payload_json,
         },
     )
+
+
+def set_current_active_parse_run(
+    session: Session,
+    *,
+    pointer_id: uuid.UUID,
+    account_id: uuid.UUID,
+    space_id: uuid.UUID,
+    source_id: uuid.UUID,
+    source_revision_id: uuid.UUID,
+    parse_run_id: uuid.UUID,
+    event_id: uuid.UUID,
+    payload_sha256: str,
+    payload_json: str,
+) -> None:
+    session.execute(
+        text(
+            "SELECT memdot_set_current_active_parse_run("
+            ":pointer_id,:account_id,:space_id,:source_id,:source_revision_id,"
+            ":parse_run_id,:event_id,:payload_sha256,CAST(:payload_json AS jsonb))"
+        ),
+        {
+            "pointer_id": pointer_id,
+            "account_id": account_id,
+            "space_id": space_id,
+            "source_id": source_id,
+            "source_revision_id": source_revision_id,
+            "parse_run_id": parse_run_id,
+            "event_id": event_id,
+            "payload_sha256": payload_sha256,
+            "payload_json": payload_json,
+        },
+    )

@@ -5,8 +5,8 @@ Before changing anything:
 1. Read [docs/README.md](docs/README.md).
 2. Read [CONTEXT.md](CONTEXT.md) for verified current state and invariants.
 3. Read [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and work only in the
-   active owner-approved macro-phase.
-4. Read the active phase in
+   active owner-approved delivery wave.
+4. Read the active wave and technical phases in
    [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 5. Read [docs/ai/CODEBASE_CONTEXT_MAP.md](docs/ai/CODEBASE_CONTEXT_MAP.md).
 6. Read the owning PRD/FSD/TRD requirements and relevant ADRs.
@@ -14,10 +14,19 @@ Before changing anything:
 8. Inspect actual files and manifests; never infer an implementation or command
    from the target map.
 
-Within an approved macro-phase, Grok completes micro-phases in order and
-self-validates each one. Codex reviews once at the macro-phase boundary using
-the consolidated phase report. Do not request routine Codex review between
-micro-phases.
+Within an approved delivery wave, Grok completes micro-phases in order and
+self-validates each one. Codex reviews once at the wave boundary. Do not request
+routine Codex review between micro-phases.
+
+Prompts, correction prompts, consolidated reports, raw logs, candidate patches,
+stats, and file inventories are chat or `/tmp` artifacts. Do not add them under
+`docs/`. Repository documentation is reserved for durable product, architecture,
+security, evaluation, operator, context, and implementation truth.
+
+Grok may use bounded multitask mode. Give parallel tasks exclusive paths and
+explicit contracts. Migrations, RLS/auth, public APIs/events, shared Compose/CI,
+MemdotDocument, deletion truth, and learner-evidence policy have one writer at a
+time. The main task reconciles the combined diff and runs the integrated gate.
 
 Durable invariants:
 
@@ -32,6 +41,16 @@ Durable invariants:
 - Documentation and traceability IDs must change with behaviour or architecture.
 - Commit, push, merge, deploy, paid resources, credentials, production data, and
   phase transitions remain owner-controlled even after tests pass.
+
+## Full-smoke policy
+
+Before frontend work, only two future full `make selfhost-smoke` runs are
+scheduled: Checkpoint A after technical Phase 8 and Checkpoint B after technical
+Phase 11. Waves 4, 5, and 7 use focused component/integration gates only. Do not
+repeat a successful full smoke during correction unless the correction changes
+Compose topology, startup/readiness, networking, TLS/OIDC discovery, secrets,
+runtime DB roles/migrations, Hatchet durability, object persistence,
+backup/restore/tombstones, telemetry-off boot, or Tex-disabled fallback.
 
 ## Verified Phase 1 commands
 
@@ -71,6 +90,12 @@ make selfhost-smoke   # bounded end-to-end infra smoke (TLS, OIDC, durability, c
 make migrate-domain # explicit Alembic upgrade as memdot_migrate
 make check-rls      # live RLS registry gate against PostgreSQL
 make phase3-gates   # migrate-domain + check-rls + targeted pytest
+```
+
+## Verified Phase 4 commands
+
+```bash
+make phase4-gates   # Wave 4 focused gate (no full selfhost-smoke)
 ```
 
 Operator docs: `infra/compose/README.md`. Image digests: `infra/compose/images.lock.yaml`.

@@ -39,7 +39,9 @@ class Source(Base):
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
+    processing_status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class SourceRevision(Base):
@@ -190,7 +192,15 @@ class ParseRun(Base):
     source_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     parser_profile: Mapped[str] = mapped_column(String(128), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
+    profile_hash: Mapped[str | None] = mapped_column(String(64))
+    is_shadow: Mapped[bool] = mapped_column(default=False)
+    quality_score: Mapped[float | None] = mapped_column()
+    stage_checkpoint: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    artifact_object_key: Mapped[str | None] = mapped_column(Text)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_detail_safe: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class DocumentElement(Base):
@@ -215,6 +225,14 @@ class DocumentElement(Base):
     parse_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     element_kind: Mapped[str] = mapped_column(String(64), nullable=False)
     locator: Mapped[str | None] = mapped_column(Text)
+    element_index: Mapped[int | None] = mapped_column(Integer)
+    parent_element_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    content_hash: Mapped[str | None] = mapped_column(String(64))
+    exact_text: Mapped[str | None] = mapped_column(Text)
+    normalized_text: Mapped[str | None] = mapped_column(Text)
+    element_metadata: Mapped[dict[str, object]] = mapped_column(
+        "metadata", JSONB, nullable=False, default=dict
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -472,6 +490,10 @@ class OutboxEvent(Base):
     payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claim_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    claim_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claimed_by: Mapped[str | None] = mapped_column(Text)
 
 
 class IdempotencyRecord(Base):
@@ -485,6 +507,9 @@ class IdempotencyRecord(Base):
     idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
     fingerprint_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     response_status: Mapped[int] = mapped_column(Integer, nullable=False)
+    route: Mapped[str | None] = mapped_column(Text)
+    response_body: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    response_headers: Mapped[dict[str, object] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -493,7 +518,9 @@ class DurableJob(Base):
     __table_args__ = (
         UniqueConstraint("account_id", "id", name="uq_durable_job_1"),
         CheckConstraint(
-            "status IN ('pending', 'running', 'succeeded', 'failed', 'cancelled')",
+            "status IN ("
+            "'pending', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'dead_letter'"
+            ")",
             name="ck_durable_job_status",
         ),
     )
@@ -502,7 +529,18 @@ class DurableJob(Base):
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     job_type: Mapped[str] = mapped_column(String(128), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    correlation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    idempotency_key: Mapped[str | None] = mapped_column(String(256))
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    progress: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_detail_safe: Mapped[str | None] = mapped_column(Text)
+    auth_snapshot: Mapped[dict[str, object] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    dead_letter_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class JobAttempt(Base):
@@ -521,6 +559,10 @@ class JobAttempt(Base):
     job_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_detail_safe: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -534,4 +576,65 @@ class ProjectionState(Base):
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     projection_name: Mapped[str] = mapped_column(String(128), nullable=False)
     cursor: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class UploadIntent(Base):
+    __tablename__ = "upload_intent"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "source_id"],
+            ["source.account_id", "source.id"],
+            name="fk_upload_intent_source",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "space_id", "source_id"],
+            ["source.account_id", "source.space_id", "source.id"],
+            name="fk_upload_intent_source_space",
+        ),
+        UniqueConstraint("account_id", "id", name="uq_upload_intent_1"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    object_key: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_byte_count: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CurrentActiveParseRun(Base):
+    __tablename__ = "current_active_parse_run"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "source_id"],
+            ["source.account_id", "source.id"],
+            name="fk_current_active_parse_source",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "source_revision_id"],
+            ["source_revision.account_id", "source_revision.id"],
+            name="fk_current_active_parse_revision",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "parse_run_id"],
+            ["parse_run.account_id", "parse_run.id"],
+            name="fk_current_active_parse_run",
+        ),
+        UniqueConstraint(
+            "account_id", "source_id", "source_revision_id", name="uq_current_active_parse_run_1"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    parse_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

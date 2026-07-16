@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.memdot.app/events/source.active_parse_changed.v1.json",
+  "title": "source.active_parse_changed",
+  "type": "object",
+  "required": ["source_id", "revision_id", "parse_run_id"],
+  "properties": {
+    "source_id": { "type": "string", "format": "uuid" },
+    "revision_id": { "type": "string", "format": "uuid" },
+    "parse_run_id": { "type": "string", "format": "uuid" }
+  },
+  "additionalProperties": false
+}

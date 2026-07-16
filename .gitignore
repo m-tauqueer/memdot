@@ -83,15 +83,7 @@ uv-cache/
 
 .import_linter_cache/
 
-# Local phase handoff artifacts
-PHASE_01_CANDIDATE.patch
-PHASE_01_CANDIDATE.stat.txt
-PHASE_02_CANDIDATE.patch
-PHASE_02_CANDIDATE.stat.txt
-docs/execution/PHASE_02_CANDIDATE.patch
-docs/execution/PHASE_02_UNTRACKED.txt
-docs/execution/PHASE_03_CANDIDATE.patch
-docs/execution/PHASE_03_CANDIDATE.stat.txt
-docs/execution/PHASE_03_UNTRACKED.txt
-/tmp/PHASE_02_*.patch
-/tmp/phase2-*
+# Implementation handoff artifacts belong in /tmp, never in the repository.
+*_CANDIDATE.patch
+*_CANDIDATE.stat.txt
+*_UNTRACKED.txt
